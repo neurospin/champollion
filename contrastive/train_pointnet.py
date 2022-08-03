@@ -46,10 +46,8 @@ from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
-import numpy as np
-import torch
-from contrastive.backbones.convnet import ConvNet
 
+from contrastive.backbones.pointnet import PointNetCls
 from contrastive.data.datamodule import DataModule_Learning
 from contrastive.data.datamodule import DataModule_Evaluation
 from contrastive.models.contrastive_learner import ContrastiveLearner
@@ -75,10 +73,30 @@ We use the following definitions:
   The elements are called output vectors
 """
 
-@hydra.main(config_name='config', config_path="configs")
+@hydra.main(config_name='config_no_save', config_path="configs")
 def train(config):
     config = process_config(config)
     os.environ["NUMEXPR_MAX_THREADS"] = str(config.num_cpu_workers)
+
+    set_root_logger_level(config.verbose)
+    # Sets handler for logger
+    set_file_log_handler(file_dir=os.getcwd(),
+                         suffix='output')
+    log.info(f"current directory = {os.getcwd()}")
+
+
+    # copies some of the config parameters in a yaml file easily accessible
+    keys_to_keep = ['dataset', 'numpy_all', 'nb_subjects', 'model', 'with_labels', 
+    'input_size', 'temperature_initial', 'temperature', 'sigma', 'drop_rate', 'depth_decoder',
+    'mode', 'foldlabel', 'fill_value', 'patch_size', 'max_angle', 'checkerboard_size', 'keep_bottom',
+    'growth_rate', 'block_config', 'num_init_features', 'num_representation_features', 'num_outputs',
+    'environment', 'batch_size', 'pin_mem', 'partition', 'lr', 'weight_decay', 'max_epochs',
+    'early_stopping_patience', 'seed', 'backbone_name']
+
+    #create_accessible_config(keys_to_keep, os.getcwd()+"/.hydra/config.yaml")
+
+    # create a csv file where the parameters changing between runs are stored
+    #get_config_diff(os.getcwd()+'/..', whole_config=False, save=True)    
 
 
     if config.mode == 'evaluation':
@@ -86,7 +104,7 @@ def train(config):
     else:
         data_module = DataModule_Learning(config)
 
-    if config.mode == 'evaluation':
+    """ if config.mode == 'evaluation':
         model = ContrastiveLearner_Visualization(config,
                                sample_data=data_module)   
     elif config.model == "SimCLR_supervised":
@@ -96,19 +114,26 @@ def train(config):
         model = ContrastiveLearner(config,
                                sample_data=data_module) 
     else:
-        raise ValueError("Wrong combination of 'mode' and 'model'")
+        raise ValueError("Wrong combination of 'mode' and 'model'")"""
+    
+    model = PointNetCls(k=config.num_representation_features)
 
-    summary(model, tuple(config.input_size), device='cpu')
+    summary(model, tuple(config.input_size), device="cpu")
 
-    X = np.ones([10] + list(config.input_size))
-    X = torch.from_numpy(X)
-    X = X.float()
-    print(X)
+    early_stop_callback = EarlyStopping(monitor="val_loss",
+         patience=config.early_stopping_patience)
 
-    Y = model.forward(X)
+    trainer = pl.Trainer(
+        gpus=1,
+        max_epochs=config.max_epochs,
+        callbacks=[early_stop_callback],
+        logger=tb_logger,
+        flush_logs_every_n_steps=config.nb_steps_per_flush_logs,
+        log_every_n_steps=config.log_every_n_steps)
 
-    print(Y.shape)
-
+    trainer.fit(model, data_module, ckpt_path=config.checkpoint_path)
+    log.info("Fitting is done")
+    log.info(f"Number of hooks: {len(model.save_output.outputs)}")
 
 
 if __name__ == "__main__":

@@ -141,5 +141,5 @@ overwrite to True if you still want to compute them.")
             print(f"{sub_dir} is a file. Continue.")
 
 
-control_sim_zij("/neurospin/dico/agaudin/Runs/03_monkeys/Output/convnet_exploration",
+control_sim_zij("/neurospin/dico/agaudin/Runs/04_pointnet/Output",
 dataset='cingulate_HCP', verbose=False, emb_types=['val'], overwrite=False)

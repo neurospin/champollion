@@ -1,12 +1,15 @@
 import os
 import yaml
+import json
 import omegaconf
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+from scipy.spatial.distance import cdist
 
 from contrastive.evaluation.generate_embeddings import compute_embeddings
-from contrastive.evaluation.train_multiple_classifiers import train_classifiers
 
-from sklearn.utils._testing import ignore_warnings
-from sklearn.exceptions import ConvergenceWarning
 
 
 # Auxilary function used to process the config linked to the model.
@@ -33,23 +36,69 @@ def preprocess_config(sub_dir, dataset, classifier_name='svm', verbose=False):
     cfg.embeddings_save_path = sub_dir + f"/{dataset}_embeddings"
     cfg.training_embeddings = sub_dir + f"/{dataset}_embeddings/full_embeddings.csv"
 
+    # add possibly missing config parameters
+    if 'projection_head_hidden_layers' not in cfg.keys():
+        cfg.projection_head_hidden_layers = None
+    
     return cfg
 
 
-# main function
-# creates embeddings and train classifiers for all models contained in the folder
-@ignore_warnings(category=ConvergenceWarning)
-def embeddings_pipeline(dir_path, dataset='cingulate_ACCpatterns', classifier_name='svm',
-                        overwrite=False, verbose=False):
+
+def compute_hist_sim_zij(model_path, emb_types=['val'], q=0.1, threshold=0.90, save=False, verbose=False):
+    path = model_path + '/cingulate_HCP_embeddings'
+    for emb_type in emb_types:
+        # load the data
+        full_path = path + f'/{emb_type}_embeddings.csv'
+        embs = pd.read_csv(full_path, index_col=0)
+
+        # compute the similarities
+        sims = cdist(embs, embs, metric='cosine')
+        sims = 1 - sims
+
+        # plot them
+        x = [sims[i,j] for i in range(embs.shape[0]) for j in range(embs.shape[0]) if i < j]
+        if verbose:
+            print("check size (should be the same two numbers):", len(x), np.sum(range(embs.shape[0])))
+
+        if save:
+            x = np.array(x)
+            np.save(path+f'/{emb_type}_hist_sim_zij.npy', x)
+            
+
+        plt.figure()
+        plt.hist(x, bins=np.linspace(-1,1,50))
+        plt.title(f"{emb_type} embeddings")
+
+        # check if model to exclude based on similarity repartition (using quantile)
+        quant = np.quantile(x, q)
+        print("10% lowest similarity", quant)
+        good_model = True
+        if quant >= threshold:
+            good_model = False
+            print(f"PROBLEMATIC MODEL: {model_path}")
+
+        if save:
+            plt.savefig(path+f'/{emb_type}_hist_sim_zij.jpg')
+            good_model_dict = {'quantile-percentage': q,
+                               'quantile': quant,
+                               'threshold': threshold,
+                               'exclude': not good_model}
+            with open(path+'/good_model.json', 'w') as file:
+                json.dump(good_model_dict, file) 
+        else:
+            plt.show()
+
+
+
+def control_sim_zij(dir_path, dataset='cingulate_HCP', emb_types=['val'],
+                        q=0.1, threshold=0.90, overwrite=False, verbose=False):
     """
     - dir_path: path where to apply recursively the process.
     - dataset: dataset the embeddings are generated from.
-    - classifier_name: parameter to select the desired classifer type (currently neural_network
-    or svm).
     - overwrite: redo the process on models where embeddings already exist.
     - verbose: verbose.
     """
-
+    print("Start")
     print("/!\ Convergence warnings are disabled")
     # walks recursively through the subfolders
     for name in os.listdir(dir_path):
@@ -70,7 +119,7 @@ overwrite to True if you still want to compute them.")
                 else:
                     print("Start post processing")
                     # get the config and correct it to suit what is needed for classifiers
-                    cfg = preprocess_config(sub_dir, dataset, classifier_name=classifier_name)
+                    cfg = preprocess_config(sub_dir, dataset)
                     if verbose:
                         print("CONFIG FILE", type(cfg))
                         print(cfg)
@@ -80,17 +129,17 @@ overwrite to True if you still want to compute them.")
                     
                     # apply the functions
                     compute_embeddings(cfg)
-                    # reload it for train_classifiers to work properly
-                    cfg = omegaconf.OmegaConf.load(sub_dir+'/.hydra/config_classifiers.yaml')
-                    train_classifiers(cfg)
+                    
+                    compute_hist_sim_zij(sub_dir, emb_types=emb_types, q=q, threshold=threshold,
+                                         save=True, verbose=verbose)
 
             else:
                 print(f"{sub_dir} not associated to a model. Continue")
-                embeddings_pipeline(sub_dir,  dataset=dataset, classifier_name=classifier_name,
-                                    overwrite=overwrite, verbose=verbose)
+                control_sim_zij(sub_dir, emb_types=emb_types, q=q, threshold=threshold,
+                                overwrite=overwrite, verbose=verbose)
         else:
             print(f"{sub_dir} is a file. Continue.")
 
 
-embeddings_pipeline("/neurospin/dico/agaudin/Runs/04_pointnet/Output",
-dataset='cingulate_ACCpatterns', verbose=True, classifier_name='svm', overwrite=False)
+control_sim_zij("/neurospin/dico/agaudin/Runs/04_pointnet/Output",
+dataset='cingulate_HCP', verbose=False, emb_types=['val'], overwrite=False)

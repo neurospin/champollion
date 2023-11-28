@@ -138,13 +138,15 @@ def train(config):
         callbacks.append(early_stop_overfitting)
 
     trainer = pl.Trainer(
-        gpus=1,
+        accelerator='gpu',
+        devices=1,
         max_epochs=config.max_epochs,
         callbacks=callbacks,
         logger=tb_logger,
-        flush_logs_every_n_steps=config.nb_steps_per_flush_logs,
+        #flush_logs_every_n_steps=config.nb_steps_per_flush_logs,
         log_every_n_steps=config.log_every_n_steps,
-        auto_lr_find=True)
+        #auto_lr_find=True
+        )
     
     # # find the best lr
     # log.info("Find the best learning rate...")

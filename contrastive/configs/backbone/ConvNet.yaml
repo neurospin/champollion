@@ -1,0 +1,6 @@
+# @package _global_
+# Characterization of the ConvNet model used
+backbone_name: convnet
+encoder_depth: 3
+backbone_output_size: 10
+projection_head_hidden_layers:

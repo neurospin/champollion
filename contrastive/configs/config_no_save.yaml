@@ -1,0 +1,12 @@
+defaults:
+  - hydra: no_save
+  - dataset: cingulate_ACCpatterns
+  - model: SimCLR
+  - mode: encoder
+  - augmentations: no_augmentation
+  - backbone: ConvNet
+  - platform: cuda_not_brainvisa
+  - trainer: default
+  - classifier: svm
+  - embeddings: embeddings
+  - override hydra/job_logging: custom

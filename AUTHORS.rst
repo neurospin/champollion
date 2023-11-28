@@ -14,6 +14,7 @@ The core developers are:
 
 * Joël Chavas
 * Aymeric Gaudin
+* Julien Laval
 
 Other contributors
 ..................

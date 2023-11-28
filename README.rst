@@ -1,7 +1,7 @@
-
-Unsupervised Representation Learning of Cingulate Cortical Folding Patterns
+Self-supervised learning for preterm-specific variability of cortical folding in the right superior temporal sulcus region
 ###########################################################################
 
+This repository is based on <https://github.com/neurospin-projects/2023_agaudin_jchavas_folding_supervised/>. It aims to apply the pipepline for preter-specific folding pattern analysis and explore explainability methods.
 Official Pytorch implementation for Unsupervised Learning and Cortical Folding (`paper <https://openreview.net/forum?id=ueRZzvQ_K6u>`_).
 The project aims to study cortical folding patterns thanks to unsupervised deep learning methods.
 
@@ -20,8 +20,8 @@ First, the repository can be cloned thanks to:
 
 .. code-block:: shell
 
-    git clone https://github.com/neurospin-projects/2023_agaudin_jchavas_folding_supervised
-    cd 2023_agaudin_jchavas_folding_supervised
+    git clone https://github.com/neurospin-projects/2023_jlaval_STSbabies
+    cd 2023_jlaval_STSbabies
 
 Then, install the a virtual environment through the following command lines:
 

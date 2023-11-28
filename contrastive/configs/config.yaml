@@ -1,0 +1,17 @@
+defaults:
+  - _self_
+  - hydra: local
+  - dataset/STs_dHCP_374_subjects.yaml
+  - label: Preterm_28
+  - model: SimCLR_fusion
+  - mode: classifier
+  - augmentations: no_augmentation
+  - backbone: ConvNet
+  - platform: cuda_not_brainvisa
+  - trainer: default
+  - classifier: svm
+  - embeddings: embeddings
+  - projection_head: linear
+  - override hydra/job_logging: custom
+
+data: ${oc.dict.values:dataset}

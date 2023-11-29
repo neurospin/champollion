@@ -166,11 +166,11 @@ def embeddings_pipeline(dir_path, datasets, label, short_name=None, classifier_n
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    embeddings_pipeline("/neurospin/dico/agaudin/Runs/09_new_repo/Output/grid_searches/step2/cingulate",
-        datasets=["cingulate_schiz_strat_bis","cingulate_schiz_left_strat_bis"],
-        label='diagnosis',
-        short_name='schiz_diag', overwrite=False, use_best_model=True,
-        subsets=['train','val','test_intra','test'], verbose=False)
+    embeddings_pipeline("/neurospin/dico/jlaval/Runs/02_STS_babies/Program/Output/2023-11-28",
+        datasets=["STs_babies/STs_dHCP_374_subjects"],
+        label='Preterm_28',
+        short_name='dHCP', overwrite=False, use_best_model=True,
+        subsets=['train_val'], verbose=False)
 
 # if __name__ == "__main__":
 #     gs_path = "/neurospin/dico/agaudin/Runs/09_new_repo/Output/grid_searches/step2"

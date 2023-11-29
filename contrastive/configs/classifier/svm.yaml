@@ -4,7 +4,7 @@ classifier_name: svm
 training_embeddings: /neurospin/dico/data/deep_folding/current/datasets/schiz/morphometry_statistics/F.C.M.ant/shape_embs.csv
 results_save_path:
 labels_of_interest:
-class_max_epochs: 5000
-n_repeat: 250
+class_max_epochs: -1
+n_repeat: 5
 classifier_seed: 24
 classifier_test_size: 0.2

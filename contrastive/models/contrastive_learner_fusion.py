@@ -509,7 +509,7 @@ in the config to False to unfreeze them.")
         """Only available in classifier mode.
         Gets the output of the model and convert it to probabilities thanks to softmax."""
         if self.config.mode == 'classifier':
-            X, filenames_list, labels_all = self.compute_output_skeletons(
+            X, filenames_list, labels_all = self.compute_outputs_skeletons(
                 loader)
             # compute the mean of the two views' outputs
             X = (X[::2, ...] + X[1::2, ...]) / 2

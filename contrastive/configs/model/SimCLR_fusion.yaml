@@ -4,6 +4,7 @@ sigma_labels: 2.0
 sigma: 5
 drop_rate: 0.05
 pretrained_model_path: #path/to/cpkt
+#pretrained_model_path: /neurospin/dico/jlaval/Runs/01_deep_supervised/Program/Output/2023-06-15/14-36-49/logs/lightning_logs/version_0/checkpoints/epoch=250-step=297435.ckpt #UKB
 load_encoder_only: True
 freeze_encoders: False
 fusioned_latent_space_size: 10  # if set to -1, then it will be the sum of the encoders' output sizes

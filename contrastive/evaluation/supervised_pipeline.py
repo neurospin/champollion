@@ -133,7 +133,7 @@ def supervised_auc_eval(config, model_path, folder_name=None, use_best_model=Tru
         loaders_dict['test_intra'] = test_intra_loader
     except:
         log.info("No test intra for this dataset.")
-    
+      
     # create a save path is necessary
     save_path = model_path+f"/{folder_name}_supervised_results"
     log.debug(f"Save path = {save_path}")
@@ -185,6 +185,9 @@ def supervised_auc_eval(config, model_path, folder_name=None, use_best_model=Tru
             full_save_path = outputs_save_path + f'/{subset}_outputs.csv'
             subset_csv = save_outputs_as_csv(outputs, filenames, labels, full_save_path)
             full_csv = pd.concat([full_csv, subset_csv], axis=0)
+            full_save_path = outputs_save_path + f'/{subset}_probas.csv'
+            probas, labels, filenames = model.compute_output_probabilities(loader)
+            subset_csv = save_outputs_as_csv(probas, filenames, labels, full_save_path)
         full_csv.to_csv(outputs_save_path + '/full_outputs.csv')
         log.info("Outputs saved")
 
@@ -256,7 +259,7 @@ def pipeline(dir_path, datasets, label, short_name=None, overwrite=False, use_be
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    pipeline("/neurospin/dico/agaudin/Runs/09_new_repo/Output/grid_searches/step3/occipital/recrop_threshold1",    
-            datasets=["occipital_schiz_R_strat_bis_threshold1", 'occipital_schiz_L_strat_bis_threshold1'],
-            label='diagnosis', short_name='schiz_diag', overwrite=False, use_best_model=True,
+    pipeline("/neurospin/dico/jlaval/Runs/02_STS_babies/Program/Output/linear_classification/",    
+            datasets=['STs_babies/STs_dHCP_374_subjects'],
+            label='Preterm_28', short_name='dHCP_fold2', overwrite=True, use_best_model=False,
             save_outputs=True)

@@ -23,7 +23,7 @@ First, the repository can be cloned thanks to:
     git clone https://github.com/neurospin-projects/2023_jlaval_STSbabies/
     cd 2023_jlaval_STSbabies
 
-Then, install the a virtual environment through the following command lines:
+Then, install a virtual environment through the following command lines:
 
 .. code-block:: shell
 
@@ -35,7 +35,7 @@ Then, install the a virtual environment through the following command lines:
 Note that you might need a `BrainVISA <https://brainvisa.info>`_ environment to run
 some of the functions or notebooks.
 
-Preterm analysis requires training on UkBioBank, in encoder mode (self-supervised setting).
+Preterm analysis requires training on UkBioBank, using SimCLR. A comprehensive description is given in contrastive/README.rst.
 
 .. code-block:: shell
 

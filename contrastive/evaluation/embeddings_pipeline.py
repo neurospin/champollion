@@ -166,11 +166,13 @@ def embeddings_pipeline(dir_path, datasets, label, short_name=None, classifier_n
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    embeddings_pipeline("/neurospin/dico/jlaval/Runs/01_deep_supervised/Program/Output/chosen_model_crop_baby_STS_trained_on_UkBioBank-copy",
+    embeddings_pipeline("/neurospin/dico/jlaval/Runs/02_STS_babies/Program/Output/2023-11-29/",
         datasets=["STs_babies/STs_dHCP_374_subjects"],
         label='Preterm_28',
-        short_name='dHCP', overwrite=True, use_best_model=True,
+        short_name='dHCP', overwrite=True, use_best_model=False,
         subsets=['train_val'], verbose=False)
+    
+#"/neurospin/dico/jlaval/Runs/01_deep_supervised/Program/Output/chosen_model_crop_baby_STS_trained_on_UkBioBank-copy"
 
 # if __name__ == "__main__":
 #     gs_path = "/neurospin/dico/agaudin/Runs/09_new_repo/Output/grid_searches/step2"

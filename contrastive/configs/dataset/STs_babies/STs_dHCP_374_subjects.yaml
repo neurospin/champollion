@@ -9,12 +9,13 @@ subjects_foldlabel_all: /neurospin/dico/data/deep_folding/current/datasets/dHCP_
 crop_file_suffix: _cropped_skeleton.nii.gz
 pickle_benchmark:
 # for two fold supervised classification, switch train and val alternatively
-#train_csv_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/crops/2mm/S.T.s.baby/mask/test_50_subject.csv
-#val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/crops/2mm/S.T.s.baby/mask/train_50_subject.csv
-train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/crops/2mm/S.T.s.baby/mask/train_val_subject.csv
+train_csv_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/crops/2mm/S.T.s.baby/mask/test_50_subject.csv
+val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/crops/2mm/S.T.s.baby/mask/train_50_subject.csv
+test_csv_file : /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/crops/2mm/S.T.s.baby/mask/train_val_subject.csv
+#train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/crops/2mm/S.T.s.baby/mask/train_val_subject.csv
 # for extremely preterm vs full-terms only
-#subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/crops/2mm/S.T.s.baby/mask/preterm_labels_28_37.csv
+subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/crops/2mm/S.T.s.baby/mask/preterm_labels_28_37.csv
 # for extremely preterm vs all
-subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/crops/2mm/S.T.s.baby/mask/preterm_labels.csv
+#subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/crops/2mm/S.T.s.baby/mask/preterm_labels.csv
 subject_column_name: 'Subject'
 input_size: (1, 22, 49, 46)

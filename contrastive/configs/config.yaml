@@ -3,7 +3,7 @@ defaults:
   - augmentations: foldlabel
   - backbone: ConvNet
   - classifier: svm
-  - dataset/STs_babies/STs_UkBioBank
+  - dataset/STs_babies/STs_dHCP_374_subjects
   # - dataset/occipital_schiz_L_strat_bis_threshold1
   - embeddings: embeddings
   - hydra: local

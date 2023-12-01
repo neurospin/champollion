@@ -259,7 +259,7 @@ def pipeline(dir_path, datasets, label, short_name=None, overwrite=False, use_be
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    pipeline("/neurospin/dico/jlaval/Runs/02_STS_babies/Program/Output/linear_classification/",    
+    pipeline("/neurospin/dico/jlaval/Runs/02_STS_babies/Program/Output/2023-12-01/",    
             datasets=['STs_babies/STs_dHCP_374_subjects'],
             label='Preterm_28', short_name='dHCP_fold2', overwrite=True, use_best_model=False,
             save_outputs=True)

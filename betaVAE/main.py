@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
     config = Config()
 
-    torch.manual_seed(5)
+    torch.manual_seed(3) #same seed = same training ? yes
     save_dir = config.save_dir
 
     # create the save dir

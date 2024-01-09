@@ -40,6 +40,7 @@ import numpy as np
 import pandas as pd
 import torch
 import torchvision.transforms as transforms
+from configs.config import Config
 
 
 class SkeletonDataset():
@@ -53,6 +54,7 @@ class SkeletonDataset():
     """
     def __init__(self, dataframe, filenames=None):
         self.df = dataframe
+        self.config = Config()
         if filenames:
             self.filenames = filenames
         else:
@@ -74,7 +76,7 @@ class SkeletonDataset():
 
         fill_value = 0
         self.transform = transforms.Compose([NormalizeSkeleton(),
-                         Padding([1, 20, 40, 40], fill_value=fill_value)
+                         Padding(list(self.config.in_shape), fill_value=fill_value)
                          ])
         sample = self.transform(sample)
         tuple_with_path = (sample, filename)
@@ -137,6 +139,7 @@ class Padding(object):
         fill_arr: np.array
             the zero padded array.
         """
+
         if len(arr.shape) - len(self.shape) == 1:
             data = []
             for _arr, _fill_value in zip(arr, self.fill_value):

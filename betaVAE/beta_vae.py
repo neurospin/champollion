@@ -151,7 +151,7 @@ class ModelTester():
     Class to test data with a trained model
     """
     def __init__(self, model, dico_set_loaders, kl_weight, loss_func,
-                n_latent, depth):
+                n_latent, depth, sampling):
         """
         Args:
             model: trained model to use
@@ -173,7 +173,46 @@ class ModelTester():
         self.n_latent = n_latent
         self.depth = depth
         self.loss_func = loss_func
+        self.sampling = sampling
 
+
+    def test(self):
+
+        device = torch.device("cuda", index=0)
+
+        results = {k:{} for k in self.dico_set_loaders.keys()}
+        out_z = []
+        output_list = []
+
+        for loader_name, loader in self.dico_set_loaders.items():
+            self.model.eval()
+            with torch.no_grad():
+                for inputs, path in loader:
+                    inputs = Variable(inputs).to(device, dtype=torch.float32)
+                    target = torch.squeeze(inputs, dim=1).long()
+
+                    if self.sampling:
+                        outputs, z, logvar = self.model(inputs)
+
+                    else:
+                        z, logvar = self.model.encode(inputs) # z = mean because no random sampling
+                        outputs = self.model.decode(z)
+
+                    recon_loss_val, kl_val, loss_val = vae_loss(outputs, target, z, logvar, self.loss_func,
+                                    kl_weight=self.kl_weight)                        
+                    outputs = torch.argmax(outputs, dim=1) # otherwise two values with cross entropy
+                    output_list.append(np.array(outputs.cpu().detach().numpy()).astype(bool))
+
+                    for k in range(len(path)):
+                        out_z = np.array(np.squeeze(z[k]).cpu().detach().numpy())
+                        var = np.array(np.squeeze(logvar[k].exp()).cpu().detach().numpy())
+                        #results[loader_name][path[k]] = loss_val, out_z, recon_loss_val
+                        results[loader_name][path[k]] = loss_val, out_z, recon_loss_val, var
+        output = np.vstack(output_list)
+
+        return results, output
+
+""" OVERFLOW
     def test(self):
         id_arr, input_arr, phase_arr, output_arr = [], [], [], []
         self.list_loss_train, self.list_loss_val = [], []
@@ -183,23 +222,23 @@ class ModelTester():
         out_z = []
 
         for loader_name, loader in self.dico_set_loaders.items():
+            print(loader_name)
             self.model.eval()
             with torch.no_grad():
                 for inputs, path in loader:
+                    print(np.unique(inputs))
                     inputs = Variable(inputs).to(device, dtype=torch.float32)
                     output, z, logvar = self.model(inputs)
-                    target = torch.squeeze(inputs, dim=1).long()
-                    recon_loss_val, kl_val, loss_val = vae_loss(output, target, z, logvar, self.loss_func,
+                    #target = torch.squeeze(inputs, dim=1).long()
+                    recon_loss_val, kl_val, loss_val = vae_loss(inputs, output, z, logvar, self.loss_func,
                                      kl_weight=self.kl_weight)
-                    output = torch.argmax(output, dim=1)
 
                     for k in range(len(path)):
-                        id_arr.append(path)
-                        input_arr.append(np.array(np.squeeze(inputs).cpu().detach().numpy()))
-                        output_arr.append(np.squeeze(output).cpu().detach().numpy())
-                        phase_arr.append(loader_name)
                         out_z = np.array(np.squeeze(z[k]).cpu().detach().numpy())
-
-                        results[loader_name][path[k]] = out_z
+                        #var = np.array(np.squeeze(logvar[k].exp()).cpu().detach().numpy())
+                        #results[loader_name][path[k]] = loss_val, out_z, recon_loss_val
+                        #results[loader_name][path[k]] = loss_val, out_z, recon_loss_val, inputs, var
+                        results[loader_name][path[k]] = loss_val, out_z, recon_loss_val, inputs
 
         return results
+"""

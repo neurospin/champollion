@@ -45,7 +45,7 @@ import torch.nn as nn
 from beta_vae import *
 from deep_folding.utils.pytorchtools import EarlyStopping
 
-from betaVAE.postprocess import plot_loss
+from postprocess import plot_loss
 
 
 def train_vae(config, trainloader, valloader, root_dir=None):

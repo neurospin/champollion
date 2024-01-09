@@ -61,10 +61,11 @@ def create_subset(config):
                              names=['subjects'])
     train_list['subjects'] = train_list['subjects'].astype('str')
 
-    tmp = pd.read_pickle(os.path.join(config.data_dir, "Rskeleton.pkl")).T
+    tmp = pd.read_pickle(config.data_dir) #.T and remove _str
     tmp.index.astype('str')
-    tmp['subjects'] = [re.search('(\d{6})', tmp.index[k]).group(0) for k in range(
-                        len(tmp))]
+    #tmp['subjects'] = [re.search('(\d{6})', tmp.index[k]).group(0) for k in range(
+    #                    len(tmp))]
+    tmp['subjects'] = [tmp.index[k] for k in range(len(tmp))]
     tmp = tmp.merge(train_list, left_on = 'subjects', right_on='subjects', how='right')
 
     filenames = list(train_list['subjects'])

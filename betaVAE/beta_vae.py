@@ -151,7 +151,7 @@ class ModelTester():
     Class to test data with a trained model
     """
     def __init__(self, model, dico_set_loaders, kl_weight, loss_func,
-                n_latent, depth, sampling):
+                n_latent, depth):
         """
         Args:
             model: trained model to use
@@ -173,7 +173,6 @@ class ModelTester():
         self.n_latent = n_latent
         self.depth = depth
         self.loss_func = loss_func
-        self.sampling = sampling
 
 
     def test(self):
@@ -191,12 +190,8 @@ class ModelTester():
                     inputs = Variable(inputs).to(device, dtype=torch.float32)
                     target = torch.squeeze(inputs, dim=1).long()
 
-                    if self.sampling:
-                        outputs, z, logvar = self.model(inputs)
-
-                    else:
-                        z, logvar = self.model.encode(inputs) # z = mean because no random sampling
-                        outputs = self.model.decode(z)
+                    z, logvar = self.model.encode(inputs) # z = mean because no random sampling
+                    outputs = self.model.decode(z)
 
                     recon_loss_val, kl_val, loss_val = vae_loss(outputs, target, z, logvar, self.loss_func,
                                     kl_weight=self.kl_weight)                        

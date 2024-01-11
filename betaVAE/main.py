@@ -38,6 +38,9 @@
 
 import os
 import sys
+import hydra
+import omegaconf
+from omegaconf import OmegaConf
 
 import numpy as np
 import pandas as pd
@@ -46,24 +49,47 @@ import yaml
 import itertools
 import torch
 
+from datetime import datetime
+now = datetime.now()
+
 from train import train_vae
 from load_data import create_subset
-from configs.config import Config
+#from configs.config import Config
+from utils.config import process_config
 
+def adjust_in_shape(config):
 
-if __name__ == '__main__':
+    dims=[]
+    for idx in range(1, 4):
+        dim = config.in_shape[idx]
+        r = dim%(2**config.depth)
+        if r!=0:
+            dim+=(2**config.depth-r)
+        dims.append(dim)
+    return((1, dims[0]+4, dims[1], dims[2]))
 
-    config = Config()
+@hydra.main(config_name='config', version_base="1.1", config_path="configs")
+def train_model(config):
+    #config = Config()
+    config=process_config(config)
 
-    torch.manual_seed(3) #same seed = same training ? yes
-    save_dir = config.save_dir
+    torch.manual_seed(3) #same seed = same training ? yes, pourtant différents entraînements donnent des outputs diff ?
+    # take random seed like contrastive and save it in logs / config ?
+    config.save_dir = config.save_dir + f"/{now:%Y-%m-%d}/{now:%H-%M-%S}/"
+    config.in_shape = adjust_in_shape(config)
+
+    print(config)
 
     # create the save dir
     try:
-        os.makedirs(save_dir)
+        os.makedirs(config.save_dir)
     except FileExistsError:
-        print("Directory " , save_dir ,  " already exists")
+        print("Directory " , config.save_dir ,  " already exists")
         pass
+
+    # save config as a yaml file
+    with open(config.save_dir+"/config.yaml", "w") as f:
+        OmegaConf.save(config, f)
 
     """ Load data and generate torch datasets """
     subset1 = create_subset(config)
@@ -83,27 +109,19 @@ if __name__ == '__main__':
     val_label = []
     for _, path in valloader:
         val_label.append(path[0])
-    np.savetxt(f"{save_dir}val_label.csv", np.array(val_label), delimiter =", ", fmt ='% s')
+    np.savetxt(f"{config.save_dir}/val_label.csv", np.array(val_label), delimiter =", ", fmt ='% s')
 
     device = "cpu"
     if torch.cuda.is_available():
         device = "cuda:0"
 
-    weights = [1, 2]
-    class_weights = torch.FloatTensor(weights).to(device)
-    criterion = torch.nn.CrossEntropyLoss(weight=class_weights, reduction='sum')
-
-
-    cur_config = {"kl": config.kl, "n": config.n}
-    print(cur_config)
-
-    # save config as a yaml file
-    with open(config.save_dir + '/config.yaml', 'w') as file:
-        yaml.dump(config.__dict__, file)
+    #weights = [1, 2]
+    #class_weights = torch.FloatTensor(weights).to(device)
+    #criterion = torch.nn.CrossEntropyLoss(weight=class_weights, reduction='sum')
 
     """ Train model for given configuration """
     vae, final_loss_val = train_vae(config, trainloader, valloader,
-                                    root_dir=save_dir)
+                                    root_dir=config.save_dir)
 
     # """ Evaluate model performances """
     # dico_set_loaders = {'train': trainloader, 'val': valloader}
@@ -124,3 +142,6 @@ if __name__ == '__main__':
     #
     # with open(f"{save_dir}results_test.json", "w") as json_file:
     #     json_file.write(json.dumps(res, sort_keys=True, indent=4))
+
+if __name__ == '__main__':
+    train_model()

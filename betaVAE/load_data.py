@@ -57,20 +57,29 @@ def create_subset(config):
     Returns:
         subset: Dataset corresponding to HCP_1
     """
-    train_list = pd.read_csv(config.subject_dir, header=None, usecols=[0],
-                             names=['subjects'])
-    train_list['subjects'] = train_list['subjects'].astype('str')
 
-    tmp = pd.read_pickle(config.data_dir) #.T and remove _str
+    train_list = pd.read_csv(config.subject_dir)
+    train_list.columns=['subjects']
+    train_list['subjects'] = train_list['subjects'].astype('str')
+    tmp_sub = train_list['subjects'].tolist()
+    if tmp_sub[0][:4]=='sub-':
+        tmp_sub = [subject[4:] for subject in tmp_sub]
+        train_list['subjects']=tmp_sub
+
+
+    tmp = pd.read_pickle(config.data_dir)
+
+    subjects = tmp.columns.tolist()
+    if subjects[0][:4]=='sub-': # remove sub
+        subjects = [subject[4:] for subject in subjects]
+        tmp.columns = subjects
+    tmp = tmp.T
     tmp.index.astype('str')
-    #tmp['subjects'] = [re.search('(\d{6})', tmp.index[k]).group(0) for k in range(
-    #                    len(tmp))]
     tmp['subjects'] = [tmp.index[k] for k in range(len(tmp))]
     tmp = tmp.merge(train_list, left_on = 'subjects', right_on='subjects', how='right')
-
     filenames = list(train_list['subjects'])
 
-    subset = SkeletonDataset(dataframe=tmp, filenames=filenames)
+    subset = SkeletonDataset(config=config, dataframe=tmp, filenames=filenames)
 
     return subset
 
@@ -95,6 +104,6 @@ def create_test_subset(config):
 
     filenames = list(tmp['subjects'])
 
-    subset_test = SkeletonDataset(dataframe=tmp, filenames=filenames)
+    subset_test = SkeletonDataset(config=config, dataframe=tmp, filenames=filenames)
 
     return subset_test

@@ -40,7 +40,7 @@ import numpy as np
 import pandas as pd
 import torch
 import torchvision.transforms as transforms
-from configs.config import Config
+#from configs.config import Config
 
 
 class SkeletonDataset():
@@ -52,9 +52,9 @@ class SkeletonDataset():
         tuple_with_path: tuple of type (sample, filename) with sample normalized
                          and padded
     """
-    def __init__(self, dataframe, filenames=None):
+    def __init__(self, config, dataframe, filenames=None):
         self.df = dataframe
-        self.config = Config()
+        self.config = config
         if filenames:
             self.filenames = filenames
         else:

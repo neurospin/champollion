@@ -1,0 +1,6 @@
+defaults:
+ - _self_
+ - dataset: SC_babies_left_UkBioBank
+ - model: BetaVAE
+ - trainer: trainer
+ - loss: CrossEntropy

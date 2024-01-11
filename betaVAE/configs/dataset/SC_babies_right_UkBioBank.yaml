@@ -1,0 +1,6 @@
+# @package _global_
+dataset_name: SC_babies_right_UkBioBank
+data_dir: "/neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/S.C.babies/mask/Rskeleton.pkl"
+subject_dir: "/neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/S.C.babies/mask/Rskeleton_subject.csv"
+save_dir: "/neurospin/dico/jlaval/Runs/02_STS_babies/Program/Output/BetaVAE/S.C.babies/R/"
+in_shape: [1, 43, 41, 44]

@@ -1,0 +1,6 @@
+# @package _global_
+dataset_name: STs_babies_left_UkBioBank
+data_dir: "/neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/S.T.s.babies/mask/Lskeleton.pkl"
+subject_dir: "/neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/S.T.s.babies/mask/Lskeleton_subject.csv"
+save_dir: "/neurospin/dico/jlaval/Runs/02_STS_babies/Program/Output/BetaVAE/S.T.s.babies/L/"
+in_shape: [1, 25, 55, 50]

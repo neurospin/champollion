@@ -718,3 +718,26 @@ class GaussianNoiseTensor(object):
     def __call__(self, tensor):
         noise = torch.randn(tensor.shape)
         return tensor + self.sigma * noise
+    
+
+class Translate(object):
+    """
+    Apply a random slicing of up to n_voxel in every direction and pads
+    to perform translation while keeping original dimension.
+    """
+
+    def __init__(self, n_voxel=1):
+        self.n_voxel = n_voxel
+    
+    def __call__(self, tensor):
+        arr = tensor.numpy()
+        translated_arr = arr.copy()
+        absolute_translation_xyz = np.random.randint(self.n_voxel+1, size=3)
+        sign_translation = np.random.randint(2, size=3)
+        slc = [slice(None) if (translation==0) else slice(translation, None) if sign else slice(-translation)
+               for sign, translation in zip(sign_translation, absolute_translation_xyz)]
+        pad_width = [(0, translation) if sign else (translation, 0)
+                     for sign, translation in zip(sign_translation, absolute_translation_xyz)]
+        translated_arr = translated_arr[slc[0], slc[1], slc[2]]
+        translated_arr = np.pad(translated_arr, pad_width, mode='constant', constant_values=0)
+        return torch.from_numpy(translated_arr)

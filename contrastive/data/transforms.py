@@ -70,7 +70,7 @@ def transform_only_padding(input_size, config):
                 ToPointnetTensor(n_max=config.n_max)
             ])
 
-
+"""
 def transform_foldlabel(sample_foldlabel, percentage, input_size, config):
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
@@ -83,6 +83,28 @@ def transform_foldlabel(sample_foldlabel, percentage, input_size, config):
                             keep_bottom=config.keep_bottom),
                        BinarizeTensor(),
                        RotateTensor(max_angle=config.max_angle)]
+    
+    if config.backbone_name == 'pointnet':
+        transforms_list.append(ToPointnetTensor(n_max=config.n_max))
+    if config.sigma_noise > 0:
+        transforms_list.append(GaussianNoiseTensor(sigma=config.sigma_noise))
+    
+    return transforms.Compose(transforms_list)
+"""
+
+
+def transform_foldlabel(sample_foldlabel, percentage, input_size, config):
+    transforms_list = [SimplifyTensor(),
+                       PaddingTensor(shape=input_size,
+                                     fill_value=config.fill_value),
+                       RemoveRandomBranchTensor(
+                            sample_foldlabel=sample_foldlabel,
+                            percentage=percentage,
+                            variable_percentage=config.variable_percentage,
+                            input_size=input_size,
+                            keep_bottom=config.keep_bottom),
+                       BinarizeTensor(),
+                       TranslateTensor()]
     
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))

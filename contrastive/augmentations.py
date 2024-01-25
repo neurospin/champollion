@@ -743,3 +743,36 @@ class TranslateTensor(object):
         translated_arr = np.expand_dims(translated_arr[..., 0], axis=0)
 
         return torch.from_numpy(translated_arr)
+    
+class TrimDepthTensor(object):
+    """
+    Trim depth based on distmap.
+    Set max_distance to -1 to not apply trim.
+    """
+
+    def __init__(self, sample_distmap,
+                 max_distance, input_size):
+        self.max_distance = max_distance
+        self.input_size = input_size
+        self.sample_distmap = sample_distmap
+    
+    def __call__(self, tensor_skel):
+        log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
+        arr_skel = tensor_skel.numpy() # NEED SKEL ?
+        arr_distmap = self.sample_distmap.numpy()
+
+        # log.debug(f"arr_skel.shape = {arr_skel.shape}")
+        # log.debug(f"arr_foldlabel.shape = {arr_foldlabel.shape}")
+        assert (arr_skel.shape == arr_distmap.shape)
+        assert (self.max_distance >= 0)
+
+        # get random threshold
+        threshold = np.random.randint(0, self.max_distance)
+
+        # mask skel with thresholded distmap
+        arr_trimmed = arr_skel.copy()
+        arr_trimmed[arr_distmap<=threshold]=0
+
+        arr_trimmed = arr_trimmed.astype('float32') # WHY FLOAT ?
+
+        return torch.from_numpy(arr_trimmed)

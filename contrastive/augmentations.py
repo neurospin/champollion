@@ -746,33 +746,33 @@ class TranslateTensor(object):
     
 class TrimDepthTensor(object):
     """
-    Trim depth based on distmap.
+    Trim depth based on distbottom.
     Set max_distance to -1 to not apply trim.
     """
 
-    def __init__(self, sample_distmap,
+    def __init__(self, sample_distbottom,
                  max_distance, input_size):
         self.max_distance = max_distance
         self.input_size = input_size
-        self.sample_distmap = sample_distmap
+        self.sample_distbottom = sample_distbottom
     
     def __call__(self, tensor_skel):
         log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
         arr_skel = tensor_skel.numpy() # NEED SKEL ?
-        arr_distmap = self.sample_distmap.numpy()
+        arr_distbottom = self.sample_distbottom.numpy()
 
         # log.debug(f"arr_skel.shape = {arr_skel.shape}")
         # log.debug(f"arr_foldlabel.shape = {arr_foldlabel.shape}")
-        assert (arr_skel.shape == arr_distmap.shape)
+        assert (arr_skel.shape == arr_distbottom.shape)
         assert (self.max_distance >= 0)
 
         # get random threshold
         threshold = np.random.randint(0, self.max_distance)
 
-        # mask skel with thresholded distmap
+        # mask skel with thresholded distbottom
         arr_trimmed = arr_skel.copy()
-        arr_trimmed[arr_distmap<=threshold]=0
+        arr_trimmed[arr_distbottom<=threshold]=0
 
-        arr_trimmed = arr_trimmed.astype('float32') # WHY FLOAT ?
+        arr_trimmed = arr_trimmed.astype('float32')
 
         return torch.from_numpy(arr_trimmed)

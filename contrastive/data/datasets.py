@@ -41,7 +41,8 @@ from contrastive.utils.logs import set_file_logger
 
 from contrastive.data.transforms import \
     transform_foldlabel, transform_no_foldlabel,\
-    transform_nothing_done, transform_only_padding
+    transform_nothing_done, transform_only_padding,\
+    transform_trimdepth, transform_random
 
 from contrastive.augmentations import PaddingTensor
 
@@ -180,7 +181,22 @@ class ContrastiveDatasetFusion():
         # compute the transforms
         for reg in range(len(filenames)):
             if self.transform:
-                if self.config.foldlabel:
+                # mix of branch clipping, cutout, cutin, and trimdepth
+                if self.config.mixed:
+                    transform1 = transform_random(
+                        sample_foldlabels[reg],
+                        self.config.percentage,
+                        sample_distmaps[reg],
+                        input_size=self.config.data[reg].input_size,
+                        config=self.config)
+                    transform2 = transform_random(
+                        sample_foldlabels[reg],
+                        self.config.percentage,
+                        sample_distmaps[reg],
+                        input_size=self.config.data[reg].input_size,
+                        config=self.config)
+                # branch clipping
+                elif self.config.foldlabel:
                     transform1 = transform_foldlabel(
                         sample_foldlabels[reg],
                         self.config.percentage,
@@ -191,7 +207,16 @@ class ContrastiveDatasetFusion():
                         self.config.percentage,
                         self.config.data[reg].input_size,
                         self.config)
-
+                # trimdepth
+                elif self.config.trimdepth:
+                        transform1 = transform_trimdepth(
+                            sample_distmaps[reg],
+                            self.config.data[reg].input_size,
+                            self.config)
+                        transform2 = transform_trimdepth(
+                            sample_distmaps[reg],
+                            self.config.data[reg].input_size,
+                            self.config)
                 # cutout with or without noise
                 else:
                     transform1 = transform_no_foldlabel(
@@ -202,6 +227,7 @@ class ContrastiveDatasetFusion():
                         from_skeleton=False,
                         input_size=self.config.data[reg].input_size,
                         config=self.config)
+                    
             else:
                 transform1 = transform_only_padding(
                     self.config.data[reg].input_size, self.config)

@@ -149,12 +149,12 @@ def transform_cutin(input_size, config):
     return transforms.Compose(transforms_list)
 
 
-def transform_trimdepth(sample_distmap, input_size, config):
+def transform_trimdepth(sample_distbottom, input_size, config):
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
                        TrimDepthTensor(
-                           sample_distmap=sample_distmap,
+                           sample_distbottom=sample_distbottom,
                            n_voxels_to_trim=config.max_distance,
                            input_size=input_size
                        ),
@@ -169,14 +169,14 @@ def transform_trimdepth(sample_distmap, input_size, config):
 
 
 def transform_random(sample_foldlabel, percentage,
-                     sample_distmap, input_size, config):
+                     sample_distbottom, input_size, config):
     np.random.seed()
     alpha = np.random.uniform()
     if alpha < 1/3:
         return transform_foldlabel(sample_foldlabel, percentage,
                                    input_size, config)
     elif alpha < 2/3:
-        return transform_trimdepth(sample_distmap,
+        return transform_trimdepth(sample_distbottom,
                                    input_size, config)
     elif alpha < 5/6:
         return transform_cutout(input_size, config)

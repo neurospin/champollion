@@ -186,13 +186,13 @@ class ContrastiveDatasetFusion():
                     transform1 = transform_random(
                         sample_foldlabels[reg],
                         self.config.percentage,
-                        sample_distmaps[reg],
+                        sample_distbottoms[reg],
                         input_size=self.config.data[reg].input_size,
                         config=self.config)
                     transform2 = transform_random(
                         sample_foldlabels[reg],
                         self.config.percentage,
-                        sample_distmaps[reg],
+                        sample_distbottoms[reg],
                         input_size=self.config.data[reg].input_size,
                         config=self.config)
                 # branch clipping
@@ -210,11 +210,11 @@ class ContrastiveDatasetFusion():
                 # trimdepth
                 elif self.config.trimdepth:
                         transform1 = transform_trimdepth(
-                            sample_distmaps[reg],
+                            sample_distbottoms[reg],
                             self.config.data[reg].input_size,
                             self.config)
                         transform2 = transform_trimdepth(
-                            sample_distmaps[reg],
+                            sample_distbottoms[reg],
                             self.config.data[reg].input_size,
                             self.config)
                 # cutout with or without noise

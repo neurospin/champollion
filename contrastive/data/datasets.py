@@ -113,7 +113,7 @@ class ContrastiveDatasetFusion():
     """
 
     def __init__(self, arrays, filenames, config, apply_transform=True,
-                 labels=None, foldlabel_arrays=None):
+                 labels=None, foldlabel_arrays=None, distbottom_arrays=None):
         """
         Every data argument is a list over regions
 
@@ -124,6 +124,7 @@ class ContrastiveDatasetFusion():
         """
         self.arrs = arrays
         self.foldlabel_arrs = foldlabel_arrays
+        self.distbottom_arrs = distbottom_arrays
         self.labels = labels
         self.nb_train = len(filenames[0])
         self.filenames = filenames
@@ -168,6 +169,14 @@ class ContrastiveDatasetFusion():
             sample_foldlabels = [padd_foldlabel(sample_foldlabel,
                                                 self.config.data[reg].input_size)
                                  for reg, sample_foldlabel in enumerate(sample_foldlabels)]
+            
+
+        if self.distbottom_arrs[0] is not None:
+            sample_distbottoms = [get_sample(distbottom_arr, idx, 'int32')
+                                 for distbottom_arr in self.distbottom_arrs]
+            sample_distbottoms = [padd_foldlabel(sample_distbottom,
+                                                self.config.data[reg].input_size)
+                                 for reg, sample_distbottom in enumerate(sample_distbottoms)]
 
         if self.labels is not None:
             for reg in range(len(filenames)):

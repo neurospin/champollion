@@ -747,7 +747,8 @@ class TranslateTensor(object):
 class TrimDepthTensor(object):
     """
     Trim depth based on distbottom.
-    Set max_distance to -1 to not apply trim.
+    Set max_distance to 0 to remove bottom only.
+    Set max_distance to -1 to remove nothing.
     """
 
     def __init__(self, sample_distbottom,
@@ -764,14 +765,15 @@ class TrimDepthTensor(object):
         # log.debug(f"arr_skel.shape = {arr_skel.shape}")
         # log.debug(f"arr_foldlabel.shape = {arr_foldlabel.shape}")
         assert (arr_skel.shape == arr_distbottom.shape)
-        assert (self.max_distance >= 0)
+        assert (self.max_distance >= -1)
 
-        # get random threshold
-        threshold = np.random.randint(0, self.max_distance)
-
-        # mask skel with thresholded distbottom
         arr_trimmed = arr_skel.copy()
-        arr_trimmed[arr_distbottom<=threshold]=0
+
+        if self.max_distance >= 0:
+            # get random threshold
+            threshold = np.random.randint(0, self.max_distance+1)
+            # mask skel with thresholded distbottom
+            arr_trimmed[arr_distbottom<=threshold]=0
 
         arr_trimmed = arr_trimmed.astype('float32')
 

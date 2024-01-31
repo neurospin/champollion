@@ -61,7 +61,7 @@ log = set_file_logger(__file__)
 root = logging.getLogger()
 
 
-def sanity_checks_without_labels(config, skeleton_output, reg):
+def sanity_checks_foldlabels_without_labels(config, skeleton_output, reg):
     # Loads and separates in train_val/test set foldlabels if requested
     check_subject_consistency(config.data[reg].subjects_all,
                               config.data[reg].subjects_foldlabel_all)
@@ -89,6 +89,34 @@ def sanity_checks_without_labels(config, skeleton_output, reg):
 
     return foldlabel_output
 
+def sanity_checks_distbottoms_without_labels(config, skeleton_output, reg):
+    # Loads and separates in train_val/test set distbottoms if requested
+    check_subject_consistency(config.data[reg].subjects_all,
+                              config.data[reg].subjects_distbottom_all)
+    # in order to avoid logging twice the same information
+    if root.level == 20:  # root logger in INFO mode
+        set_root_logger_level(0)
+    # add all the other created objects in the next line
+    distbottom_output = extract_data(config.data[reg].distbottom_all,
+                                    config.data[reg].crop_dir,
+                                    config, reg)
+    if root.level == 10:  # root logger in WARNING mode
+        set_root_logger_level(1)
+    log.info("distbottom data loaded")
+
+    # Makes some sanity checks
+    for subset_name in distbottom_output.keys():
+        log.debug("skeleton", skeleton_output[subset_name][1].shape)
+        log.debug("distbottom", distbottom_output[subset_name][1].shape)
+        check_if_same_subjects(skeleton_output[subset_name][0],
+                               distbottom_output[subset_name][0],
+                               subset_name)
+        check_if_same_shape(skeleton_output[subset_name][1],
+                            distbottom_output[subset_name][1],
+                            subset_name)
+
+    return distbottom_output
+
 
 def create_sets_without_labels(config):
     """Creates train, validation and test sets
@@ -101,6 +129,7 @@ def create_sets_without_labels(config):
 
     skeleton_all = []
     foldlabel_all = []
+    distbottom_all = []
     
     # checks consistency among regions
     if len(config.data) > 1:
@@ -119,10 +148,14 @@ def create_sets_without_labels(config):
             check_if_numpy_same_length(config.data[0].numpy_all,
                                        config.data[1].numpy_all,
                                        "numpy_all")
-            if config.foldlabel:
+            if config.foldlabel or config.mixed:
                 check_if_numpy_same_length(config.data[0].foldlabel_all,
                                            config.data[1].foldlabel_all,
                                            "foldlabel_all")
+            if config.trimdepth or config.mixed:
+                check_if_numpy_same_length(config.data[0].distbottom_all,
+                                           config.data[1].distbottom_all,
+                                           "distbottom_all")
 
     for reg in range(len(config.data)):
         # Loads and separates in train_val/test skeleton crops
@@ -132,8 +165,8 @@ def create_sets_without_labels(config):
         skeleton_all.append(skeleton_output)
 
         # Loads and separates in train_val/test set foldlabels if requested
-        if config.apply_augmentations and config.foldlabel:
-            foldlabel_output = sanity_checks_without_labels(config,
+        if config.apply_augmentations and (config.foldlabel or config.mixed):
+            foldlabel_output = sanity_checks_foldlabels_without_labels(config,
                                                             skeleton_output,
                                                             reg)
         else:
@@ -141,6 +174,17 @@ def create_sets_without_labels(config):
             log.info("foldlabel data NOT requested. Foldlabel data NOT loaded")
         
         foldlabel_all.append(foldlabel_output)
+
+        # same with distbottom
+        if config.apply_augmentations and (config.trimdepth or config.mixed):
+            distbottom_output = sanity_checks_distbottoms_without_labels(config,
+                                                            skeleton_output,
+                                                            reg)
+        else:
+            distbottom_output = None
+            log.info("distbottom data NOT requested. Distbottom data NOT loaded")
+        
+        distbottom_all.append(distbottom_output)
             
 
     # Creates the dataset from these data by doing some preprocessing
@@ -159,13 +203,26 @@ def create_sets_without_labels(config):
         for foldlabel_output in foldlabel_all:
             # select the augmentation method
             if config.apply_augmentations:
-                if config.foldlabel:  # branch_clipping
+                if config.mixed or config.foldlabel:  # branch_clipping
                     foldlabel_array = foldlabel_output[subset_name][1]
                 else:  # cutout
                     foldlabel_array = None  # no need of fold labels
             else:  # no augmentation
                 foldlabel_array = None
             foldlabel_arrays.append(foldlabel_array)
+
+        # Concatenates distbottom arrays
+        distbottom_arrays = []
+        for distbottom_output in distbottom_all:
+            # select the augmentation method
+            if config.apply_augmentations:
+                if config.mixed or config.trimdepth:  # trimdepth
+                    distbottom_array = distbottom_output[subset_name][1]
+                else:  # cutout
+                    distbottom_array = None  # no need of fold labels
+            else:  # no augmentation
+                distbottom_array = None
+            distbottom_arrays.append(distbottom_array)
 
         # Checks if equality of filenames and labels
         check_if_list_of_equal_dataframes(
@@ -176,6 +233,7 @@ def create_sets_without_labels(config):
             filenames=filenames,
             arrays=arrays,
             foldlabel_arrays=foldlabel_arrays,
+            distbottom_arrays=distbottom_arrays,
             config=config,
             apply_transform=config.apply_augmentations)
 

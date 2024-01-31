@@ -153,11 +153,9 @@ def transform_trimdepth(sample_distbottom, input_size, config):
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
-                       TrimDepthTensor(
-                           sample_distbottom=sample_distbottom,
-                           n_voxels_to_trim=config.max_distance,
-                           input_size=input_size
-                       ),
+                       TrimDepthTensor(sample_distbottom=sample_distbottom,
+                                       max_distance=config.max_distance,
+                                       input_size=input_size),
                        BinarizeTensor(),
                        TranslateTensor()]
     if config.backbone_name == 'pointnet':

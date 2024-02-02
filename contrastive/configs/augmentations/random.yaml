@@ -11,6 +11,7 @@ max_distance: 0
 max_translation: 1
 checkerboard_size: 4
 keep_bottom: True
+keep_top: True
 percentage: 40
 variable_percentage: False
 sigma_noise: 0.2  # set to positive to allow noise

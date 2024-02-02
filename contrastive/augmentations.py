@@ -751,11 +751,12 @@ class TrimDepthTensor(object):
     Set max_distance to -1 to remove nothing.
     """
 
-    def __init__(self, sample_distbottom,
-                 max_distance, input_size):
+    def __init__(self, sample_distbottom, max_distance,
+                 input_size, keep_top):
         self.max_distance = max_distance
         self.input_size = input_size
         self.sample_distbottom = sample_distbottom
+        self.keep_top=keep_top
     
     def __call__(self, tensor_skel):
         log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
@@ -773,7 +774,11 @@ class TrimDepthTensor(object):
             # get random threshold
             threshold = np.random.randint(0, self.max_distance+1)
             # mask skel with thresholded distbottom
-            arr_trimmed[arr_distbottom<=threshold]=0
+            if self.keep_top:
+                arr_trimmed[np.logical_and(arr_distbottom<=threshold, arr_skel!=35)]=0
+            else:
+                arr_trimmed[arr_distbottom<=threshold]=0
+        
 
         arr_trimmed = arr_trimmed.astype('float32')
 

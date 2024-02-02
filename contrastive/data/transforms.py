@@ -155,7 +155,8 @@ def transform_trimdepth(sample_distbottom, input_size, config):
                                      fill_value=config.fill_value),
                        TrimDepthTensor(sample_distbottom=sample_distbottom,
                                        max_distance=config.max_distance,
-                                       input_size=input_size),
+                                       input_size=input_size,
+                                       keep_top=config.keep_top),
                        BinarizeTensor(),
                        TranslateTensor(config.max_translation)]
     if config.backbone_name == 'pointnet':

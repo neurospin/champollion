@@ -369,7 +369,7 @@ class PartialCutOutTensor_Roll(object):
     """
 
     def __init__(self, from_skeleton=True,
-                 keep_bottom=True, patch_size=None,
+                 keep_top=True, patch_size=None,
                  random_size=False, localization=None):
         """[summary]
         If from_skeleton==True,
@@ -387,7 +387,7 @@ class PartialCutOutTensor_Roll(object):
         self.random_size = random_size
         self.localization = localization
         self.from_skeleton = from_skeleton
-        self.keep_bottom = keep_bottom
+        self.keep_top = keep_top
 
     def __call__(self, tensor):
 
@@ -431,8 +431,8 @@ class PartialCutOutTensor_Roll(object):
         # This keeps the whole skeleton outside the cutout
         # and keeps only bottom value inside the cutout
         if self.from_skeleton:
-            if self.keep_bottom:
-                arr_inside = arr_inside * (arr_inside == 30)
+            if self.keep_top:
+                arr_inside = arr_inside * (arr_inside == 35)
             else:
                 arr_inside = arr_inside * (arr_inside == 0)
 
@@ -440,8 +440,8 @@ class PartialCutOutTensor_Roll(object):
         # This keeps only bottom value outside the cutout
         # and keeps the whole skeleton inside the cutout
         else:
-            if self.keep_bottom:
-                arr_outside = arr_outside * (arr_outside == 30)
+            if self.keep_top:
+                arr_outside = arr_outside * (arr_outside == 35)
             else:
                 arr_outside = arr_outside * (arr_outside == 0)
 

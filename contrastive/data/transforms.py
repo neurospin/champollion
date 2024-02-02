@@ -120,7 +120,7 @@ def transform_cutout(input_size, config):
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
                        PartialCutOutTensor_Roll(from_skeleton=True,
-                                                keep_bottom=config.keep_bottom,
+                                                keep_top=config.keep_top,
                                                 patch_size=config.patch_size),
                        BinarizeTensor(),
                        TranslateTensor(config.max_translation)]
@@ -137,7 +137,7 @@ def transform_cutin(input_size, config):
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
                        PartialCutOutTensor_Roll(from_skeleton=False,
-                                                keep_bottom=config.keep_bottom,
+                                                keep_top=config.keep_top,
                                                 patch_size=config.patch_size),
                        BinarizeTensor(),
                        TranslateTensor(config.max_translation)]

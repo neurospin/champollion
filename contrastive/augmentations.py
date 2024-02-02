@@ -726,7 +726,7 @@ class TranslateTensor(object):
     to perform translation while keeping original dimension.
     """
 
-    def __init__(self, n_voxel=1):
+    def __init__(self, n_voxel):
         self.n_voxel = n_voxel
     
     def __call__(self, tensor):

@@ -202,7 +202,7 @@ def transform_no_foldlabel(from_skeleton, input_size, config):
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
                        PartialCutOutTensor_Roll(from_skeleton=from_skeleton,
-                                                keep_bottom=config.keep_bottom,
+                                                keep_top=config.keep_top,
                                                 patch_size=config.patch_size),
                        BinarizeTensor(),
                        RotateTensor(max_angle=config.max_angle)]

@@ -10,5 +10,5 @@ max_angle: 6
 max_distance: 6
 max_translation: 1
 checkerboard_size: 4
-keep_bottom: True
+keep_top: True
 sigma_noise: 0.2  # set to positive to allow noise

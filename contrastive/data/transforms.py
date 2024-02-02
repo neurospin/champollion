@@ -184,16 +184,16 @@ def transform_random(sample_foldlabel, percentage,
                      sample_distbottom, input_size, config):
     np.random.seed()
     alpha = np.random.uniform()
-    if alpha < 1/3:
+    if alpha < 1/4:
         return transform_foldlabel(sample_foldlabel, percentage,
                                    input_size, config)
-    elif alpha < 2/3:
+    elif alpha < 1/2:
         return transform_trimdepth(sample_distbottom,
                                    input_size, config)
-    elif alpha < 5/6:
+    elif alpha < 3/4:
         return transform_cutout(input_size, config)
     else:
-        return transform_cutin(input_size, config)
+        return transform_translation(input_size, config)
 
 
 def transform_no_foldlabel(from_skeleton, input_size, config):

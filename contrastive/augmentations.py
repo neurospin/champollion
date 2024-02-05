@@ -770,17 +770,20 @@ class TrimDepthTensor(object):
     Set max_distance to -1 to remove nothing.
     """
 
-    def __init__(self, sample_distbottom, max_distance,
-                 input_size, keep_top):
+    def __init__(self, sample_distbottom, sample_foldlabel,
+                 max_distance, input_size, keep_top, uniform):
         self.max_distance = max_distance
         self.input_size = input_size
         self.sample_distbottom = sample_distbottom
+        self.sample_foldlabel = sample_foldlabel
         self.keep_top=keep_top
+        self.uniform=uniform
     
     def __call__(self, tensor_skel):
         log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
         arr_skel = tensor_skel.numpy() # NEED SKEL ?
         arr_distbottom = self.sample_distbottom.numpy()
+        arr_foldlabel = self.sample_foldlabel.numpy()
 
         # log.debug(f"arr_skel.shape = {arr_skel.shape}")
         # log.debug(f"arr_foldlabel.shape = {arr_foldlabel.shape}")
@@ -790,13 +793,30 @@ class TrimDepthTensor(object):
         arr_trimmed = arr_skel.copy()
 
         if self.max_distance >= 0:
-            # get random threshold
-            threshold = np.random.randint(-1, self.max_distance+1)
-            # mask skel with thresholded distbottom
-            if self.keep_top:
-                arr_trimmed[np.logical_and(arr_distbottom<=threshold, arr_skel!=35)]=0
+            if self.uniform:
+                # get random threshold
+                threshold = np.random.randint(-1, self.max_distance+1)
+                # mask skel with thresholded distbottom
+                if self.keep_top:
+                    arr_trimmed[np.logical_and(arr_distbottom<=threshold, arr_skel!=35)]=0
+                else:
+                    arr_trimmed[arr_distbottom<=threshold]=0
             else:
-                arr_trimmed[arr_distbottom<=threshold]=0
+                # select a threshold for each branch
+                arr_trimmed_branches = np.zeros(arr_skel.shape)
+                indexes = np.unique(arr_foldlabel*(arr_foldlabel<1000))
+                for index in indexes:
+                    mask_branch = np.mod(arr_foldlabel,
+                                        np.full(arr_skel.shape, fill_value=1000))==index
+                    threshold = np.random.randint(-1, self.max_distance+1)
+                    arr_dist = arr_distbottom.copy()
+                    if self.keep_top:
+                        arr_dist[np.logical_and(arr_distbottom<=threshold, arr_skel!=35)]=0
+                    else:
+                        arr_dist[arr_distbottom<=threshold]=0
+                    arr_trimmed_branches += arr_dist * mask_branch
+                arr_trimmed = arr_trimmed_branches.copy()
+
         
 
         arr_trimmed = arr_trimmed.astype('float32')

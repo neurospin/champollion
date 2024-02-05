@@ -205,7 +205,8 @@ def transform_no_foldlabel(from_skeleton, input_size, config):
                                                 keep_top=config.keep_top,
                                                 patch_size=config.patch_size),
                        BinarizeTensor(),
-                       RotateTensor(max_angle=config.max_angle)]
+                       #RotateTensor(max_angle=config.max_angle)]
+                       TranslateTensor(config.max_translation)]
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))
     if config.sigma_noise > 0:

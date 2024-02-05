@@ -103,7 +103,8 @@ def transform_foldlabel(sample_foldlabel, percentage, input_size, config):
                             percentage=percentage,
                             variable_percentage=config.variable_percentage,
                             input_size=input_size,
-                            keep_bottom=config.keep_bottom),
+                            keep_bottom=config.keep_bottom,
+                            keep_top=config.keep_top),
                        BinarizeTensor(),
                        TranslateTensor(config.max_translation)]
     
@@ -121,6 +122,7 @@ def transform_cutout(input_size, config):
                                      fill_value=config.fill_value),
                        PartialCutOutTensor_Roll(from_skeleton=True,
                                                 keep_top=config.keep_top,
+                                                keep_bottom=config.keep_bottom,
                                                 patch_size=config.patch_size),
                        BinarizeTensor(),
                        TranslateTensor(config.max_translation)]
@@ -138,6 +140,7 @@ def transform_cutin(input_size, config):
                                      fill_value=config.fill_value),
                        PartialCutOutTensor_Roll(from_skeleton=False,
                                                 keep_top=config.keep_top,
+                                                keep_bottom=config.keep_bottom,
                                                 patch_size=config.patch_size),
                        BinarizeTensor(),
                        TranslateTensor(config.max_translation)]
@@ -203,6 +206,7 @@ def transform_no_foldlabel(from_skeleton, input_size, config):
                                      fill_value=config.fill_value),
                        PartialCutOutTensor_Roll(from_skeleton=from_skeleton,
                                                 keep_top=config.keep_top,
+                                                keep_bottom=config.keep_bottom,
                                                 patch_size=config.patch_size),
                        BinarizeTensor(),
                        #RotateTensor(max_angle=config.max_angle)]
@@ -214,7 +218,7 @@ def transform_no_foldlabel(from_skeleton, input_size, config):
     
     return transforms.Compose(transforms_list)
 
-
+# DEPRECATED
 def transform_both(sample_foldlabel, percentage, from_skeleton,
                    input_size, config):
     if config.backbone_name != 'pointnet':

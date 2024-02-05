@@ -210,9 +210,15 @@ def remove_bottom_branches(a):
     Bottom branches are numerated between 2000 and 2999"""
     return a*((a < 2000) | (a >= 3000)).astype(int)
 
+def remove_top_branches(a):
+    """Removes top branches from foldlabel.
+
+    Top branches are numerated between 2000 and 2999"""
+    return a*((a < 8000) | (a >= 9000)).astype(int)
+
 
 def remove_branches_up_to_percent(arr_foldlabel, arr_skel,
-                                  percentage, keep_bottom):
+                                  percentage, keep_bottom, keep_top):
     """Removes from arr_skel random branches up to percentage of pixels
     If percentage==0, no pixel is deleted
     If percentage==100, all pixels are deleted
@@ -224,6 +230,8 @@ def remove_branches_up_to_percent(arr_foldlabel, arr_skel,
 
     if keep_bottom:
         arr_foldlabel = remove_bottom_branches(arr_foldlabel)
+    elif keep_top:
+        arr_foldlabel = remove_top_branches(arr_foldlabel)
     # if keep_bottom:
     #     arr_foldlabel_without_bottom = remove_bottom_branches(arr_foldlabel)
     #     branches, counts = np.unique(arr_foldlabel_without_bottom,
@@ -276,12 +284,14 @@ class RemoveRandomBranchTensor(object):
     """
 
     def __init__(self, sample_foldlabel,
-                 percentage, input_size, keep_bottom, variable_percentage):
+                 percentage, input_size,
+                 keep_bottom, keep_top, variable_percentage):
         self.sample_foldlabel = sample_foldlabel
         self.percentage = percentage
         self.variable_percentage = variable_percentage
         self.input_size = input_size
         self.keep_bottom = keep_bottom
+        self.keep_top = keep_top
 
     def __call__(self, tensor_skel):
         log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
@@ -292,6 +302,7 @@ class RemoveRandomBranchTensor(object):
         # log.debug(f"arr_foldlabel.shape = {arr_foldlabel.shape}")
         assert (arr_skel.shape == arr_foldlabel.shape)
         assert (self.percentage >= 0)
+        assert not (self.keep_bottom and self.keep_top), "Choose either keep_bottom or keep_top."
 
         if self.variable_percentage:
             percentage = np.random.uniform(0, self.percentage)
@@ -311,13 +322,15 @@ class RemoveRandomBranchTensor(object):
                     remove_branches_up_to_percent(arr_foldlabel[num_img, ...],
                                                   arr_skel[num_img, ...],
                                                   percentage,
-                                                  self.keep_bottom)
+                                                  self.keep_bottom,
+                                                  self.keep_top)
         elif len(arr_skel.shape) == len(self.input_size):
             arr_skel_without_branches = \
                 remove_branches_up_to_percent(arr_foldlabel,
                                               arr_skel,
                                               percentage,
-                                              self.keep_bottom)
+                                              self.keep_bottom,
+                                              self.keep_top)
         else:
             raise RuntimeError(
                 f"Unexpected skeleton shape."
@@ -369,7 +382,7 @@ class PartialCutOutTensor_Roll(object):
     """
 
     def __init__(self, from_skeleton=True,
-                 keep_top=True, patch_size=None,
+                 keep_top=True, keep_bottom=False, patch_size=None,
                  random_size=False, localization=None):
         """[summary]
         If from_skeleton==True,
@@ -388,6 +401,7 @@ class PartialCutOutTensor_Roll(object):
         self.localization = localization
         self.from_skeleton = from_skeleton
         self.keep_top = keep_top
+        self.keep_bottom = keep_bottom
 
     def __call__(self, tensor):
 
@@ -398,6 +412,7 @@ class PartialCutOutTensor_Roll(object):
         else:
             size = np.copy(self.patch_size)
         assert len(size) == len(img_shape), "Incorrect patch dimension."
+        assert not (self.keep_bottom and self.keep_top), "Choose either keep_bottom or keep_top."
         start_cutout = []
         for ndim in range(len(img_shape)):
             if size[ndim] > img_shape[ndim] or size[ndim] < 0:
@@ -433,6 +448,8 @@ class PartialCutOutTensor_Roll(object):
         if self.from_skeleton:
             if self.keep_top:
                 arr_inside = arr_inside * (arr_inside == 35)
+            elif self.keep_bottom:
+                arr_inside = arr_inside * (arr_inside == 30)
             else:
                 arr_inside = arr_inside * (arr_inside == 0)
 
@@ -442,6 +459,8 @@ class PartialCutOutTensor_Roll(object):
         else:
             if self.keep_top:
                 arr_outside = arr_outside * (arr_outside == 35)
+            elif self.keep_bottom:
+                arr_outside = arr_outside * (arr_outside == 30)
             else:
                 arr_outside = arr_outside * (arr_outside == 0)
 
@@ -772,7 +791,7 @@ class TrimDepthTensor(object):
 
         if self.max_distance >= 0:
             # get random threshold
-            threshold = np.random.randint(0, self.max_distance+1)
+            threshold = np.random.randint(-1, self.max_distance+1)
             # mask skel with thresholded distbottom
             if self.keep_top:
                 arr_trimmed[np.logical_and(arr_distbottom<=threshold, arr_skel!=35)]=0

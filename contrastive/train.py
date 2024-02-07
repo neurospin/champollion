@@ -101,7 +101,7 @@ def train(config):
                     'sigma', 'drop_rate', 'mode', 'both', 'foldlabel',
                     'trimdepth', 'mixed', 'resize', 'patch_size', 'max_angle',
                     'max_distance', 'max_translation', 'checkerboard_size',
-                    'keep_bottom', 'keep_bottom', 'uniform_trim', 'growth_rate', 'block_config',
+                    'keep_bottom', 'keep_top', 'uniform_trim', 'growth_rate', 'block_config',
                     'num_init_features','backbone_output_size',
                     'fusioned_latent_space_size','num_outputs',
                     'environment', 'batch_size', 'pin_mem', 'partition',

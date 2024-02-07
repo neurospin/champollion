@@ -148,7 +148,7 @@ def create_sets_without_labels(config):
             check_if_numpy_same_length(config.data[0].numpy_all,
                                        config.data[1].numpy_all,
                                        "numpy_all")
-            if config.foldlabel or config.mixed:
+            if config.foldlabel or config.trimdepth or config.mixed:
                 check_if_numpy_same_length(config.data[0].foldlabel_all,
                                            config.data[1].foldlabel_all,
                                            "foldlabel_all")
@@ -165,7 +165,7 @@ def create_sets_without_labels(config):
         skeleton_all.append(skeleton_output)
 
         # Loads and separates in train_val/test set foldlabels if requested
-        if config.apply_augmentations and (config.foldlabel or config.mixed):
+        if config.apply_augmentations and (config.foldlabel or config.trimdepth or config.mixed):
             foldlabel_output = sanity_checks_foldlabels_without_labels(config,
                                                             skeleton_output,
                                                             reg)
@@ -203,7 +203,7 @@ def create_sets_without_labels(config):
         for foldlabel_output in foldlabel_all:
             # select the augmentation method
             if config.apply_augmentations:
-                if config.mixed or config.foldlabel:  # branch_clipping
+                if config.trimdepth or config.mixed or config.foldlabel:  # branch_clipping
                     foldlabel_array = foldlabel_output[subset_name][1]
                 else:  # cutout
                     foldlabel_array = None  # no need of fold labels

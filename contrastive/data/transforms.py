@@ -152,14 +152,17 @@ def transform_cutin(input_size, config):
     return transforms.Compose(transforms_list)
 
 
-def transform_trimdepth(sample_distbottom, input_size, config):
+def transform_trimdepth(sample_distbottom, sample_foldlabel,
+                        input_size, config):
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
                        TrimDepthTensor(sample_distbottom=sample_distbottom,
+                                       sample_foldlabel=sample_foldlabel,
                                        max_distance=config.max_distance,
                                        input_size=input_size,
-                                       keep_top=config.keep_top),
+                                       keep_top=config.keep_top,
+                                       uniform=config.uniform_trim),
                        BinarizeTensor(),
                        TranslateTensor(config.max_translation)]
     if config.backbone_name == 'pointnet':
@@ -193,6 +196,7 @@ def transform_random(sample_foldlabel, percentage,
                                    input_size, config)
     elif alpha < 1/2:
         return transform_trimdepth(sample_distbottom,
+                                   sample_foldlabel,
                                    input_size, config)
     elif alpha < 3/4:
         return transform_cutout(input_size, config)

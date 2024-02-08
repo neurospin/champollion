@@ -2,11 +2,15 @@
 resize: False
 both: False
 apply_augmentations: True
+mixed: False
 foldlabel: True
+trimdepth: False
 fill_value: 0
 max_angle: 6
+max_translation: 1
 checkerboard_size: 4
 keep_bottom: True
+keep_top: False
 percentage: 40
 variable_percentage: False
 sigma_noise: 0.2  # set to positive to allow noise

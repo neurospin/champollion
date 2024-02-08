@@ -37,6 +37,7 @@ Transforms used in dataset
 """
 
 import torchvision.transforms as transforms
+import numpy as np
 
 from contrastive.augmentations import *
 
@@ -102,9 +103,10 @@ def transform_foldlabel(sample_foldlabel, percentage, input_size, config):
                             percentage=percentage,
                             variable_percentage=config.variable_percentage,
                             input_size=input_size,
-                            keep_bottom=config.keep_bottom),
+                            keep_bottom=config.keep_bottom,
+                            keep_top=config.keep_top),
                        BinarizeTensor(),
-                       TranslateTensor()]
+                       TranslateTensor(config.max_translation)]
     
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))
@@ -112,6 +114,94 @@ def transform_foldlabel(sample_foldlabel, percentage, input_size, config):
         transforms_list.append(GaussianNoiseTensor(sigma=config.sigma_noise))
     
     return transforms.Compose(transforms_list)
+
+
+def transform_cutout(input_size, config):
+    transforms_list = [SimplifyTensor(),
+                       PaddingTensor(shape=input_size,
+                                     fill_value=config.fill_value),
+                       PartialCutOutTensor_Roll(from_skeleton=True,
+                                                keep_top=config.keep_top,
+                                                keep_bottom=config.keep_bottom,
+                                                patch_size=config.patch_size),
+                       BinarizeTensor(),
+                       TranslateTensor(config.max_translation)]
+    if config.backbone_name == 'pointnet':
+        transforms_list.append(ToPointnetTensor(n_max=config.n_max))
+    if config.sigma_noise > 0:
+        transforms_list.append(GaussianNoiseTensor(sigma=config.sigma_noise))
+    
+    return transforms.Compose(transforms_list)
+
+
+def transform_cutin(input_size, config):
+    transforms_list = [SimplifyTensor(),
+                       PaddingTensor(shape=input_size,
+                                     fill_value=config.fill_value),
+                       PartialCutOutTensor_Roll(from_skeleton=False,
+                                                keep_top=config.keep_top,
+                                                keep_bottom=config.keep_bottom,
+                                                patch_size=config.patch_size),
+                       BinarizeTensor(),
+                       TranslateTensor(config.max_translation)]
+    if config.backbone_name == 'pointnet':
+        transforms_list.append(ToPointnetTensor(n_max=config.n_max))
+    if config.sigma_noise > 0:
+        transforms_list.append(GaussianNoiseTensor(sigma=config.sigma_noise))
+    
+    return transforms.Compose(transforms_list)
+
+
+def transform_trimdepth(sample_distbottom, sample_foldlabel,
+                        input_size, config):
+    transforms_list = [SimplifyTensor(),
+                       PaddingTensor(shape=input_size,
+                                     fill_value=config.fill_value),
+                       TrimDepthTensor(sample_distbottom=sample_distbottom,
+                                       sample_foldlabel=sample_foldlabel,
+                                       max_distance=config.max_distance,
+                                       input_size=input_size,
+                                       keep_top=config.keep_top,
+                                       uniform=config.uniform_trim),
+                       BinarizeTensor(),
+                       TranslateTensor(config.max_translation)]
+    if config.backbone_name == 'pointnet':
+        transforms_list.append(ToPointnetTensor(n_max=config.n_max))
+    if config.sigma_noise > 0:
+        transforms_list.append(GaussianNoiseTensor(sigma=config.sigma_noise))
+    
+    return transforms.Compose(transforms_list)
+
+
+def transform_translation(input_size, config):
+    transforms_list = [SimplifyTensor(),
+                       PaddingTensor(shape=input_size,
+                                     fill_value=config.fill_value),
+                       BinarizeTensor(),
+                       TranslateTensor(config.max_translation)]
+    if config.backbone_name == 'pointnet':
+        transforms_list.append(ToPointnetTensor(n_max=config.n_max))
+    if config.sigma_noise > 0:
+        transforms_list.append(GaussianNoiseTensor(sigma=config.sigma_noise))
+    
+    return transforms.Compose(transforms_list)
+
+
+def transform_random(sample_foldlabel, percentage,
+                     sample_distbottom, input_size, config):
+    np.random.seed()
+    alpha = np.random.uniform()
+    if alpha < 1/4:
+        return transform_foldlabel(sample_foldlabel, percentage,
+                                   input_size, config)
+    elif alpha < 1/2:
+        return transform_trimdepth(sample_distbottom,
+                                   sample_foldlabel,
+                                   input_size, config)
+    elif alpha < 3/4:
+        return transform_cutout(input_size, config)
+    else:
+        return transform_translation(input_size, config)
 
 
 def transform_no_foldlabel(from_skeleton, input_size, config):
@@ -119,10 +209,12 @@ def transform_no_foldlabel(from_skeleton, input_size, config):
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
                        PartialCutOutTensor_Roll(from_skeleton=from_skeleton,
+                                                keep_top=config.keep_top,
                                                 keep_bottom=config.keep_bottom,
                                                 patch_size=config.patch_size),
                        BinarizeTensor(),
-                       RotateTensor(max_angle=config.max_angle)]
+                       #RotateTensor(max_angle=config.max_angle)]
+                       TranslateTensor(config.max_translation)]
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))
     if config.sigma_noise > 0:
@@ -130,7 +222,7 @@ def transform_no_foldlabel(from_skeleton, input_size, config):
     
     return transforms.Compose(transforms_list)
 
-
+# DEPRECATED
 def transform_both(sample_foldlabel, percentage, from_skeleton,
                    input_size, config):
     if config.backbone_name != 'pointnet':

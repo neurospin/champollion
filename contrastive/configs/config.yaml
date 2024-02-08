@@ -1,9 +1,9 @@
 defaults:
   - _self_
-  - augmentations: foldlabel
+  - augmentations: random
   - backbone: ConvNet
   - classifier: svm
-  - dataset/STs_babies/STs_dHCP_374_subjects
+  - dataset/local_julien/cingulate_UKB_right
   # - dataset/occipital_schiz_L_strat_bis_threshold1
   - embeddings: embeddings
   - hydra: local

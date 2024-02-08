@@ -2,14 +2,18 @@
 resize: False
 both: False
 apply_augmentations: True
-mixed: False
-foldlabel: False
-trimdepth: False
+mixed: True
+foldlabel: True
+trimdepth: True
+uniform_trim: False
 fill_value: 0
-patch_size: [1, 11, 25, 25]
 max_angle: 6
+max_distance: 0
 max_translation: 1
 checkerboard_size: 4
-keep_top: True
 keep_bottom: False
+keep_top: True
+percentage: 40
+variable_percentage: False
 sigma_noise: 0.2  # set to positive to allow noise
+patch_size: [1, 11, 25, 25]

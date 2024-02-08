@@ -166,12 +166,26 @@ def embeddings_pipeline(dir_path, datasets, label, short_name=None, classifier_n
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    embeddings_pipeline("/neurospin/dico/jlaval/Runs/02_STS_babies/Program/Output/2023-11-29/",
-        datasets=["STs_babies/STs_dHCP_374_subjects"],
-        label='Preterm_28',
-        short_name='dHCP', overwrite=True, use_best_model=False,
+#    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/cutout/",
+#        datasets=["local_julien/cingulate_ACCpatterns_1"],
+#        label='Right_PCS',
+#        short_name='ACC_1', overwrite=False, use_best_model=False,
+#        subsets=['train_val'], verbose=False)
+
+
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/cutout/",
+        datasets=["local_julien/cingulate_UKB_right_1"],
+        label='Age_64',
+        short_name='UKB_1', overwrite=False, use_best_model=False,
         subsets=['train_val'], verbose=False)
-    
+
+
+#datasets=["local_julien/cingulate_UKB_right"]
+#datasets=["local_julien/cingulate_ACCpatterns_1
+#label='Age_64'
+#label='Right_PCS'
+#short_name='UKB_1'
+
 #"/neurospin/dico/jlaval/Runs/01_deep_supervised/Program/Output/chosen_model_crop_baby_STS_trained_on_UkBioBank-copy"
 
 # if __name__ == "__main__":

@@ -235,7 +235,7 @@ class ContrastiveDatasetFusion():
                         input_size=self.config.data[reg].input_size,
                         config=self.config)
                     transform2 = transform_no_foldlabel(
-                        from_skeleton=False,
+                        from_skeleton=True,
                         input_size=self.config.data[reg].input_size,
                         config=self.config)
                     

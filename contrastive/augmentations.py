@@ -207,14 +207,14 @@ def intersection_skeleton_foldlabel(arr_foldlabel, arr_skel):
 def remove_bottom_branches(a):
     """Removes bottom branches from foldlabel.
 
-    Bottom branches are numerated between 2000 and 2999"""
-    return a*((a < 2000) | (a >= 3000)).astype(int)
+    Bottom branches are numerated between 7000 and 7999"""
+    return a*((a < 7000) | (a >= 8000)).astype(int)
 
 def remove_top_branches(a):
     """Removes top branches from foldlabel.
 
-    Top branches are numerated between 2000 and 2999"""
-    return a*((a < 8000) | (a >= 9000)).astype(int)
+    Top branches are numerated between 6000 and 6999"""
+    return a*((a < 6000) | (a >= 7000)).astype(int)
 
 
 def remove_branches_up_to_percent(arr_foldlabel, arr_skel,

@@ -162,7 +162,8 @@ def transform_trimdepth(sample_distbottom, sample_foldlabel,
                                        max_distance=config.max_distance,
                                        input_size=input_size,
                                        keep_top=config.keep_top,
-                                       uniform=config.uniform_trim),
+                                       uniform=config.uniform_trim,
+                                       binary=config.binary_trim),
                        BinarizeTensor(),
                        TranslateTensor(config.max_translation)]
     if config.backbone_name == 'pointnet':

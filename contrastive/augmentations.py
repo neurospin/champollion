@@ -772,13 +772,14 @@ class TrimDepthTensor(object):
     """
 
     def __init__(self, sample_distbottom, sample_foldlabel,
-                 max_distance, input_size, keep_top, uniform):
+                 max_distance, input_size, keep_top, uniform, binary):
         self.max_distance = max_distance
         self.input_size = input_size
         self.sample_distbottom = sample_distbottom
         self.sample_foldlabel = sample_foldlabel
         self.keep_top=keep_top
         self.uniform=uniform
+        self.binary=binary
     
     def __call__(self, tensor_skel):
         log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
@@ -812,7 +813,14 @@ class TrimDepthTensor(object):
                 arr_trimmed = arr_skel.copy()
                 mask_branch = np.mod(arr_foldlabel,
                                     np.full(arr_foldlabel.shape, fill_value=1000))==index
-                threshold = np.random.randint(-1, self.max_distance+1)
+                if self.binary:
+                    r = np.random.randint(2)
+                    if r == 0:
+                        threshold = -1
+                    else:
+                        threshold = self.max_distance
+                else:
+                    threshold = np.random.randint(-1, self.max_distance+1)
                 if self.keep_top:
                     arr_trimmed[np.logical_and(arr_distbottom<=threshold, arr_skel!=35)]=0
                 else:

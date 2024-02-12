@@ -13,4 +13,5 @@ checkerboard_size: 4
 keep_top: True
 keep_bottom: False
 uniform_trim: False
+binary_trim: True
 sigma_noise: 0.2  # set to positive to allow noise

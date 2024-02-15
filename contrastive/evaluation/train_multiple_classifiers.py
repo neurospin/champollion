@@ -17,7 +17,7 @@ from functools import partial
 
 from sklearn.preprocessing import StandardScaler
 # from contrastive.models.binary_classifier import BinaryClassifier
-from sklearn.svm import SVC
+from sklearn.svm import SVC, SVR
 from sklearn.neural_network import MLPClassifier
 
 from contrastive.data.utils import read_labels
@@ -25,6 +25,7 @@ from contrastive.data.utils import read_labels
 from contrastive.utils.config import process_config
 from contrastive.utils.logs import set_root_logger_level, set_file_logger
 from contrastive.evaluation.utils_pipelines import save_used_label
+from contrastive.evaluation.auc_score import regression_roc_auc_score
 
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
@@ -221,30 +222,39 @@ def train_one_classifier(config, inputs, i=0):
     Y = inputs['Y']
     outputs = {}
 
-    # choose the classifier type
-    # /!\ The chosen classifier must have a predict_proba method.
-    if config.classifier_name == 'svm':
-        model = SVC(kernel='linear', probability=True,
-                    max_iter=config.class_max_epochs, random_state=i,
-                    C=0.01, class_weight='balanced')
-    elif config.classifier_name == 'neural_network':
-        model = MLPClassifier(hidden_layer_sizes=config.classifier_hidden_layers,
-                              activation=config.classifier_activation,
-                              batch_size=config.class_batch_size,
-                              max_iter=config.class_max_epochs, random_state=i)
-    else:
-        raise ValueError(f"The chosen classifier ({config.classifier_name}) is not handled by the pipeline. \
-Choose a classifier type that exists in configs/classifier.")
-    
-    # SVC predict_proba
-    labels_proba = cross_val_predict(model, X, Y, cv=5, method='predict_proba')
-    curves, roc_auc, accuracy = compute_indicators(Y, labels_proba)
-    outputs['proba_of_1'] = labels_proba[:, 1]
+    if 'label_type' in config.keys() and config['label_type']=='continuous':
+        model = SVR(kernel='linear',max_iter=config.class_max_epochs,
+                    C=0.01)
+        val_pred = cross_val_predict(model, X, Y, cv=5)
+        reg_auc = regression_roc_auc_score(Y, val_pred, num_rounds=10000)
+        outputs['labels_pred'] = val_pred
+        outputs['reg_auc'] = reg_auc
 
-    # Stores in outputs dict
-    outputs['curves'] = curves
-    outputs['roc_auc'] = roc_auc
-    outputs['accuracy'] = accuracy
+    else:
+        # choose the classifier type
+        # /!\ The chosen classifier must have a predict_proba method.
+        if config.classifier_name == 'svm':
+            model = SVC(kernel='linear', probability=True,
+                        max_iter=config.class_max_epochs, random_state=i,
+                        C=0.01, class_weight='balanced')
+        elif config.classifier_name == 'neural_network':
+            model = MLPClassifier(hidden_layer_sizes=config.classifier_hidden_layers,
+                                activation=config.classifier_activation,
+                                batch_size=config.class_batch_size,
+                                max_iter=config.class_max_epochs, random_state=i)
+        else:
+            raise ValueError(f"The chosen classifier ({config.classifier_name}) is not handled by the pipeline. \
+    Choose a classifier type that exists in configs/classifier.")
+        
+        # SVC predict_proba
+        labels_proba = cross_val_predict(model, X, Y, cv=5, method='predict_proba')
+        curves, roc_auc, accuracy = compute_indicators(Y, labels_proba)
+        outputs['proba_of_1'] = labels_proba[:, 1]
+
+        # Stores in outputs dict
+        outputs['curves'] = curves
+        outputs['roc_auc'] = roc_auc
+        outputs['accuracy'] = accuracy
 
     return outputs
 
@@ -282,10 +292,13 @@ def train_n_repeat_classifiers(config, subset='full'):
     Y = labels.label
 
     # Builds objects where the results are saved
-    Curves = {'cross_val': []}
-    aucs = {'cross_val': []}
-    accuracies = {'cross_val': []}
-    proba_matrix = np.zeros((labels.shape[0], config.n_repeat))
+    if 'label_type' in config.keys() and config['label_type']=='continuous':
+        reg_aucs = []
+    else:
+        Curves = {'cross_val': []}
+        aucs = {'cross_val': []}
+        accuracies = {'cross_val': []}
+        proba_matrix = np.zeros((labels.shape[0], config.n_repeat))
 
     # Configures loops
 
@@ -298,54 +311,69 @@ def train_n_repeat_classifiers(config, subset='full'):
     X = scaler.fit_transform(X)
 
     inputs['Y'] = Y
-
-    # Actual loop done config.n_repeat times
-    if _parallel:
-        print(f"Computation done IN PARALLEL: {config.n_repeat} times")
-        print(f"Number of subjects used by the SVM: {len(inputs['X'])}")
-        func = partial(train_one_classifier, config, inputs)
-        outputs = pqdm(repeats, func, n_jobs=define_njobs())
+    if 'label_type' in config.keys() and config['label_type']=='continuous':
+        #Y.iloc[:, [1]] = scaler.fit_transform(Y.iloc[:, [1]])
+        outputs = train_one_classifier(config, inputs)
+        #labels_preds = outputs['labels_pred']
+        # TODO: add a matrix of labels preds and save like proba matrix
+        reg_auc = outputs['reg_auc']
+        
+        values = {}
+        values[f'{subset}_auc'] = reg_auc
+        # save results
+        print(f"results_save_path = {results_save_folder}")
+        filename = f"{subset}_values.json"
+        with open(os.path.join(results_save_folder, filename), 'w+') as file:
+            json.dump(values, file)
     else:
-        outputs = []
-        print("Computation done SERIALLY")
-        for i in repeats:
-            print("model number", i)
-            outputs.append(train_one_classifier(config, inputs, i))
 
-    # Put together the results
-    for i, o in enumerate(outputs):
-        probas_pred = o['proba_of_1']
-        curves = o['curves']
-        roc_auc = o['roc_auc']
-        accuracy = o['accuracy']
-        proba_matrix[:, i] = probas_pred
-        Curves['cross_val'].append(curves)
-        aucs['cross_val'].append(roc_auc)
-        accuracies['cross_val'].append(accuracy)
+        # Actual loop done config.n_repeat times
+        if _parallel:
+            print(f"Computation done IN PARALLEL: {config.n_repeat} times")
+            print(f"Number of subjects used by the SVM: {len(inputs['X'])}")
+            func = partial(train_one_classifier, config, inputs)
+            outputs = pqdm(repeats, func, n_jobs=define_njobs())
+        else:
+            outputs = []
+            print("Computation done SERIALLY")
+            for i in repeats:
+                print("model number", i)
+                outputs.append(train_one_classifier(config, inputs, i))
+        
+        # Put together the results
+        for i, o in enumerate(outputs):
+            probas_pred = o['proba_of_1']
+            curves = o['curves']
+            roc_auc = o['roc_auc']
+            accuracy = o['accuracy']
+            proba_matrix[:, i] = probas_pred
+            Curves['cross_val'].append(curves)
+            aucs['cross_val'].append(roc_auc)
+            accuracies['cross_val'].append(accuracy)
 
-    # add the predictions to the df where the true values are
-    columns_names = ["svm_"+str(i) for i in range(config.n_repeat)]
-    probas = pd.DataFrame(
-        proba_matrix, columns=columns_names, index=labels.index)
-    labels = pd.concat([labels, probas], axis=1)
+        # add the predictions to the df where the true values are
+        columns_names = ["svm_"+str(i) for i in range(config.n_repeat)]
+        probas = pd.DataFrame(
+            proba_matrix, columns=columns_names, index=labels.index)
+        labels = pd.concat([labels, probas], axis=1)
 
-    # post processing (mainly plotting graphs)
-    values = {}
-    mode = 'cross_val'
-    post_processing_results(labels, embeddings, Curves, aucs,
-                            accuracies, values, columns_names,
-                            mode, subset, results_save_folder)
-    
-    # save results
-    print(f"results_save_path = {results_save_folder}")
-    filename = f"{subset}_values.json"
-    with open(os.path.join(results_save_folder, filename), 'w+') as file:
-        json.dump(values, file)
+        # post processing (mainly plotting graphs)
+        values = {}
+        mode = 'cross_val'
+        post_processing_results(labels, embeddings, Curves, aucs,
+                                accuracies, values, columns_names,
+                                mode, subset, results_save_folder)
+        
+        # save results
+        print(f"results_save_path = {results_save_folder}")
+        filename = f"{subset}_values.json"
+        with open(os.path.join(results_save_folder, filename), 'w+') as file:
+            json.dump(values, file)
 
-    # plt.show()
-    plt.close('all')
+        # plt.show()
+        plt.close('all')
 
-    save_used_label(os.path.dirname(results_save_folder), config)
+        save_used_label(os.path.dirname(results_save_folder), config)
 
 
 #@hydra.main(config_name='config_no_save', config_path="../configs")

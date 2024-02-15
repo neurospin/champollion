@@ -40,7 +40,7 @@ def preprocess_config(sub_dir, datasets, label, folder_name, classifier_name='sv
     change_config_label(cfg, label)
 
     # get the right classifiers parameters
-    with open(f'./configs/classifier/{classifier_name}.yaml', 'r') as file:
+    with open(os.getcwd() + f'/configs/classifier/{classifier_name}.yaml', 'r') as file:
         dataset_yaml = yaml.load(file, yaml.FullLoader)
     for key in dataset_yaml:
         cfg[key] = dataset_yaml[key]
@@ -127,7 +127,7 @@ def embeddings_pipeline(dir_path, datasets, label, short_name=None, classifier_n
                         yaml.dump(omegaconf.OmegaConf.to_yaml(cfg), file)
 
                     # apply the functions
-                    compute_embeddings(cfg)
+                    #compute_embeddings(cfg)
                     # reload config for train_classifiers to work properly
                     cfg = omegaconf.OmegaConf.load(
                         sub_dir+'/.hydra/config_classifiers.yaml')
@@ -140,7 +140,7 @@ def embeddings_pipeline(dir_path, datasets, label, short_name=None, classifier_n
                         cfg = omegaconf.OmegaConf.load(
                             sub_dir+'/.hydra/config_classifiers.yaml')
                         cfg.use_best_model = True
-                        compute_embeddings(cfg)
+                        #compute_embeddings(cfg)
                         # reload config for train_classifiers to work properly
                         cfg = omegaconf.OmegaConf.load(
                             sub_dir+'/.hydra/config_classifiers.yaml')
@@ -166,7 +166,7 @@ def embeddings_pipeline(dir_path, datasets, label, short_name=None, classifier_n
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-#    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/2024-02-13/",
+#    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/gaussian_noise/",
 #        datasets=["local_julien/cingulate_ACCpatterns_1"],
 #        label='Right_PCS',
 #        short_name='ACC_1', overwrite=True, use_best_model=False,
@@ -175,7 +175,7 @@ if __name__ == "__main__":
 
     embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/translation_only/",
         datasets=["local_julien/cingulate_UKB_right_5percent"],
-        label='Sex',
+        label='Age',
         short_name='UKB_5percent', overwrite=True, use_best_model=False,
         subsets=['train_val'], verbose=False)
 

@@ -148,11 +148,11 @@ def create_sets_without_labels(config):
             check_if_numpy_same_length(config.data[0].numpy_all,
                                        config.data[1].numpy_all,
                                        "numpy_all")
-            if config.foldlabel or config.trimdepth or config.random_choice:
+            if config.foldlabel or config.trimdepth or config.random_choice or config.mixed:
                 check_if_numpy_same_length(config.data[0].foldlabel_all,
                                            config.data[1].foldlabel_all,
                                            "foldlabel_all")
-            if config.trimdepth or config.random_choice:
+            if config.trimdepth or config.random_choice or config.mixed:
                 check_if_numpy_same_length(config.data[0].distbottom_all,
                                            config.data[1].distbottom_all,
                                            "distbottom_all")
@@ -165,7 +165,8 @@ def create_sets_without_labels(config):
         skeleton_all.append(skeleton_output)
 
         # Loads and separates in train_val/test set foldlabels if requested
-        if config.apply_augmentations and (config.foldlabel or config.trimdepth or config.random_choice):
+        if config.apply_augmentations and (config.foldlabel or config.trimdepth
+                                           or config.random_choice or config.mixed):
             foldlabel_output = sanity_checks_foldlabels_without_labels(config,
                                                             skeleton_output,
                                                             reg)
@@ -176,7 +177,7 @@ def create_sets_without_labels(config):
         foldlabel_all.append(foldlabel_output)
 
         # same with distbottom
-        if config.apply_augmentations and (config.trimdepth or config.random_choice):
+        if config.apply_augmentations and (config.trimdepth or config.random_choice or config.mixed):
             distbottom_output = sanity_checks_distbottoms_without_labels(config,
                                                             skeleton_output,
                                                             reg)
@@ -203,7 +204,7 @@ def create_sets_without_labels(config):
         for foldlabel_output in foldlabel_all:
             # select the augmentation method
             if config.apply_augmentations:
-                if config.trimdepth or config.random_choice or config.foldlabel:  # branch_clipping
+                if config.trimdepth or config.random_choice or config.mixed or config.foldlabel:  # branch_clipping
                     foldlabel_array = foldlabel_output[subset_name][1]
                 else:  # cutout
                     foldlabel_array = None  # no need of fold labels
@@ -216,7 +217,7 @@ def create_sets_without_labels(config):
         for distbottom_output in distbottom_all:
             # select the augmentation method
             if config.apply_augmentations:
-                if config.random_choice or config.trimdepth:  # trimdepth
+                if config.random_choice or config.mixed or config.trimdepth:  # trimdepth
                     distbottom_array = distbottom_output[subset_name][1]
                 else:  # cutout
                     distbottom_array = None  # no need of fold labels

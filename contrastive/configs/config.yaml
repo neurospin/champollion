@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - augmentations: random
+  - augmentations: no_foldlabel
   - backbone: ConvNet
   - classifier: svm
   - dataset/local_julien/cingulate_UKB_right

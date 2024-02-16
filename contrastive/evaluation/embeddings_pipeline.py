@@ -166,16 +166,16 @@ def embeddings_pipeline(dir_path, datasets, label, short_name=None, classifier_n
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-#    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/gaussian_noise/",
+#    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/2024-02-15/",
 #        datasets=["local_julien/cingulate_ACCpatterns_1"],
 #        label='Right_PCS',
 #        short_name='ACC_1', overwrite=True, use_best_model=False,
 #        subsets=['train_val'], verbose=False)
 
 
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/translation_only/",
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/translation_magnitude/",
         datasets=["local_julien/cingulate_UKB_right_5percent"],
-        label='Age',
+        label='Sex',
         short_name='UKB_5percent', overwrite=True, use_best_model=False,
         subsets=['train_val'], verbose=False)
 

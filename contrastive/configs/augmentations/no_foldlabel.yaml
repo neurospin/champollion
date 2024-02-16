@@ -12,4 +12,4 @@ max_translation: 1
 checkerboard_size: 4
 keep_top: True
 keep_bottom: False
-sigma_noise: 0.2  # set to positive to allow noise
+sigma_noise: 0.  # set to positive to allow noise

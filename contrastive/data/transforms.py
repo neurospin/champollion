@@ -71,28 +71,6 @@ def transform_only_padding(input_size, config):
                 ToPointnetTensor(n_max=config.n_max)
             ])
 
-"""
-def transform_foldlabel(sample_foldlabel, percentage, input_size, config):
-    transforms_list = [SimplifyTensor(),
-                       PaddingTensor(shape=input_size,
-                                     fill_value=config.fill_value),
-                       RemoveRandomBranchTensor(
-                            sample_foldlabel=sample_foldlabel,
-                            percentage=percentage,
-                            variable_percentage=config.variable_percentage,
-                            input_size=input_size,
-                            keep_bottom=config.keep_bottom),
-                       BinarizeTensor(),
-                       RotateTensor(max_angle=config.max_angle)]
-    
-    if config.backbone_name == 'pointnet':
-        transforms_list.append(ToPointnetTensor(n_max=config.n_max))
-    if config.sigma_noise > 0:
-        transforms_list.append(GaussianNoiseTensor(sigma=config.sigma_noise))
-    
-    return transforms.Compose(transforms_list)
-"""
-
 
 def transform_foldlabel(sample_foldlabel, percentage, input_size, config):
     transforms_list = [SimplifyTensor(),
@@ -223,6 +201,48 @@ def transform_random(sample_foldlabel, percentage,
         return transform_cutin(input_size, config)
     else:
         return transform_translation(input_size, config)
+    
+
+def transform_mixed(sample_foldlabel, percentage,
+                    sample_distbottom, input_size, config):
+    transforms_list = [SimplifyTensor(),
+                       PaddingTensor(shape=input_size,
+                                     fill_value=config.fill_value)]
+    if 'foldlabel' in config.mixed_list:
+        transforms_list.append(RemoveRandomBranchTensor(
+                            sample_foldlabel=sample_foldlabel,
+                            percentage=percentage,
+                            variable_percentage=config.variable_percentage,
+                            input_size=input_size,
+                            keep_bottom=config.keep_bottom,
+                            keep_top=config.keep_top))
+    if 'cutout' in config.mixed_list:
+        transforms_list.append(PartialCutOutTensor_Roll(
+                                from_skeleton=False,
+                                keep_top=config.keep_top,
+                                keep_bottom=config.keep_bottom,
+                                patch_size=config.patch_size))
+    # BEWARE: the bottom kept using foldlabel and cutout are not protected
+    # by trimdepth. Add keep_bottom to trimdepth config to preserve.
+    # Likewise, keep top is the same argument for each augmentation.
+    # for now, stick to foldlabel + cutout.
+    if 'trimdepth' in config.mixed_list:
+        transforms_list.append(TrimDepthTensor(
+                                sample_distbottom=sample_distbottom,
+                                sample_foldlabel=sample_foldlabel,
+                                max_distance=config.max_distance,
+                                input_size=input_size,
+                                keep_top=config.keep_top,
+                                uniform=config.uniform_trim,
+                                binary=config.binary_trim))
+    transforms_list.append(BinarizeTensor())
+    transforms_list.append(TranslateTensor(config.max_translation))
+    if config.backbone_name == 'pointnet':
+        transforms_list.append(ToPointnetTensor(n_max=config.n_max))
+    if config.sigma_noise > 0:
+        transforms_list.append(GaussianNoiseTensor(sigma=config.sigma_noise))
+    
+    return transforms.Compose(transforms_list)
 
 
 # DEPRECATED

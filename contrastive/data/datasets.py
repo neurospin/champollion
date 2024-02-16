@@ -42,7 +42,7 @@ from contrastive.utils.logs import set_file_logger
 from contrastive.data.transforms import \
     transform_foldlabel, transform_no_foldlabel,\
     transform_nothing_done, transform_only_padding,\
-    transform_trimdepth, transform_random
+    transform_trimdepth, transform_random, transform_mixed
 
 from contrastive.augmentations import PaddingTensor
 
@@ -199,6 +199,19 @@ class ContrastiveDatasetFusion():
                         input_size=self.config.data[reg].input_size,
                         config=self.config)
                     transform2 = transform_random(
+                        sample_foldlabels[reg],
+                        self.config.percentage,
+                        sample_distbottoms[reg],
+                        input_size=self.config.data[reg].input_size,
+                        config=self.config)
+                elif self.config.mixed:
+                    transform1 = transform_mixed(
+                        sample_foldlabels[reg],
+                        self.config.percentage,
+                        sample_distbottoms[reg],
+                        input_size=self.config.data[reg].input_size,
+                        config=self.config)
+                    transform2 = transform_mixed(
                         sample_foldlabels[reg],
                         self.config.percentage,
                         sample_distbottoms[reg],

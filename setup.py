@@ -27,7 +27,7 @@ setup(
                       'OmegaConf',
                       'scikit-learn',
                       'scikit-image',
-                      'pytorch-lightning>=1.8.0',
+                      'pytorch-lightning==2.1.3',
                       'lightly',
                       'plotly',
                       'toolz',

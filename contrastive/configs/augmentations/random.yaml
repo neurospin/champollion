@@ -18,5 +18,5 @@ percentage: 40
 variable_percentage: False
 sigma_noise: 0.  # set to positive to allow noise
 patch_size: [1, 11, 25, 25]
-distribution: [0.25, 0.5, 0.75] #equiprobability for each of the 4 augmentations
+distribution: [0.25, 0.5, 0.75, 0.75] #equiprobability for each of the 4 augmentations (excluding cutin)
 #distribution: [0,0,0] # for translation only

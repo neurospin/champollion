@@ -1,5 +1,9 @@
 # @package _global_
 apply_augmentations: True
+random_choice: False
+mixed: True
+foldlabel: False
+trimdepth: False
 uniform_trim: False
 binary_trim: True
 fill_value: 0

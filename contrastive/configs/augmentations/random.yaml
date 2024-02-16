@@ -1,8 +1,7 @@
 # @package _global_
-resize: False
-both: False
 apply_augmentations: True
 random_choice: True
+mixed: False
 foldlabel: True
 trimdepth: True
 uniform_trim: False

@@ -191,7 +191,7 @@ class ContrastiveDatasetFusion():
         for reg in range(len(filenames)):
             if self.transform:
                 # mix of branch clipping, cutout, cutin, and trimdepth
-                if self.config.mixed:
+                if self.config.random_choice:
                     transform1 = transform_random(
                         sample_foldlabels[reg],
                         self.config.percentage,

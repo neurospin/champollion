@@ -2,7 +2,7 @@
 resize: False
 both: False
 apply_augmentations: True
-mixed: False
+random_choice: False
 foldlabel: False
 trimdepth: False
 fill_value: 0

@@ -218,7 +218,7 @@ def transform_mixed(sample_foldlabel, percentage,
                             keep_top=config.keep_top))
     if 'cutout' in config.mixed_list:
         transforms_list.append(PartialCutOutTensor_Roll(
-                                from_skeleton=False,
+                                from_skeleton=True,
                                 keep_top=config.keep_top,
                                 keep_bottom=config.keep_bottom,
                                 patch_size=config.patch_size))

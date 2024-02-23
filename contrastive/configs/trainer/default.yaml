@@ -25,5 +25,5 @@ random_state: 25
 # Parameters of step scheduler
 scheduler: False
 step_size: 10
-gamma: 0.8
+gamma: 1.0
 class_weights: [19., 256.]

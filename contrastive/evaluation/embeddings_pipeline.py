@@ -59,8 +59,8 @@ def preprocess_config(sub_dir, datasets, label, folder_name, classifier_name='sv
 # main function
 # creates embeddings and train classifiers for all models contained in folder
 @ignore_warnings(category=ConvergenceWarning)
-def embeddings_pipeline(dir_path, datasets, label, short_name=None, classifier_name='svm',
-                        overwrite=False, use_best_model=False, subsets=['full'],
+def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_name='svm',
+                        overwrite=False, embeddings=True, use_best_model=False, subsets=['full'],
                         verbose=False):
     """Pipeline to generate automatically the embeddings and compute the associated AUCs 
     for all the models contained in a given directory. All the AUCs are computed with 
@@ -70,7 +70,7 @@ def embeddings_pipeline(dir_path, datasets, label, short_name=None, classifier_n
         - dir_path: str. Path where the models are stored and where is applied 
         recursively the process.
         - datasets: list of str. Datasets the embeddings are generated from.
-        - label: str. Name of the label to be used for evaluation.
+        - labels: str list. Names of the labels to be used for evaluation.
         - short_name: str or None. Name of the directory where to store both embeddings 
         and aucs. If None, use datasets to generate the folder name.
         - classifier_name: str. Parameter to select the desired classifer type
@@ -115,50 +115,54 @@ def embeddings_pipeline(dir_path, datasets, label, short_name=None, classifier_n
                     print("Start post processing")
                     # get the config and correct it to suit
                     # what is needed for classifiers
-                    cfg = preprocess_config(sub_dir, datasets, label, folder_name,
-                                            classifier_name=classifier_name)
-                    if verbose:
-                        print("CONFIG FILE", type(cfg))
-                        print(json.dumps(omegaconf.OmegaConf.to_container(
-                            cfg, resolve=True), indent=4, sort_keys=True))
-                    # save the modified config next to the real one
-                    with open(sub_dir+'/.hydra/config_classifiers.yaml', 'w') \
-                            as file:
-                        yaml.dump(omegaconf.OmegaConf.to_yaml(cfg), file)
+                    for idx, label in enumerate(labels):
+                        cfg = preprocess_config(sub_dir, datasets, label, folder_name,
+                                                classifier_name=classifier_name)
+                        if verbose:
+                            print("CONFIG FILE", type(cfg))
+                            print(json.dumps(omegaconf.OmegaConf.to_container(
+                                cfg, resolve=True), indent=4, sort_keys=True))
+                        # save the modified config next to the real one
+                        with open(sub_dir+'/.hydra/config_classifiers.yaml', 'w') \
+                                as file:
+                            yaml.dump(omegaconf.OmegaConf.to_yaml(cfg), file)
 
-                    # apply the functions
-                    compute_embeddings(cfg)
-                    # reload config for train_classifiers to work properly
-                    cfg = omegaconf.OmegaConf.load(
-                        sub_dir+'/.hydra/config_classifiers.yaml')
-                    train_classifiers(cfg, subsets=subsets)
-
-                    # compute embeddings for the best model if saved
-                    if (use_best_model and os.path.exists(sub_dir+'/logs/best_model_weights.pt')):
-                        print("\nCOMPUTE AGAIN WITH THE BEST MODEL\n")
                         # apply the functions
-                        cfg = omegaconf.OmegaConf.load(
-                            sub_dir+'/.hydra/config_classifiers.yaml')
-                        cfg.use_best_model = True
-                        compute_embeddings(cfg)
+                        if embeddings and idx==0:
+                            compute_embeddings(cfg)
                         # reload config for train_classifiers to work properly
                         cfg = omegaconf.OmegaConf.load(
                             sub_dir+'/.hydra/config_classifiers.yaml')
-                        cfg.use_best_model = True
-                        cfg.training_embeddings = cfg.embeddings_save_path + \
-                            '_best_model'
-                        cfg.embeddings_save_path = \
-                            cfg.embeddings_save_path + '_best_model'
                         train_classifiers(cfg, subsets=subsets)
+
+                        # compute embeddings for the best model if saved
+                        if (use_best_model and os.path.exists(sub_dir+'/logs/best_model_weights.pt')):
+                            print("\nCOMPUTE AGAIN WITH THE BEST MODEL\n")
+                            # apply the functions
+                            cfg = omegaconf.OmegaConf.load(
+                                sub_dir+'/.hydra/config_classifiers.yaml')
+                            cfg.use_best_model = True
+                            if embeddings and idx==0:
+                                compute_embeddings(cfg)
+                            # reload config for train_classifiers to work properly
+                            cfg = omegaconf.OmegaConf.load(
+                                sub_dir+'/.hydra/config_classifiers.yaml')
+                            cfg.use_best_model = True
+                            cfg.training_embeddings = cfg.embeddings_save_path + \
+                                '_best_model'
+                            cfg.embeddings_save_path = \
+                                cfg.embeddings_save_path + '_best_model'
+                            train_classifiers(cfg, subsets=subsets)
 
             else:
                 print(f"\n{sub_dir} not associated to a model. Continue")
                 embeddings_pipeline(sub_dir,
                                     datasets=datasets,
-                                    label=label,
+                                    labels=labels,
                                     short_name=short_name,
                                     classifier_name=classifier_name,
                                     overwrite=overwrite,
+                                    embeddings=embeddings,
                                     use_best_model=use_best_model,
                                     subsets=subsets,
                                     verbose=verbose)
@@ -166,17 +170,17 @@ def embeddings_pipeline(dir_path, datasets, label, short_name=None, classifier_n
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-#    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/2024-02-19/",
+#    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/2024-02-22/",
 #        datasets=["local_julien/cingulate_ACCpatterns_1"],
-#        label='Right_PCS',
-#        short_name='ACC_1', overwrite=True, use_best_model=False,
+#        labels=['Right_PCS'],
+#        short_name='ACC_1', overwrite=True, embeddings=True, use_best_model=False,
 #        subsets=['train_val'], verbose=False)
 
 
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/2024-02-19/",
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/batch_size/",
         datasets=["local_julien/cingulate_UKB_right_5percent"],
-        label='Sex',
-        short_name='UKB_5percent', overwrite=True, use_best_model=False,
+        labels=['Age', 'Age_64', 'Sex'],
+        short_name='UKB_5percent', overwrite=True, embeddings=True, use_best_model=False,
         subsets=['train_val'], verbose=False)
 
 

@@ -8,7 +8,7 @@ import json
 import os
 
 from torch.utils.data import DataLoader, TensorDataset
-from sklearn.metrics import auc, roc_curve, roc_auc_score, accuracy_score
+from sklearn.metrics import auc, roc_curve, roc_auc_score, balanced_accuracy_score
 from sklearn.model_selection import cross_val_predict, train_test_split
 
 from pqdm.processes import pqdm
@@ -123,11 +123,23 @@ def compute_indicators(Y, proba_pred):
     curves = roc_curve(labels_true, proba_pred[:, 1])
     roc_auc = roc_auc_score(labels_true, proba_pred[:, 1])
 
-    # choose labels predicted with frontier = 0.5
-    labels_pred = np.argmax(proba_pred, axis=1)
+    # choose labels predicted with frontier = 0.5 # previously used with accuracy
+    #labels_pred = np.argmax(proba_pred, axis=1)
     # compute accuracy
-    accuracy = accuracy_score(labels_true, labels_pred)
-    return curves, roc_auc, accuracy
+    # balanced accuracy
+    # find the best threshold
+    # would be overfitting to use this metric for model selection ?
+    max_accuracy = 0
+    for threshold in np.linspace(0,1,101):
+        labels_pred_0 = proba_pred[:, 0] < threshold
+        labels_pred_1 = proba_pred[:, 0] >= threshold
+        accuracy_0 = balanced_accuracy_score(labels_true, labels_pred_0)
+        accuracy_1 = balanced_accuracy_score(labels_true, labels_pred_1)
+        accuracy = max(accuracy_0, accuracy_1)
+        if accuracy > max_accuracy:
+            max_accuracy = accuracy
+
+    return curves, roc_auc, max_accuracy
 
 
 def compute_auc(column, label_col=None):
@@ -194,7 +206,7 @@ def post_processing_results(labels, embeddings, Curves, aucs, accuracies,
           np.std(accuracies[mode]))
     print(f"{subset} cross_val AUC", np.mean(aucs[mode]), np.std(aucs[mode]))
 
-    values[f'{subset}_total_accuracy'] = \
+    values[f'{subset}_total_balanced_accuracy'] = \
         [np.mean(accuracies[mode]), np.std(accuracies[mode])]
     values[f'{subset}_auc'] = [np.mean(aucs[mode]), np.std(aucs[mode])]
 
@@ -254,7 +266,7 @@ def train_one_classifier(config, inputs, i=0):
         # Stores in outputs dict
         outputs['curves'] = curves
         outputs['roc_auc'] = roc_auc
-        outputs['accuracy'] = accuracy
+        outputs['balanced_accuracy'] = accuracy
 
     return outputs
 
@@ -345,7 +357,7 @@ def train_n_repeat_classifiers(config, subset='full'):
             probas_pred = o['proba_of_1']
             curves = o['curves']
             roc_auc = o['roc_auc']
-            accuracy = o['accuracy']
+            accuracy = o['balanced_accuracy']
             proba_matrix[:, i] = probas_pred
             Curves['cross_val'].append(curves)
             aucs['cross_val'].append(roc_auc)

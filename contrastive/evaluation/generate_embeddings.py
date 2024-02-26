@@ -94,14 +94,20 @@ def compute_embeddings(config):
 
     model = ContrastiveLearnerFusion(config, sample_data=data_module)
     # fetch and load weights
-    paths = config.model_path+"/logs/*/version_0/checkpoints"+r'/*.ckpt'
-    if 'use_best_model' in config.keys():
-        paths = config.model_path+"/logs/best_model_weights.pt"
-    files = glob.glob(paths)
-    #print("model_weights:", files[0])
-    cpkt_path = files[0]
+    if 'epoch' in config.keys():
+        ckpt_path = config.model_path+\
+                    f"/logs/model_weights_evolution/model_weights_epoch{config.epoch}.pt"
+        assert os.path.isfile(ckpt_path), f"No weights for selected epoch {config.epoch}"
+
+    else:
+        paths = config.model_path+"/logs/*/version_0/checkpoints"+r'/*.ckpt'
+        if 'use_best_model' in config.keys():
+            paths = config.model_path+"/logs/best_model_weights.pt"
+        files = glob.glob(paths)
+        #print("model_weights:", files[0])
+        ckpt_path = files[0]
     checkpoint = torch.load(
-        cpkt_path, map_location=torch.device(config.device))
+        ckpt_path, map_location=torch.device(config.device))
     model.load_state_dict(checkpoint['state_dict'])
 
     model.eval()

@@ -14,7 +14,7 @@ from sklearn.exceptions import ConvergenceWarning
 # Auxilary function used to process the config linked to the model.
 # For instance, change the embeddings save path to being next to the model.
 def preprocess_config(sub_dir, datasets, label, folder_name, classifier_name='svm',
-                      verbose=False):
+                      epoch=None, verbose=False):
     """Loads the associated config of the given model and changes what has to be done,
     mainly the datasets, the classifier type and a few other keywords.
     
@@ -25,6 +25,7 @@ def preprocess_config(sub_dir, datasets, label, folder_name, classifier_name='sv
         - folder_name: str. Name of the directory where to store both embeddings and aucs.
         - classifier_name: str. Should correspond to a classifier yaml file's name 
         (currently either 'svm' or 'neural_network').
+        - epoch: int. Specifies the epoch used for inference. Set to None to use the last epoch.
         - verbose: bool. Verbose.
         
     Output:
@@ -53,6 +54,10 @@ def preprocess_config(sub_dir, datasets, label, folder_name, classifier_name='sv
         sub_dir + f"/{folder_name}_embeddings"
     cfg.apply_transformations = False
 
+    # add epoch to config if specified
+    if epoch is not None:
+        cfg.epoch = epoch
+
     return cfg
 
 
@@ -61,7 +66,7 @@ def preprocess_config(sub_dir, datasets, label, folder_name, classifier_name='sv
 @ignore_warnings(category=ConvergenceWarning)
 def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_name='svm',
                         overwrite=False, embeddings=True, use_best_model=False, subsets=['full'],
-                        verbose=False):
+                        epoch=None, verbose=False):
     """Pipeline to generate automatically the embeddings and compute the associated AUCs 
     for all the models contained in a given directory. All the AUCs are computed with 
     5-folds cross validation .
@@ -76,10 +81,12 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
         - classifier_name: str. Parameter to select the desired classifer type
         (currently neural_network or svm).
         - overwrite: bool. Redo the process on models where embeddings already exist.
+        - embeddings: bool. Compute the embeddings, or use the ones previously computed.
         - use_best_model: bool. Use the best model saved during to generate embeddings. 
         The 'normal' model is always used, the best is only added.
         - subsets: list of subsets you want the SVM to learn on. Set to ['full'] if you
         want to learn on all subjects in one go.
+        - epoch: int. Specifies the epoch used for inference. Set to None to use the last epoch.
         - verbose: bool. Verbose.
     """
 
@@ -117,7 +124,7 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
                     # what is needed for classifiers
                     for idx, label in enumerate(labels):
                         cfg = preprocess_config(sub_dir, datasets, label, folder_name,
-                                                classifier_name=classifier_name)
+                                                classifier_name=classifier_name, epoch=epoch)
                         if verbose:
                             print("CONFIG FILE", type(cfg))
                             print(json.dumps(omegaconf.OmegaConf.to_container(
@@ -165,23 +172,24 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
                                     embeddings=embeddings,
                                     use_best_model=use_best_model,
                                     subsets=subsets,
+                                    epoch=epoch,
                                     verbose=verbose)
         else:
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-#    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/2024-02-22/",
-#        datasets=["local_julien/cingulate_ACCpatterns_1"],
-#        labels=['Right_PCS'],
-#        short_name='ACC_1', overwrite=True, embeddings=True, use_best_model=False,
-#        subsets=['train_val'], verbose=False)
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/2024-02-26/",
+        datasets=["local_julien/cingulate_ACCpatterns_1"],
+        labels=['Right_PCS'],
+        short_name='ACC_1_epoch100', overwrite=True, embeddings=True, use_best_model=False,
+        subsets=['train_val'], epoch=100, verbose=False)
 
 
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/batch_size/",
-        datasets=["local_julien/cingulate_UKB_right_5percent"],
-        labels=['Age', 'Age_64', 'Sex'],
-        short_name='UKB_5percent', overwrite=True, embeddings=True, use_best_model=False,
-        subsets=['train_val'], verbose=False)
+#    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/2024-02-25/",
+#        datasets=["local_julien/cingulate_UKB_right_5percent"],
+#        labels=['Age', 'Age_64', 'Sex'],
+#        short_name='UKB_5percent', overwrite=True, embeddings=True, use_best_model=False,
+#        subsets=['train_val'], epoch=None, verbose=False)
 
 
 #datasets=["local_julien/cingulate_UKB_right"]

@@ -674,6 +674,16 @@ in the config to False to unfreeze them.")
             return True
         else:
             return False
+        
+    def save_model_weights(self):
+        """Tells if it is the right epoch to save model weights."""
+        if self.config.nb_epochs_per_weight_save <= 0:
+            return False
+        elif self.current_epoch % self.config.nb_epochs_per_weight_save == 0 \
+                or self.current_epoch >= self.config.max_epochs:
+            return True
+        else:
+            return False
 
 
     def compute_tsne(self, loader, register):
@@ -822,6 +832,14 @@ in the config to False to unfreeze them.")
                 histogram_sim_zij = plot_histogram(self.sim_zij, buffer=True)
                 self.loggers[0].experiment.add_image(
                     'histo_sim_zij', histogram_sim_zij, self.current_epoch)
+                
+            if self.save_model_weights():
+                print('saving model weights')
+                dir_to_save = './logs/model_weights_evolution/'
+                if not os.path.isdir(dir_to_save):
+                    os.mkdir(dir_to_save)
+                torch.save({'state_dict': self.state_dict()},
+                           dir_to_save + f'model_weights_epoch{self.current_epoch}.pt')
 
         if self.config.mode in ['classifier', 'regresser']:
             train_auc = self.compute_output_auc(

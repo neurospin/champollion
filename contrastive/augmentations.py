@@ -388,7 +388,7 @@ class PartialCutOutTensor_Roll(object):
     We assume that the rectangle to be cut is inside the image.
     """
 
-    def __init__(self, from_skeleton=True,
+    def __init__(self, from_skeleton=True, input_size=None,
                  keep_extremity='bottom', patch_size=None,
                  random_size=False, localization=None):
         """[summary]
@@ -399,11 +399,17 @@ class PartialCutOutTensor_Roll(object):
         Args:
             from_skeleton (bool, optional): Defaults to True.
             patch_size (either int or list of int): Defaults to None.
+                if int, percentage of the volume to cutout.
+                Defines a rectangle with same proportions as input.
             random_size (bool, optional): Defaults to False.
             inplace (bool, optional): Defaults to False.
             localization ([type], optional): Defaults to None.
         """
-        self.patch_size = rotate_list(patch_size)
+        if not isinstance(patch_size, int):
+            self.patch_size = rotate_list(patch_size)
+        else:
+            self.patch_size = patch_size
+        self.input_size = input_size
         self.random_size = random_size
         self.localization = localization
         self.from_skeleton = from_skeleton
@@ -424,11 +430,15 @@ class PartialCutOutTensor_Roll(object):
         arr = tensor.numpy()
         img_shape = np.array(arr.shape)
         if isinstance(self.patch_size, int):
-            size = [self.patch_size for _ in range(len(img_shape))]
+            proportion = (1/100*self.patch_size)**(1/(len(img_shape)-1))
+            size = rotate_list(self.input_size)
+            size = proportion*np.array(size)
+            size = np.round(size).astype(int)
+            size[-1]=1
+            
         else:
             size = np.copy(self.patch_size)
         assert len(size) == len(img_shape), "Incorrect patch dimension."
-        #assert not (self.keep_bottom and self.keep_top), "Choose either keep_bottom or keep_top."
         start_cutout = []
         for ndim in range(len(img_shape)):
             if size[ndim] > img_shape[ndim] or size[ndim] < 0:

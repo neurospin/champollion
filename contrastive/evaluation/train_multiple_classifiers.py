@@ -9,7 +9,8 @@ import os
 
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.metrics import auc, roc_curve, roc_auc_score, balanced_accuracy_score
-from sklearn.model_selection import cross_val_predict, train_test_split
+from sklearn.model_selection import cross_val_predict, train_test_split, cross_validate, \
+                                    LeaveOneGroupOut, cross_val_score
 
 from pqdm.processes import pqdm
 from joblib import cpu_count
@@ -55,40 +56,46 @@ def load_embeddings(dir_path, labels_path, config, subset='full'):
         on. Usually either 'train', 'val', 'train_val', 'test' or 'test_intra'.
     """
     # load embeddings
-    # if targeting directly the target csv file
-    if not os.path.isdir(dir_path):
-        embeddings = pd.read_csv(dir_path, index_col=0)
-    # if only giving the directory (implies constraints on the file name)
-    # take only a specified subset
-    elif subset != 'full':
+    if config.split=='custom':
         embeddings = pd.read_csv(
-                dir_path+f'/{subset}_embeddings.csv', index_col=0)
-    # takes all the subjects
-    else:
-        if os.path.exists(dir_path+'/full_embeddings.csv'):
+                dir_path+f'/custom_cross_val_embeddings.csv', index_col=0)
+    elif config.split=='random':
+        # if targeting directly the target csv file
+        if not os.path.isdir(dir_path):
+            embeddings = pd.read_csv(dir_path, index_col=0)
+        # if only giving the directory (implies constraints on the file name)
+        # take only a specified subset
+        elif subset != 'full':
             embeddings = pd.read_csv(
-                dir_path+'/full_embeddings.csv', index_col=0)
-        elif os.path.exists(dir_path+'/pca_embeddings.csv'):
-            embeddings = pd.read_csv(
-                dir_path+'/pca_embeddings.csv', index_col=0)
+                    dir_path+f'/{subset}_embeddings.csv', index_col=0)
+        # takes all the subjects
         else:
-            train_embeddings = pd.read_csv(
-                dir_path+'/train_embeddings.csv', index_col=0)
-            val_embeddings = pd.read_csv(
-                dir_path+'/val_embeddings.csv', index_col=0)
-            test_embeddings = pd.read_csv(
-                dir_path+'/test_embeddings.csv', index_col=0)
-            embs_list = [train_embeddings, val_embeddings,
-                         test_embeddings]
-            try:
-                test_intra_embeddings = pd.read_csv(
-                    dir_path+'/test_intra_embeddings.csv', index_col=0)
-                embs_list.append(test_intra_embeddings)
-            except:
-                pass
-                
-            # regroup them in one dataframe
-            embeddings = pd.concat(embs_list, axis=0, ignore_index=False)
+            if os.path.exists(dir_path+'/full_embeddings.csv'):
+                embeddings = pd.read_csv(
+                    dir_path+'/full_embeddings.csv', index_col=0)
+            elif os.path.exists(dir_path+'/pca_embeddings.csv'):
+                embeddings = pd.read_csv(
+                    dir_path+'/pca_embeddings.csv', index_col=0)
+            else:
+                train_embeddings = pd.read_csv(
+                    dir_path+'/train_embeddings.csv', index_col=0)
+                val_embeddings = pd.read_csv(
+                    dir_path+'/val_embeddings.csv', index_col=0)
+                test_embeddings = pd.read_csv(
+                    dir_path+'/test_embeddings.csv', index_col=0)
+                embs_list = [train_embeddings, val_embeddings,
+                            test_embeddings]
+                try:
+                    test_intra_embeddings = pd.read_csv(
+                        dir_path+'/test_intra_embeddings.csv', index_col=0)
+                    embs_list.append(test_intra_embeddings)
+                except:
+                    pass
+                    
+                # regroup them in one dataframe
+                embeddings = pd.concat(embs_list, axis=0, ignore_index=False)
+    else:
+        raise ValueError("Wrong split config specified")
 
     embeddings.sort_index(inplace=True)
     log.debug(f"sorted embeddings: {embeddings.head()}")
@@ -217,7 +224,7 @@ def post_processing_results(labels, embeddings, Curves, aucs, accuracies,
     #                         index=True)
 
 
-def train_one_classifier(config, inputs, i=0):
+def train_one_classifier(config, inputs, subjects, i=0):
     """Trains one classifier, whose type is set in config_no_save.
 
     Args:
@@ -259,7 +266,35 @@ def train_one_classifier(config, inputs, i=0):
     Choose a classifier type that exists in configs/classifier.")
         
         # SVC predict_proba
-        labels_proba = cross_val_predict(model, X, Y, cv=5, method='predict_proba')
+        if config.split=='random':
+            cv=5
+        #cv_results = cross_validate(model, X, Y, cv=5, return_train_score=True)
+        # TODO: REPLACE CROSS_VAL_PREDICT WITH CROSS_VALIDATE
+        # GATHER VAL VALUES (IN RIGHT ORDER). COMPUTE INDICATORS ON THE SET.
+        # LIKEWISE, TRAIN SCORE GIVES 4 AUCS, FOR EACH SPLIT. COMPUTE INDICATORS ON EACH SPLIT, AND RETURN LIST OF AUCS (OR AVERAGE AND DEVIATION?)
+        # KEEP SUBSET IN THE NAMES.
+        elif config.split=='custom':
+            if 'splits_basedir' not in config.keys():
+                raise ValueError("A custom split should be specified for custom CV")
+            else:
+                root_dir = '/'.join(config.splits_basedir.split('/')[:-1])
+                basedir = config.splits_basedir.split('/')[-1]
+                splits_dirs = [os.path.join(root_dir,f) for f in os.listdir(root_dir) if basedir in f and '.csv' in f]
+                splits_subs = [pd.read_csv(file, header=None) for file in splits_dirs]
+                labels = np.concatenate([[i] * len(K) for i, K in enumerate(splits_subs)])
+                splits_subs_and_labels = pd.concat(splits_subs)
+                splits_subs_and_labels.columns=['ID']
+                splits_subs_and_labels['labels'] = labels
+                subs_embeddings = pd.DataFrame({'ID': subjects, 'X': list(X.values), 'Y': Y})
+                df = splits_subs_and_labels.merge(subs_embeddings, on='ID')
+                groups, X, Y = df['labels'], np.vstack(df['X'].values), df['Y']
+                logo = LeaveOneGroupOut()
+                cv = logo.get_n_splits(groups=groups)
+        else:
+            raise ValueError("Wrong split config specified")
+        
+        labels_proba = cross_val_predict(model, X, Y, cv=cv, method='predict_proba')
+
         curves, roc_auc, accuracy = compute_indicators(Y, labels_proba)
         outputs['proba_of_1'] = labels_proba[:, 1]
 
@@ -299,10 +334,10 @@ def train_n_repeat_classifiers(config, subset='full'):
 
     embeddings, labels = load_embeddings(
         train_embs_path, train_lab_paths, config, subset=subset)
-    names_col = 'ID' if 'ID' in embeddings.columns else 'Subject'
+    names_col = 'ID' if 'ID' in embeddings.columns else 'Subject' # issue here ?
     X = embeddings.loc[:, embeddings.columns != names_col]
     Y = labels.label
-
+    subjects = embeddings.index.tolist()
     # Builds objects where the results are saved
     if 'label_type' in config.keys() and config['label_type']=='continuous':
         reg_aucs = []
@@ -325,7 +360,7 @@ def train_n_repeat_classifiers(config, subset='full'):
     inputs['Y'] = Y
     if 'label_type' in config.keys() and config['label_type']=='continuous':
         #Y.iloc[:, [1]] = scaler.fit_transform(Y.iloc[:, [1]])
-        outputs = train_one_classifier(config, inputs)
+        outputs = train_one_classifier(config, inputs, subjects)
         #labels_preds = outputs['labels_pred']
         # TODO: add a matrix of labels preds and save like proba matrix
         reg_auc = outputs['reg_auc']
@@ -343,14 +378,14 @@ def train_n_repeat_classifiers(config, subset='full'):
         if _parallel:
             print(f"Computation done IN PARALLEL: {config.n_repeat} times")
             print(f"Number of subjects used by the SVM: {len(inputs['X'])}")
-            func = partial(train_one_classifier, config, inputs)
+            func = partial(train_one_classifier, config, inputs, subjects)
             outputs = pqdm(repeats, func, n_jobs=define_njobs())
         else:
             outputs = []
             print("Computation done SERIALLY")
             for i in repeats:
                 print("model number", i)
-                outputs.append(train_one_classifier(config, inputs, i))
+                outputs.append(train_one_classifier(config, inputs, subjects, i))
         
         # Put together the results
         for i, o in enumerate(outputs):
@@ -401,11 +436,19 @@ def train_classifiers(config, subsets=None):
 
     set_root_logger_level(config.verbose)
 
-    for subset in subsets:
+    if config.split=='random':
+        for subset in subsets:
+            print("\n")
+            log.info(f"USING SUBSET {subset}")
+            # the choice of the classifiers' type is now inside the function 
+            train_n_repeat_classifiers(config, subset=subset)
+    
+    elif config.split=='custom':
         print("\n")
-        log.info(f"USING SUBSET {subset}")
-        # the choice of the classifiers' type is now inside the function 
-        train_n_repeat_classifiers(config, subset=subset)
+        log.info(f"USING SUBSET test")
+        # make sure a train file is given in this mode
+        train_n_repeat_classifiers(config, subset='test')
+
 
 
 if __name__ == "__main__":

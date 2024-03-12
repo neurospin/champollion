@@ -119,67 +119,80 @@ def compute_embeddings(config):
     if not os.path.exists(embeddings_path):
         os.makedirs(embeddings_path)
 
-    # calculate embeddings for training set and save them somewhere
-    print("TRAIN SET")
-    train_embeddings = model.compute_representations(
-        data_module.train_dataloader())
+    if config.split=='random':
+        print("RANDOM SPLITS FOR CROSS-VAL")
+        # calculate embeddings for training set and save them somewhere
+        print("TRAIN SET")
+        train_embeddings = model.compute_representations(
+            data_module.train_dataloader())
 
-    # convert the embeddings to pandas df and save them
-    train_embeddings_df = embeddings_to_pandas(train_embeddings)
-    train_embeddings_df.to_csv(embeddings_path+"/train_embeddings.csv")
+        # convert the embeddings to pandas df and save them
+        train_embeddings_df = embeddings_to_pandas(train_embeddings)
+        train_embeddings_df.to_csv(embeddings_path+"/train_embeddings.csv")
 
-    # same thing for validation set
-    print("VAL SET")
-    val_embeddings = model.compute_representations(
-        data_module.val_dataloader())
+        # same thing for validation set
+        print("VAL SET")
+        val_embeddings = model.compute_representations(
+            data_module.val_dataloader())
 
-    val_embeddings_df = embeddings_to_pandas(val_embeddings)
-    val_embeddings_df.to_csv(embeddings_path+"/val_embeddings.csv")
+        val_embeddings_df = embeddings_to_pandas(val_embeddings)
+        val_embeddings_df.to_csv(embeddings_path+"/val_embeddings.csv")
 
-    # same thing for test set
-    print("TEST SET")
-    test_embeddings = model.compute_representations(
-        data_module.test_dataloader())
+        # same thing for test set
+        print("TEST SET")
+        test_embeddings = model.compute_representations(
+            data_module.test_dataloader())
 
-    test_embeddings_df = embeddings_to_pandas(test_embeddings)
-    test_embeddings_df.to_csv(embeddings_path+"/test_embeddings.csv")
+        test_embeddings_df = embeddings_to_pandas(test_embeddings)
+        test_embeddings_df.to_csv(embeddings_path+"/test_embeddings.csv")
 
-    # same thing for test_intra if it exists
-    try:
-        print("TEST INTRA SET")
-        test_intra_embeddings = model.compute_representations(
-            data_module.test_intra_dataloader())
+        # same thing for test_intra if it exists
+        try:
+            print("TEST INTRA SET")
+            test_intra_embeddings = model.compute_representations(
+                data_module.test_intra_dataloader())
 
-        test_intra_embeddings_df = embeddings_to_pandas(test_intra_embeddings)
-        test_intra_embeddings_df.to_csv(
-            embeddings_path+"/test_intra_embeddings.csv")
-    except:
-        print("No test_intra set")
+            test_intra_embeddings_df = embeddings_to_pandas(test_intra_embeddings)
+            test_intra_embeddings_df.to_csv(
+                embeddings_path+"/test_intra_embeddings.csv")
+        except:
+            print("No test_intra set")
 
-    # same thing on the train_val dataset
-    print("TRAIN_VAL SET")
-    train_val_df = pd.concat([train_embeddings_df, val_embeddings_df],
-                             axis=0)
-    train_val_df.to_csv(embeddings_path+"/train_val_embeddings.csv")
+        # same thing on the train_val dataset
+        print("TRAIN_VAL SET")
+        train_val_df = pd.concat([train_embeddings_df, val_embeddings_df],
+                                axis=0)
+        train_val_df.to_csv(embeddings_path+"/train_val_embeddings.csv")
 
-    # same thing on the entire dataset
-    print("FULL SET")
-    try:
-        full_df = pd.concat([train_embeddings_df,
-                             val_embeddings_df,
-                             test_intra_embeddings_df,
-                             test_embeddings_df],
-                             axis=0)
-    except:
-        full_df = pd.concat([train_embeddings_df,
-                             val_embeddings_df,
-                             test_embeddings_df],
-                             axis=0)
+        # same thing on the entire dataset
+        print("FULL SET")
+        try:
+            full_df = pd.concat([train_embeddings_df,
+                                val_embeddings_df,
+                                test_intra_embeddings_df,
+                                test_embeddings_df],
+                                axis=0)
+        except:
+            full_df = pd.concat([train_embeddings_df,
+                                val_embeddings_df,
+                                test_embeddings_df],
+                                axis=0)
 
-    full_df = full_df.sort_values(by='ID')
-    full_df.to_csv(embeddings_path+"/full_embeddings.csv")
+        full_df = full_df.sort_values(by='ID')
+        full_df.to_csv(embeddings_path+"/full_embeddings.csv")
 
     print("ALL EMBEDDINGS GENERATED: OK")
+
+    if config.split=='custom':
+        print('CUSTOM SPLITS FOR CROSS VAL')
+        # calculate embeddings for training set and save them somewhere
+        print("TEST SET (UNION OF CUSTOM SPLITS)")
+        test_embeddings = model.compute_representations(
+            data_module.test_dataloader())
+        
+        # convert the embeddings to pandas df and save them
+        test_embeddings_df = embeddings_to_pandas(test_embeddings)
+        test_embeddings_df.to_csv(embeddings_path+"/custom_cross_val_embeddings.csv")
 
     save_used_datasets(embeddings_path, config.dataset.keys())
 

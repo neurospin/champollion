@@ -14,7 +14,7 @@ from sklearn.exceptions import ConvergenceWarning
 # Auxilary function used to process the config linked to the model.
 # For instance, change the embeddings save path to being next to the model.
 def preprocess_config(sub_dir, datasets, label, folder_name, classifier_name='svm',
-                      epoch=None, verbose=False):
+                      epoch=None, split=None, splits_basedir=None, verbose=False):
     """Loads the associated config of the given model and changes what has to be done,
     mainly the datasets, the classifier type and a few other keywords.
     
@@ -57,6 +57,11 @@ def preprocess_config(sub_dir, datasets, label, folder_name, classifier_name='sv
     # add epoch to config if specified
     if epoch is not None:
         cfg.epoch = epoch
+    # add splitting strategy to config
+    cfg.split = split
+    if split=='custom':
+        cfg.splits_basedir=splits_basedir
+
 
     return cfg
 
@@ -66,7 +71,7 @@ def preprocess_config(sub_dir, datasets, label, folder_name, classifier_name='sv
 @ignore_warnings(category=ConvergenceWarning)
 def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_name='svm',
                         overwrite=False, embeddings=True, use_best_model=False, subsets=['full'],
-                        epochs=None, verbose=False):
+                        epochs=None, split='random', splits_basedir=None, verbose=False):
     """Pipeline to generate automatically the embeddings and compute the associated AUCs 
     for all the models contained in a given directory. All the AUCs are computed with 
     5-folds cross validation .
@@ -129,7 +134,9 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
                             else:
                                 f_name = folder_name
                             cfg = preprocess_config(sub_dir, datasets, label, f_name,
-                                                    classifier_name=classifier_name, epoch=epoch)
+                                                    classifier_name=classifier_name,
+                                                    epoch=epoch, split=split,
+                                                    splits_basedir=splits_basedir)
                             if verbose:
                                 print("CONFIG FILE", type(cfg))
                                 print(json.dumps(omegaconf.OmegaConf.to_container(
@@ -178,17 +185,24 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
                                     use_best_model=use_best_model,
                                     subsets=subsets,
                                     epochs=epochs,
+                                    split=split,
+                                    splits_basedir=splits_basedir,
                                     verbose=verbose)
         else:
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
     embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/1-5mm_reclassif",
-        datasets=["local_julien/1-5mm/cingulate_ACCpatterns_1_1-5mm"],
-        labels=['Right_PCS'],
-        short_name='ACC_1', overwrite=True, embeddings=True, use_best_model=False,
-        subsets=['train_val'], epochs=range(0, 110, 10), verbose=False)
+        datasets=["local_julien/1-5mm/cingulate_dHCP_374_subjects_1-5mm"],
+        labels=['Preterm_37'],
+        short_name='dHCP', overwrite=True, embeddings=True, use_best_model=False,
+        subsets=['full'], epochs=[None], split='random',
+        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/ACCpatterns_subjects_train_split_',
+        verbose=False)
 
+#split='random', 'custom'
+#epochs=[None], range(0, 250, 10)
+#subset=['full'], ['train_val']
 
 #    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/old_best/",
 #        datasets=["local_julien/cingulate_UKB_right_5percent"],

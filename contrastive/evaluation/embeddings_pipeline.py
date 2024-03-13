@@ -70,7 +70,8 @@ def preprocess_config(sub_dir, datasets, label, folder_name, classifier_name='sv
 # creates embeddings and train classifiers for all models contained in folder
 @ignore_warnings(category=ConvergenceWarning)
 def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_name='svm',
-                        overwrite=False, embeddings=True, use_best_model=False, subsets=['full'],
+                        overwrite=False, embeddings=True, embeddings_only=False,
+                        use_best_model=False, subsets=['full'],
                         epochs=None, split='random', splits_basedir=None, verbose=False):
     """Pipeline to generate automatically the embeddings and compute the associated AUCs 
     for all the models contained in a given directory. All the AUCs are computed with 
@@ -152,7 +153,7 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
                             # reload config for train_classifiers to work properly
                             cfg = omegaconf.OmegaConf.load(
                                 sub_dir+'/.hydra/config_classifiers.yaml')
-                            if valid_path:
+                            if valid_path and not embeddings_only:
                                 train_classifiers(cfg, subsets=subsets)
                             else:
                                 print('Invalid epoch number, skipped')
@@ -185,6 +186,7 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
                                     classifier_name=classifier_name,
                                     overwrite=overwrite,
                                     embeddings=embeddings,
+                                    embeddings_only=embeddings_only,
                                     use_best_model=use_best_model,
                                     subsets=subsets,
                                     epochs=epochs,
@@ -196,9 +198,9 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
 
 if __name__ == "__main__":
     embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/tmp",
-        datasets=["local_julien/1-5mm/STs_babies_UKB_right_5percent_1-5mm"],
-        labels=['Age'],
-        short_name='UKB_5percent', overwrite=True, embeddings=True, use_best_model=False,
+        datasets=["local_julien/1-5mm/STs_babies_UKB_right_1-5mm"],
+        labels=['Sex'],
+        short_name='UKB', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
         subsets=['full'], epochs=range(0,250,10), split='random',
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/ACCpatterns_subjects_train_split_',
         verbose=False)
@@ -207,6 +209,9 @@ if __name__ == "__main__":
 #epochs=[None], range(0, 250, 10)
 #subset=['full'], ['train_val']
 #labels=['Preterm_28', 'Preterm_32', 'Preterm_37']
+#short_name='UKB_5percent'
+#datasets=["local_julien/1-5mm/STs_babies_UKB_right_5percent_1-5mm"]
+#datasets=["local_julien/1-5mm/STs_babies_dHCP_374_subjects_right_1-5mm"]
 
 #    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/old_best/",
 #        datasets=["local_julien/cingulate_UKB_right_5percent"],

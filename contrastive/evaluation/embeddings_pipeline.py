@@ -148,11 +148,14 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
 
                             # apply the functions
                             if embeddings and idx==0:
-                                compute_embeddings(cfg)
+                                valid_path = compute_embeddings(cfg)
                             # reload config for train_classifiers to work properly
                             cfg = omegaconf.OmegaConf.load(
                                 sub_dir+'/.hydra/config_classifiers.yaml')
-                            train_classifiers(cfg, subsets=subsets)
+                            if valid_path:
+                                train_classifiers(cfg, subsets=subsets)
+                            else:
+                                print('Invalid epoch number, skipped')
 
                             # compute embeddings for the best model if saved
                             if (use_best_model and os.path.exists(sub_dir+'/logs/best_model_weights.pt')):
@@ -162,7 +165,7 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
                                     sub_dir+'/.hydra/config_classifiers.yaml')
                                 cfg.use_best_model = True
                                 if embeddings and idx==0:
-                                    compute_embeddings(cfg)
+                                    _ = compute_embeddings(cfg)
                                 # reload config for train_classifiers to work properly
                                 cfg = omegaconf.OmegaConf.load(
                                     sub_dir+'/.hydra/config_classifiers.yaml')
@@ -192,17 +195,18 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/1-5mm_reclassif",
-        datasets=["local_julien/1-5mm/cingulate_dHCP_374_subjects_1-5mm"],
-        labels=['Preterm_37'],
-        short_name='dHCP', overwrite=True, embeddings=True, use_best_model=False,
-        subsets=['full'], epochs=[None], split='random',
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/tmp",
+        datasets=["local_julien/1-5mm/STs_babies_UKB_right_5percent_1-5mm"],
+        labels=['Age'],
+        short_name='UKB_5percent', overwrite=True, embeddings=True, use_best_model=False,
+        subsets=['full'], epochs=range(0,250,10), split='random',
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/ACCpatterns_subjects_train_split_',
         verbose=False)
 
 #split='random', 'custom'
 #epochs=[None], range(0, 250, 10)
 #subset=['full'], ['train_val']
+#labels=['Preterm_28', 'Preterm_32', 'Preterm_37']
 
 #    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/old_best/",
 #        datasets=["local_julien/cingulate_UKB_right_5percent"],

@@ -52,8 +52,8 @@ from contrastive.data.datasets import ContrastiveDatasetFusion
 
 from contrastive.data.utils import \
     check_subject_consistency, extract_data, check_if_same_subjects,\
-    check_if_same_shape, check_if_skeleton, extract_data_with_labels,\
-    read_labels
+    check_npy_consistency, check_if_same_shape, check_if_skeleton,\
+    extract_data_with_labels, read_labels
 
 import logging
 
@@ -64,7 +64,11 @@ root = logging.getLogger()
 def sanity_checks_foldlabels_without_labels(config, skeleton_output, reg):
     # Loads and separates in train_val/test set foldlabels if requested
     check_subject_consistency(config.data[reg].subjects_all,
-                              config.data[reg].subjects_foldlabel_all)
+                              config.data[reg].subjects_foldlabel_all,
+                              name='foldlabel')
+    check_npy_consistency(config.data[reg].numpy_all,
+                          config.data[reg].foldlabel_all,
+                          name='foldlabel')
     # in order to avoid logging twice the same information
     if root.level == 20:  # root logger in INFO mode
         set_root_logger_level(0)
@@ -92,7 +96,11 @@ def sanity_checks_foldlabels_without_labels(config, skeleton_output, reg):
 def sanity_checks_distbottoms_without_labels(config, skeleton_output, reg):
     # Loads and separates in train_val/test set distbottoms if requested
     check_subject_consistency(config.data[reg].subjects_all,
-                              config.data[reg].subjects_distbottom_all)
+                              config.data[reg].subjects_distbottom_all,
+                              name='distbottom')
+    check_npy_consistency(config.data[reg].numpy_all,
+                          config.data[reg].distbottom_all,
+                          name='distbottom')
     # in order to avoid logging twice the same information
     if root.level == 20:  # root logger in INFO mode
         set_root_logger_level(0)

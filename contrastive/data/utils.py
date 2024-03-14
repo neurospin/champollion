@@ -97,15 +97,26 @@ def read_numpy_data_and_subject_csv(npy_file_path, csv_file_path):
     return npy_data, subjects
 
 
-def check_subject_consistency(csv_file_path_1, csv_file_path_2):
+def check_subject_consistency(csv_file_path_1, csv_file_path_2, name):
     subjects_1 = read_subject_csv(csv_file_path_1)
     subjects_2 = read_subject_csv(csv_file_path_2)
     if not subjects_1.equals(subjects_2):
         raise ValueError(
-            "Both subject files (skel, foldlabel) are not equal:\n"
+            f"Both subject files (skel, {name}) are not equal:\n"
             f"subjects_1 head = {subjects_1.head()}\n"
             f"subjects_2 head = {subjects_2.head()}\n")
 
+    
+def check_npy_consistency(file_path_arr1, file_path_arr2, name):
+    arr1 = np.load(file_path_arr1)
+    arr2 = np.load(file_path_arr2)
+    arr1 = arr1 != 0
+    arr2 = arr2 != 0
+    if not np.array_equal(arr1, arr2):
+        raise ValueError(
+            f"Both npy files (skel, {name}) are not equal:\n"
+            f"Total voxel difference: {np.sum(arr1!=arr2)}\n")
+    
 
 def check_if_skeleton(a: np.array, key: str):
     """Checks if values are compatible with skeletons"""

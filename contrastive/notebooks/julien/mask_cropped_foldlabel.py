@@ -2,6 +2,7 @@ import numpy as np
 import os
 import pandas as pd
 from soma import aims
+import tqdm
 import warnings
 
 def nearest_nonzero_idx(a,x,y,z):
@@ -18,12 +19,12 @@ dataset='UkBioBank'
 root = '/volatile/jl277509/data/' # but I copy only the crops locally..
 recompute=True
 
-old_foldlabel_dir = f'{root}{dataset}/crops/1.5mm/CINGULATE/mask/Rlabels_no_reskel/'
-new_foldlabel_dir = f'{root}{dataset}/crops/1.5mm/CINGULATE/mask/Rlabels/'
-skels_dir = f'{root}{dataset}/crops/1.5mm/CINGULATE/mask/Rcrops/'
+old_foldlabel_dir = f'{root}{dataset}/crops/1.5mm/S.T.s./mask/Rlabels_no_reskel/'
+new_foldlabel_dir = f'{root}{dataset}/crops/1.5mm/S.T.s./mask/Rlabels/'
+skels_dir = f'{root}{dataset}/crops/1.5mm/S.T.s./mask/Rcrops/'
 
 directory = f'/volatile/jl277509/data/UkBioBank/crops'
-skel_subjects = pd.read_csv(f'{root}{dataset}/crops/1.5mm/CINGULATE/mask/Rskeleton_subject.csv')
+skel_subjects = pd.read_csv(f'{root}{dataset}/crops/1.5mm/S.T.s./mask/Rskeleton_subject.csv')
 
 foldlabel_list = []
 for i, subject in enumerate(skel_subjects.Subject):
@@ -62,4 +63,4 @@ for i, subject in enumerate(skel_subjects.Subject):
 # generate Rlabel.npy
 arr = np.stack(foldlabel_list)
 print(f'Rlabel shape: {arr.shape}')
-np.save(f'{root}{dataset}/crops/1.5mm/CINGULATE/mask/Rlabel.npy', arr)
+np.save(f'{root}{dataset}/crops/1.5mm/S.T.s./mask/Rlabel.npy', arr)

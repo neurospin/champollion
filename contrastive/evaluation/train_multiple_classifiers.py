@@ -267,7 +267,7 @@ def train_one_classifier(config, inputs, subjects, i=0):
         
         # SVC predict_proba
         if config.split=='random':
-            cv=5
+            cv=config.cv
         #cv_results = cross_validate(model, X, Y, cv=5, return_train_score=True)
         # TODO: REPLACE CROSS_VAL_PREDICT WITH CROSS_VALIDATE
         # GATHER VAL VALUES (IN RIGHT ORDER). COMPUTE INDICATORS ON THE SET.

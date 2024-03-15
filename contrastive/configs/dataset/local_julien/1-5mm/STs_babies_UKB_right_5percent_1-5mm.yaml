@@ -13,6 +13,6 @@ subjects_distbottom_all: /volatile/jl277509/data/UkBioBank/crops/1.5mm/S.T.s./ma
 crop_file_suffix: _cropped_skeleton.nii.gz
 pickle_benchmark:
 train_val_csv_file: /volatile/jl277509/data/UkBioBank/subjects_5percent.csv
-subject_labels_file: /volatile/jl277509/data/UkBioBank/participants_labels.csv
+subject_labels_file: /volatile/jl277509/data/UkBioBank/participants_labels_5percent.csv
 subject_column_name: 'Subject'
 input_size: (1, 26, 57, 49)

@@ -15,5 +15,5 @@ pickle_benchmark:
 train_val_csv_file: /volatile/jl277509/data/UkBioBank/subjects_full.csv
 subject_labels_file: /volatile/jl277509/data/UkBioBank/participants_labels.csv
 subject_column_name: 'Subject'
-input_size: (1, 26, 57, 49)
+input_size: (1, 29, 66, 60)
 

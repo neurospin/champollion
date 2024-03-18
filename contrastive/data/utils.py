@@ -107,15 +107,26 @@ def check_subject_consistency(csv_file_path_1, csv_file_path_2, name):
             f"subjects_2 head = {subjects_2.head()}\n")
 
     
-def check_npy_consistency(file_path_arr1, file_path_arr2, name):
+def check_foldlabel_npy_consistency(file_path_arr1, file_path_arr2):
     arr1 = np.load(file_path_arr1)
     arr2 = np.load(file_path_arr2)
     arr1 = arr1 != 0
     arr2 = arr2 != 0
     if not np.array_equal(arr1, arr2):
         raise ValueError(
-            f"Both npy files (skel, {name}) are not equal:\n"
+            f"Both npy files (skel, foldlabel) are not equal:\n"
             f"Total voxel difference: {np.sum(arr1!=arr2)}\n")
+    
+def check_distbottom_npy_consistency(file_path_arr_crops, file_path_arr_distbottom, tolerance=0.02):
+    arr_crops = np.load(file_path_arr_crops)
+    arr_dist = np.load(file_path_arr_distbottom)
+    arr_crops = arr_crops != 0
+    arr_distbottom = np.logical_and(arr_dist!=32500, arr_dist!=32501)
+    diff = np.sum(arr_crops!=arr_distbottom)/np.sum(arr_crops)
+    if diff > tolerance:
+        raise ValueError(
+            f"Npy files (skel, distbottom) are {diff*100:.2f}% different:\n"
+            f"This is greater than tolerance {tolerance*100:.2f}% threshold set.\n")
     
 
 def check_if_skeleton(a: np.array, key: str):

@@ -286,7 +286,7 @@ def train_one_classifier(config, inputs, subjects, i=0):
                 splits_subs_and_labels.columns=['ID']
                 splits_subs_and_labels['labels'] = labels
                 subs_embeddings = pd.DataFrame({'ID': subjects, 'X': list(X.values), 'Y': Y})
-                df = splits_subs_and_labels.merge(subs_embeddings, on='ID')
+                df = subs_embeddings.merge(splits_subs_and_labels, on='ID')
                 groups, X, Y = df['labels'], np.vstack(df['X'].values), df['Y']
                 logo = LeaveOneGroupOut()
                 cv = logo.get_n_splits(groups=groups)

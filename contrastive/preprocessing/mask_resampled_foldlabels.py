@@ -5,6 +5,13 @@ from soma import aims
 import warnings
 from tqdm import tqdm
 
+
+"""
+This file masks the resampled_foldlabel files generated using resample_files.
+For now, foldlabel needs to be run twice: once for resampled_foldlabel generation,
+and once for cropping AFTER applying applying the following mask.
+"""
+
 def nearest_nonzero_idx(a,x,y,z):
     tmp = a[x,y,z]
     a[x,y,z] = 0
@@ -19,8 +26,9 @@ root = '/neurospin/dico/data/deep_folding/current/datasets/'
 #root = '/volatile/jl277509/data/' # but I copy only the crops locally..
 resolution, res = "1.5mm", 1.5
 side='R'
+resume=False
 
-vx_tolerance=15
+vx_tolerance=30
 
 old_dir = f'{root}{dataset}/foldlabels/{resolution}_tmp/'
 new_dir = f'{root}{dataset}/foldlabels/{resolution}/'
@@ -29,13 +37,22 @@ new_foldlabel_dir = os.path.join(new_dir,side)
 skels_dir = f'{root}{dataset}/skeletons/{resolution}/{side}/'
 subjects = os.listdir(skels_dir)
 skel_subjects = [sub[20:-7] for sub in subjects if sub[-1]!='f']
+print(f'number of subjects detected in {dataset}: {len(skel_subjects)}')
 print(f'first skel subjects: {skel_subjects[:5]}')
 
 #check existence of foldlabels
-assert os.path.isdir(new_dir), "Compute resampled foldlabels using deep_folding before masking."
-#move foldlabels to tmp folder 
-os.rename(new_dir, old_dir)
-os.makedirs(new_foldlabel_dir)
+if not resume:
+    assert os.path.isdir(new_dir), "Compute resampled foldlabels using deep_folding before masking."
+    #move foldlabels to tmp folder 
+    os.rename(new_dir, old_dir)
+    os.makedirs(new_foldlabel_dir)
+
+if resume:
+    # list already computed subjects
+    subjects_already_masked = os.listdir(new_foldlabel_dir)
+    subjects_already_masked = [elem[21:-7] for elem in subjects_already_masked if elem[-1]!='f']
+    skel_subjects = [elem for elem in skel_subjects if elem not in subjects_already_masked]
+    print(f'{len(subjects_already_masked)} subjects already processed, resuming')
 
 for i, subject in enumerate(tqdm(skel_subjects)):
 

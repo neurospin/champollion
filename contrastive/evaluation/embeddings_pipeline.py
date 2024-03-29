@@ -202,18 +202,21 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/2024-03-13",
-        datasets=["local_julien/1-5mm/STs_babies_dHCP_374_subjects_right_1-5mm"],
-        labels=['Preterm_32-37_vs_fullterm'],
-        short_name='dHCP', overwrite=True, embeddings=False, embeddings_only=False, use_best_model=False,
-        subsets=['train_val'], epochs=range(0,20,1), split='random', cv=3,
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/CINGULATE_SELECTED_1-5MM",
+        datasets=["local_julien/1-5mm/cingulate_ACCpatterns_custom_cv_1-5mm"],
+        labels=['Right_PCS'],
+        short_name='ACC_custom', overwrite=True, embeddings=False, embeddings_only=False, use_best_model=False,
+        subsets=['test'], epochs=[None], split='custom', cv=3,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/ACCpatterns_subjects_train_split_',
         verbose=False)
 
+
+#datasets=["local_julien/old/STs_dHCP_374_subjects"]
 #split='random', 'custom'
 #epochs=[None], range(0, 250, 10)
 #subset=['full'], ['train_val']
 #labels=['Preterm_28', 'Preterm_32', 'Preterm_37']
+#labels=['Preterm_23-28_vs_fullterm']
 #short_name='UKB_5percent'
 #datasets=["local_julien/1-5mm/STs_babies_UKB_right_5percent_1-5mm"]
 #datasets=["local_julien/1-5mm/STs_babies_dHCP_374_subjects_right_1-5mm"]

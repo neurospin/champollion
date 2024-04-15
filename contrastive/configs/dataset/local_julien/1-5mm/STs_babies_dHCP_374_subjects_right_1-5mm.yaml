@@ -28,5 +28,5 @@ pickle_benchmark:
 train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/train_val_subjects_32-37_vs_fullterm.csv
 subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/preterm_labels_32-37_vs_fullterm.csv
 subject_column_name: 'Subject'
-input_size: (1, 26, 57, 49)
+input_size: (1, 29, 66, 60)
 

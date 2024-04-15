@@ -1,0 +1,6 @@
+# @package _global_
+dataset_name: cingulate_UKB_right
+data_dir: "/volatile/jl277509/data/UkBioBank/crops/2mm/CINGULATE/mask/Rskeleton.pkl"
+subject_dir: "/volatile/jl277509/data/UkBioBank/crops/2mm/CINGULATE/mask/Rskeleton_subject.csv"
+save_dir: "/volatile/jl277509/Runs/02_STS_babies/Program/Output/betaVAE/"
+in_shape: [1, 16, 37, 37]

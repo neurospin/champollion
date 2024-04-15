@@ -121,7 +121,7 @@ def load_embeddings(dir_path, labels_path, config, subset='full'):
     return embeddings, labels
 
 
-def compute_indicators(Y, proba_pred):
+def compute_binary_indicators(Y, proba_pred):
     """Compute ROC curve and auc, and accuracy."""
     if type(Y) == torch.tensor:
         labels_true = Y.detach_().numpy()
@@ -147,6 +147,32 @@ def compute_indicators(Y, proba_pred):
             max_accuracy = accuracy
 
     return curves, roc_auc, max_accuracy
+
+
+def compute_multiclass_indicators(Y, proba_pred):
+    """Compute ROC auc and accuracy for multiclass label"""
+    if type(Y) == torch.tensor:
+        labels_true = Y.detach_().numpy()
+    else:
+        labels_true = Y.values.astype('float64')
+
+    # TODO: add metrics, return list of values, len = number of labels
+    roc_aucs = roc_auc_score(Y, proba_pred, multi_class='ovr', average=None)
+    max_accuracies = []
+    #for k in range(proba_pred.shape[1]):
+    #    max_accuracy = 0
+    #    for threshold in np.linspace(0,1,101):
+    #        labels_pred_0 = proba_pred[:, k] < threshold
+    #        labels_pred_1 = proba_pred[:, k] >= threshold
+    #        labels_true_binarized = labels_true==k
+    #        accuracy_0 = balanced_accuracy_score(labels_true_binarized, labels_pred_0)
+    #        accuracy_1 = balanced_accuracy_score(labels_true_binarized, labels_pred_1)
+    #        accuracy = max(accuracy_0, accuracy_1)
+    #        if accuracy > max_accuracy:
+    #            max_accuracy = accuracy
+    #    max_accuracies.append(max_accuracy)
+    max_accuracies=[0,0,0,0]
+    return roc_aucs, max_accuracies
 
 
 def compute_auc(column, label_col=None):
@@ -255,7 +281,7 @@ def train_one_classifier(config, inputs, subjects, i=0):
         if config.classifier_name == 'svm':
             model = SVC(kernel='linear', probability=True,
                         max_iter=config.class_max_epochs, random_state=i,
-                        C=0.01, class_weight='balanced')
+                        C=0.01, class_weight='balanced', decision_function_shape='ovr')
         elif config.classifier_name == 'neural_network':
             model = MLPClassifier(hidden_layer_sizes=config.classifier_hidden_layers,
                                 activation=config.classifier_activation,
@@ -268,11 +294,6 @@ def train_one_classifier(config, inputs, subjects, i=0):
         # SVC predict_proba
         if config.split=='random':
             cv=config.cv
-        #cv_results = cross_validate(model, X, Y, cv=5, return_train_score=True)
-        # TODO: REPLACE CROSS_VAL_PREDICT WITH CROSS_VALIDATE
-        # GATHER VAL VALUES (IN RIGHT ORDER). COMPUTE INDICATORS ON THE SET.
-        # LIKEWISE, TRAIN SCORE GIVES 4 AUCS, FOR EACH SPLIT. COMPUTE INDICATORS ON EACH SPLIT, AND RETURN LIST OF AUCS (OR AVERAGE AND DEVIATION?)
-        # KEEP SUBSET IN THE NAMES.
         elif config.split=='custom':
             if 'splits_basedir' not in config.keys():
                 raise ValueError("A custom split should be specified for custom CV")
@@ -295,13 +316,19 @@ def train_one_classifier(config, inputs, subjects, i=0):
         
         labels_proba = cross_val_predict(model, X, Y, cv=cv, method='predict_proba')
 
-        curves, roc_auc, accuracy = compute_indicators(Y, labels_proba)
-        outputs['proba_of_1'] = labels_proba[:, 1]
+        if 'label_type' in config.keys() and config['label_type']=='multiclass':
+            roc_aucs, accuracies = compute_multiclass_indicators(Y, labels_proba)
+            outputs['roc_auc'] = roc_aucs
+            outputs['balanced_accuracy'] = accuracies
+        else:
+            curves, roc_auc, accuracy = compute_binary_indicators(Y, labels_proba)
+            outputs['proba_of_1'] = labels_proba[:, 1]
 
-        # Stores in outputs dict
-        outputs['curves'] = curves
-        outputs['roc_auc'] = roc_auc
-        outputs['balanced_accuracy'] = accuracy
+            # Stores in outputs dict
+            outputs['curves'] = curves
+            outputs['roc_auc'] = roc_auc
+            outputs['balanced_accuracy'] = accuracy
+
 
     return outputs
 
@@ -341,6 +368,9 @@ def train_n_repeat_classifiers(config, subset='full'):
     # Builds objects where the results are saved
     if 'label_type' in config.keys() and config['label_type']=='continuous':
         reg_aucs = []
+    elif 'label_type' in config.keys() and config['label_type']=='multiclass':
+        aucs = {'cross_val': []}
+        accuracies = {'cross_val': []}
     else:
         Curves = {'cross_val': []}
         aucs = {'cross_val': []}
@@ -387,30 +417,58 @@ def train_n_repeat_classifiers(config, subset='full'):
                 print("model number", i)
                 outputs.append(train_one_classifier(config, inputs, subjects, i))
         
-        # Put together the results
-        for i, o in enumerate(outputs):
-            probas_pred = o['proba_of_1']
-            curves = o['curves']
-            roc_auc = o['roc_auc']
-            accuracy = o['balanced_accuracy']
-            proba_matrix[:, i] = probas_pred
-            Curves['cross_val'].append(curves)
-            aucs['cross_val'].append(roc_auc)
-            accuracies['cross_val'].append(accuracy)
+        #TODO: add proba_matrix for multiclass, merge the functions
+        if 'label_type' in config.keys() and config['label_type']=='multiclass':
+            # Put together the results
+            for i, o in enumerate(outputs):
+                roc_auc = o['roc_auc']
+                accuracy = o['balanced_accuracy']
+                aucs['cross_val'].append(roc_auc)
+                accuracies['cross_val'].append(accuracy)
 
-        # add the predictions to the df where the true values are
-        columns_names = ["svm_"+str(i) for i in range(config.n_repeat)]
-        probas = pd.DataFrame(
-            proba_matrix, columns=columns_names, index=labels.index)
-        labels = pd.concat([labels, probas], axis=1)
+            values = {}
+            mode = 'cross_val'
+            aucs = np.array(aucs[mode])
+            accuracies = np.array(accuracies[mode])
 
-        # post processing (mainly plotting graphs)
-        values = {}
-        mode = 'cross_val'
-        post_processing_results(labels, embeddings, Curves, aucs,
-                                accuracies, values, columns_names,
-                                mode, subset, results_save_folder)
-        
+            target =  f'{subset}_ovr_balanced_accuracy'
+            values[target] = [(np.mean(accuracies, axis=0)).tolist(), (np.std(accuracies, axis=0)).tolist()]
+            print(f"{subset} cross_val accuracy:\n", f'Average: {np.mean(values[target][0])}'
+                  , f'OVR: {values[target]}')
+            values[f'{subset}_total_balanced_accuracy']=\
+                [np.mean(accuracies), np.mean(values[target][1])]
+            
+            target = f'{subset}_ovr_auc'
+            values[target] = [(np.mean(aucs, axis=0)).tolist(), (np.std(aucs, axis=0)).tolist()]
+            print(f"{subset} cross_val AUC:\n", f'Average: {np.mean(values[target][0])}'
+                  , f'OVR: {values[target]}')
+            values[f'{subset}_auc']=\
+                [np.mean(aucs), np.mean(values[target][1])]
+        else:
+            # Put together the results
+            for i, o in enumerate(outputs):
+                probas_pred = o['proba_of_1']
+                curves = o['curves']
+                roc_auc = o['roc_auc']
+                accuracy = o['balanced_accuracy']
+                proba_matrix[:, i] = probas_pred
+                Curves['cross_val'].append(curves)
+                aucs['cross_val'].append(roc_auc)
+                accuracies['cross_val'].append(accuracy)
+
+            # add the predictions to the df where the true values are
+            columns_names = ["svm_"+str(i) for i in range(config.n_repeat)]
+            probas = pd.DataFrame(
+                proba_matrix, columns=columns_names, index=labels.index)
+            labels = pd.concat([labels, probas], axis=1)
+
+            # post processing (mainly plotting graphs)
+            values = {}
+            mode = 'cross_val'
+            post_processing_results(labels, embeddings, Curves, aucs,
+                                    accuracies, values, columns_names,
+                                    mode, subset, results_save_folder)
+            
         # save results
         print(f"results_save_path = {results_save_folder}")
         filename = f"{subset}_values.json"

@@ -341,6 +341,7 @@ in the config to False to unfreeze them.")
     def barlow_twins_loss(self, z_i, z_j):
         "Loss function for contrastive (BarlowTwins)"
         loss = BarlowTwinsLoss(lambda_param=self.config.lambda_BT,
+                               correlation=self.config.BT_correlation,
                                device=self.config.device)
         return loss.forward(z_i, z_j)
 

@@ -100,10 +100,11 @@ def print_info(z_i, z_j, sim_zij, sim_zii, sim_zjj, temperature):
 
 class BarlowTwinsLoss(nn.Module):
 
-    def __init__(self, device, lambda_param=5e-3):
+    def __init__(self, device, correlation='cross', lambda_param=5e-3):
         super(BarlowTwinsLoss, self).__init__()
         self.lambda_param = lambda_param
         self.device = device
+        self.correlation = correlation
 
     def forward(self, z_a, z_b):
         # normalize repr. along the batch dimension
@@ -115,13 +116,31 @@ class BarlowTwinsLoss(nn.Module):
         N = z_a.size(0)
         D = z_a.size(1)
 
-        # cross-correlation matrix
-        c = torch.mm(z_a_norm.T, z_b_norm) / N # DxD
-        # loss
-        c_diff = (c - torch.eye(D,device=self.device)).pow(2) # DxD
-        # multiply off-diagonal elems of c_diff by lambda
-        c_diff[~torch.eye(D, dtype=bool)] *= self.lambda_param
-        loss = c_diff.sum()
+        if self.correlation=='cross':
+            # cross-correlation matrix
+            c = torch.mm(z_a_norm.T, z_b_norm) / N # DxD
+            # loss
+            c_diff = (c - torch.eye(D,device=self.device)).pow(2) # DxD
+            # multiply off-diagonal elems of c_diff by lambda
+            c_diff[~torch.eye(D, dtype=bool)] *= self.lambda_param
+            loss = c_diff.sum()
+        elif self.correlation=='auto':
+            # auto-correlation matrix
+            c1 = torch.mm(z_a_norm.T, z_a_norm) / N # DxD
+            c2 = torch.mm(z_b_norm.T, z_b_norm) / N # DxD
+            c = (c1.pow(2) + c2.pow(2)) / 2
+            c[torch.eye(D)]=0
+            redundancy_loss = c.sum()
+            # cross-correlation matrix
+            c = torch.mm(z_a_norm.T, z_b_norm) / N # DxD
+            # loss
+            c_diff = (c - torch.eye(D,device=self.device)).pow(2) # DxD
+            c_diff[~torch.eye(D)]=0
+            loss = c_diff.sum()
+            loss += self.lambda_param*redundancy_loss
+        else:
+            raise ValueError("Wrong correlation specified in BarlowTwins\
+                             config: use cross or auto.")
 
         return loss
 

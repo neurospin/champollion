@@ -2,6 +2,7 @@
 test: False
 mode: encoder
 contrastive_model: BarlowTwins
+BT_correlation: 'cross'
 with_labels: False
 proportion_pure_contrastive: 1.0
 temperature_initial: 0.1

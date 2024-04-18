@@ -135,7 +135,7 @@ class BarlowTwinsLoss(nn.Module):
             c = torch.mm(z_a_norm.T, z_b_norm) / N # DxD
             # loss
             c_diff = (c - torch.eye(D,device=self.device)).pow(2) # DxD
-            c_diff[~torch.eye(D)]=0
+            c_diff[~torch.eye(D, dtype=bool)]=0
             loss = c_diff.sum()
             loss += self.lambda_param*redundancy_loss
         else:

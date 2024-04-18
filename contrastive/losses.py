@@ -129,7 +129,7 @@ class BarlowTwinsLoss(nn.Module):
             c1 = torch.mm(z_a_norm.T, z_a_norm) / N # DxD
             c2 = torch.mm(z_b_norm.T, z_b_norm) / N # DxD
             c = (c1.pow(2) + c2.pow(2)) / 2
-            c[torch.eye(D)]=0
+            c[torch.eye(D, dtype=bool)]=0
             redundancy_loss = c.sum()
             # cross-correlation matrix
             c = torch.mm(z_a_norm.T, z_b_norm) / N # DxD

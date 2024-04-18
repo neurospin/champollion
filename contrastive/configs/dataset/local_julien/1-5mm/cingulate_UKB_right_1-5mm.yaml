@@ -1,4 +1,4 @@
-ls # @package dataset.cingulate_UKB_right_1-5mm
+# @package dataset.cingulate_UKB_right_1-5mm
 dataset_name: cingulate_UKB_right_1-5mm
 pickle_normal: /volatile/jl277509/data/UkBioBank/crops/1.5mm/CINGULATE/mask/Rskeleton.pkl
 numpy_all: /volatile/jl277509/data/UkBioBank/crops/1.5mm/CINGULATE/mask/Rskeleton.npy

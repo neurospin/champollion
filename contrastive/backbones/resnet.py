@@ -126,10 +126,10 @@ class Critic(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, layers, in_channels=3, num_classes=1000, zero_init_residual=False,
-                 groups=1, width_per_group=64, replace_stride_with_dilation=None,
+    def __init__(self, block, layers, channels=[32, 64, 128, 256], in_channels=3, num_classes=1000,
+                 zero_init_residual=False, groups=1, width_per_group=64, replace_stride_with_dilation=None,
                  norm_layer=None, dropout_rate=None, out_block=None, prediction_bias=True,
-                 initial_kernel_size=7):
+                 initial_kernel_size=7, initial_stride=2):
         super(ResNet, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm3d
@@ -150,7 +150,7 @@ class ResNet(nn.Module):
                              "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
         self.groups = groups
         self.base_width = width_per_group
-        initial_stride = 2 if initial_kernel_size==7 else 1
+        #initial_stride = 2 if initial_kernel_size==7 else 1
         padding = (initial_kernel_size-initial_stride+1)//2
         self.conv1 = nn.Conv3d(in_channels, self.inplanes, kernel_size=initial_kernel_size, stride=initial_stride,
                                padding=padding, bias=False)
@@ -158,7 +158,7 @@ class ResNet(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool3d(kernel_size=3, stride=2, padding=1)
 
-        channels = [64, 128, 256, 512]
+        #channels = [64, 128, 256, 512]
 
         self.layer1 = self._make_layer(block, channels[0], layers[0])
         self.layer2 = self._make_layer(block, channels[1], layers[1], stride=2,
@@ -204,7 +204,7 @@ class ResNet(nn.Module):
     def get_current_visuals(self):
         return self.inputs
 
-    def _make_layer(self, block, planes, blocks, stride=1, dilate=False, concrete_dropout=False):
+    def _make_layer(self, block, planes, blocks, stride=1, dilate=False):
         norm_layer = self._norm_layer
         downsample = None
         previous_dilation = self.dilation
@@ -219,13 +219,12 @@ class ResNet(nn.Module):
 
         layers = []
         layers.append(block(self.inplanes, planes, stride=stride, downsample=downsample, groups=self.groups,
-                            base_width=self.base_width, dilation=previous_dilation, norm_layer=norm_layer,
-                            concrete_dropout=concrete_dropout))
+                            base_width=self.base_width, dilation=previous_dilation, norm_layer=norm_layer))
         self.inplanes = planes * block.expansion
         for _ in range(1, blocks):
             layers.append(block(self.inplanes, planes, groups=self.groups,
                                 base_width=self.base_width, dilation=self.dilation,
-                                norm_layer=norm_layer, concrete_dropout=concrete_dropout))
+                                norm_layer=norm_layer))
 
         return nn.Sequential(*layers)
 

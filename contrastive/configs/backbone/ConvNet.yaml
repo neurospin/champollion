@@ -3,5 +3,5 @@
 backbone_name: convnet
 encoder_depth: 3
 block_depth: 2
-backbone_output_size: 10
+backbone_output_size: 256
 projection_head_hidden_layers:

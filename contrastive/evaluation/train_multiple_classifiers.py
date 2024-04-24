@@ -430,6 +430,14 @@ def train_n_repeat_classifiers(config, subset='full'):
             mode = 'cross_val'
             aucs = np.array(aucs[mode])
             accuracies = np.array(accuracies[mode])
+            # compute weighted auc using label proportion in inputs
+            weighted_auc = 0
+            print(np.unique(inputs['Y'], return_counts=True)[1])
+            auc_list = (np.mean(aucs, axis=0)).tolist()
+            for idx, number in enumerate(np.unique(inputs['Y'], return_counts=True)[1]):
+                auc = auc_list[idx]
+                weight = number / len(inputs['Y'])
+                weighted_auc += auc*weight
 
             target =  f'{subset}_ovr_balanced_accuracy'
             values[target] = [(np.mean(accuracies, axis=0)).tolist(), (np.std(accuracies, axis=0)).tolist()]
@@ -439,11 +447,13 @@ def train_n_repeat_classifiers(config, subset='full'):
                 [np.mean(accuracies), np.mean(values[target][1])]
             
             target = f'{subset}_ovr_auc'
-            values[target] = [(np.mean(aucs, axis=0)).tolist(), (np.std(aucs, axis=0)).tolist()]
+            values[target] = [auc_list, (np.std(aucs, axis=0)).tolist()]
             print(f"{subset} cross_val AUC:\n", f'Average: {np.mean(values[target][0])}'
+                  , f'Weighted: {weighted_auc}'
                   , f'OVR: {values[target]}')
             values[f'{subset}_auc']=\
                 [np.mean(aucs), np.mean(values[target][1])]
+            values[f'{subset}_weighted_auc']=weighted_auc
         else:
             # Put together the results
             for i, o in enumerate(outputs):

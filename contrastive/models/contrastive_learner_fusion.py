@@ -51,6 +51,7 @@ from sklearn.metrics import roc_auc_score, r2_score
 from contrastive.augmentations import ToPointnetTensor
 from contrastive.backbones.densenet import DenseNet
 from contrastive.backbones.convnet import ConvNet
+from contrastive.backbones.resnet import resnet18
 #from contrastive.backbones.pointnet import PointNetCls
 from contrastive.backbones.projection_heads import *
 from contrastive.data.utils import change_list_device
@@ -100,6 +101,16 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     num_representation_features=config.backbone_output_size,
                     drop_rate=config.drop_rate,
                     in_shape=config.data[i].input_size))
+        elif config.backbone_name == 'resnet18':
+            for i in range(n_datasets):
+                self.backbones.append(resnet18(
+                    in_channels=1,
+                    num_classes=config.backbone_output_size,
+                    zero_init_residual=config.zero_init_residual,
+                    dropout_rate=config.drop_rate,
+                    out_block=None,
+                    prediction_bias=False,
+                    initial_kernel_size=config.initial_kernel_size))
         # elif config.backbone_name == 'pointnet':
         #     self.backbone = PointNetCls(
         #         k=config.num_representation_features,

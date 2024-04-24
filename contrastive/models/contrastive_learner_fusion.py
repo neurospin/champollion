@@ -106,7 +106,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                 self.backbones.append(ResNet(
                     block=BasicBlock,
                     layers=config.layers,
-                    filters=config.filters,
+                    channels=config.channels,
                     in_channels=1,
                     num_classes=config.backbone_output_size,
                     zero_init_residual=config.zero_init_residual,

@@ -320,6 +320,7 @@ def train_one_classifier(config, inputs, subjects, i=0):
             roc_aucs, accuracies = compute_multiclass_indicators(Y, labels_proba)
             outputs['roc_auc'] = roc_aucs
             outputs['balanced_accuracy'] = accuracies
+            outputs['proba_of_1'] = labels_proba
         else:
             curves, roc_auc, accuracy = compute_binary_indicators(Y, labels_proba)
             outputs['proba_of_1'] = labels_proba[:, 1]
@@ -371,6 +372,7 @@ def train_n_repeat_classifiers(config, subset='full'):
     elif 'label_type' in config.keys() and config['label_type']=='multiclass':
         aucs = {'cross_val': []}
         accuracies = {'cross_val': []}
+        proba_pred_list = []
     else:
         Curves = {'cross_val': []}
         aucs = {'cross_val': []}
@@ -423,16 +425,24 @@ def train_n_repeat_classifiers(config, subset='full'):
             for i, o in enumerate(outputs):
                 roc_auc = o['roc_auc']
                 accuracy = o['balanced_accuracy']
+                probas_pred = o['proba_of_1']
                 aucs['cross_val'].append(roc_auc)
                 accuracies['cross_val'].append(accuracy)
-
+                proba_pred_list.append(probas_pred)
+            
+            #save proba matrix
+            columns_names = [str(int(i)) for i in np.unique(labels.label)]
+            for k, probas_pred in enumerate(proba_pred_list):
+                filename = f"{subset}_probas_pred_{k}.csv"
+                probas = pd.DataFrame(probas_pred, columns=columns_names, index=labels.Subject)
+                probas.to_csv(os.path.join(results_save_folder, filename))
+            #compute metrics and print
             values = {}
             mode = 'cross_val'
             aucs = np.array(aucs[mode])
             accuracies = np.array(accuracies[mode])
             # compute weighted auc using label proportion in inputs
             weighted_auc = 0
-            print(np.unique(inputs['Y'], return_counts=True)[1])
             auc_list = (np.mean(aucs, axis=0)).tolist()
             for idx, number in enumerate(np.unique(inputs['Y'], return_counts=True)[1]):
                 auc = auc_list[idx]

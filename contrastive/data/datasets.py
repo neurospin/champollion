@@ -40,9 +40,9 @@ import torch
 from contrastive.utils.logs import set_file_logger
 
 from contrastive.data.transforms import \
-    transform_foldlabel, transform_no_foldlabel,\
+    transform_foldlabel, transform_cutin, transform_cutout, \
     transform_nothing_done, transform_only_padding,\
-    transform_trimdepth, transform_random
+    transform_trimdepth, transform_random, transform_mixed
 
 from contrastive.augmentations import PaddingTensor
 
@@ -191,7 +191,7 @@ class ContrastiveDatasetFusion():
         for reg in range(len(filenames)):
             if self.transform:
                 # mix of branch clipping, cutout, cutin, and trimdepth
-                if self.config.mixed:
+                if self.config.random_choice:
                     transform1 = transform_random(
                         sample_foldlabels[reg],
                         self.config.percentage,
@@ -199,6 +199,19 @@ class ContrastiveDatasetFusion():
                         input_size=self.config.data[reg].input_size,
                         config=self.config)
                     transform2 = transform_random(
+                        sample_foldlabels[reg],
+                        self.config.percentage,
+                        sample_distbottoms[reg],
+                        input_size=self.config.data[reg].input_size,
+                        config=self.config)
+                elif self.config.mixed:
+                    transform1 = transform_mixed(
+                        sample_foldlabels[reg],
+                        self.config.percentage,
+                        sample_distbottoms[reg],
+                        input_size=self.config.data[reg].input_size,
+                        config=self.config)
+                    transform2 = transform_mixed(
                         sample_foldlabels[reg],
                         self.config.percentage,
                         sample_distbottoms[reg],
@@ -230,12 +243,10 @@ class ContrastiveDatasetFusion():
                             self.config)
                 # cutout with or without noise
                 else:
-                    transform1 = transform_no_foldlabel(
-                        from_skeleton=True,
+                    transform1 = transform_cutout(
                         input_size=self.config.data[reg].input_size,
                         config=self.config)
-                    transform2 = transform_no_foldlabel(
-                        from_skeleton=True,
+                    transform2 = transform_cutin(
                         input_size=self.config.data[reg].input_size,
                         config=self.config)
                     

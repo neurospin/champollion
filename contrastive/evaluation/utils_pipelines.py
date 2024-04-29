@@ -45,7 +45,7 @@ def change_config_datasets(config, new_datasets):
 
     # add the ones of the target datasets
     for dataset in new_datasets:
-        with open(f'./configs/dataset/{dataset}.yaml', 'r') as file:
+        with open(os.getcwd() + f'/configs/dataset/{dataset}.yaml', 'r') as file:
             dataset_yaml = yaml.load(file, yaml.FullLoader)
         config.dataset[dataset] = {}
         for key in dataset_yaml:
@@ -64,13 +64,13 @@ def change_config_label(config, new_label):
     # remove the keywords of the old label
     if 'label_names' in config.keys():
         current_label = config.label_names[0]
-        with open(f'./configs/label/{current_label}.yaml', 'r') as file:
+        with open(os.getcwd() + f'/configs/label/{current_label}.yaml', 'r') as file:
             old_label_yaml = yaml.load(file, yaml.FullLoader)
         for key in old_label_yaml:
             config.pop(key)
 
     # add the ones of the target label
-    with open(f'./configs/label/{new_label}.yaml', 'r') as file:
+    with open(os.getcwd() + f'/configs/label/{new_label}.yaml', 'r') as file:
         label_yaml = yaml.load(file, yaml.FullLoader)
     for key in label_yaml:
         config[key] = label_yaml[key]

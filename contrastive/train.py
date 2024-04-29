@@ -97,12 +97,12 @@ def train(config):
 
     # copies some of the config parameters in a yaml file easily accessible
     keys_to_keep = ['datasets', 'nb_subjects', 'model', 'with_labels',
-                    'input_size', 'temperature_initial', 'temperature',
-                    'sigma', 'drop_rate', 'mode', 'both', 'foldlabel',
-                    'trimdepth', 'mixed', 'resize', 'patch_size', 'max_angle',
+                    'input_size', 'temperature_initial', 'temperature', 'lambda_BT',
+                    'sigma', 'drop_rate', 'mode', 'foldlabel',
+                    'trimdepth', 'random_choice', 'mixed', 'distribution', 'patch_size', 'max_angle',
                     'max_distance', 'max_translation', 'checkerboard_size',
-                    'keep_bottom', 'keep_top', 'uniform_trim', 'growth_rate', 'block_config',
-                    'num_init_features','backbone_output_size',
+                    'keep_extremity', 'uniform_trim', 'binary_trim', 'growth_rate',
+                    'block_config', 'num_init_features','backbone_output_size',
                     'fusioned_latent_space_size','num_outputs',
                     'environment', 'batch_size', 'pin_mem', 'partition',
                     'lr', 'gamma', 'weight_decay', 'max_epochs',
@@ -128,8 +128,12 @@ def train(config):
         model.load_pretrained_model(config.pretrained_model_path,
                                     encoder_only=config.load_encoder_only)
 
+    dataset = list(config.dataset.keys())[0]
+    input_size = tuple([1] + list(config.dataset[dataset]['input_size']))
+    #print(f"Last linear layer dimension : \
+    #      {model.state_dict()['backbones.0.encoder.Linear.weight'].shape}")
     if config.backbone_name != 'pointnet':
-        summary(model, None, device=config.device)
+        summary(model, input_data=input_size, device=config.device, depth=6)
     else:
         summary(model, device='cpu')
 

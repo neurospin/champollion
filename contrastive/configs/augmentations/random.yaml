@@ -1,19 +1,21 @@
 # @package _global_
-resize: False
-both: False
 apply_augmentations: True
-mixed: True
+random_choice: True
+mixed: False
 foldlabel: True
 trimdepth: True
 uniform_trim: False
+binary_trim: True
 fill_value: 0
 max_angle: 6
-max_distance: 0
+max_distance: 75
 max_translation: 1
 checkerboard_size: 4
-keep_bottom: False
-keep_top: True
-percentage: 40
+keep_extremity: 'bottom'
+percentage: 20
 variable_percentage: False
-sigma_noise: 0.2  # set to positive to allow noise
-patch_size: [1, 11, 25, 25]
+sigma_noise: 0.  # set to positive to allow noise
+patch_size: 30
+distribution: [0.2, 0.4, 0.6, 0.8] #equiprobability
+#distribution: [0.25, 0.5, 0.75, 0.75] #equiprobability for each of the 4 augmentations (excluding cutin)
+#distribution: [0,0,0] # for translation only

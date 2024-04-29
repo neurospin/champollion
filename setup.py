@@ -2,7 +2,7 @@ import os
 from setuptools import setup, find_packages
 
 setup(
-    name='2023_agaudin_jchavas_folding_supervised',
+    name='2023_jlaval_STSbabies',
     version='0.0.1',
     packages=find_packages(
         exclude=['tests*', 'notebooks*']),
@@ -27,7 +27,7 @@ setup(
                       'OmegaConf',
                       'scikit-learn',
                       'scikit-image',
-                      'pytorch-lightning>=1.8.0',
+                      'pytorch-lightning==2.1.3',
                       'lightly',
                       'plotly',
                       'toolz',
@@ -48,7 +48,7 @@ setup(
                         git+https://git@github.com/neurospin/deep_folding',
                       ],
     },
-    url='https://github.com/neurospin-projects/2023_agaudin_jchavas_folding_supervised',
-    author='Joël Chavas, Aymeric Gaudin, Julien Laval',
-    author_email='joel.chavas@cea.fr, aymeric.gaudin@cea.fr, julien.laval@cea.fr'
+    url='https://github.com/neurospin-projects/2023_jlaval_STSbabies',
+    author='Julien Laval, Joël Chavas, Aymeric Gaudin',
+    author_email='julien.laval@cea.fr, joel.chavas@cea.fr, aymeric.gaudin@cea.fr'
 )

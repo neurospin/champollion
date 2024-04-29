@@ -1,7 +1,6 @@
 # @package _global_
-resize: False
-both: False
 apply_augmentations: True
+random_choice: False
 mixed: False
 foldlabel: False
 trimdepth: True
@@ -10,7 +9,7 @@ max_angle: 6
 max_distance: 6
 max_translation: 1
 checkerboard_size: 4
-keep_top: True
-keep_bottom: False
+keep_extremity: 'top'
 uniform_trim: False
+binary_trim: True
 sigma_noise: 0.2  # set to positive to allow noise

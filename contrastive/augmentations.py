@@ -207,18 +207,18 @@ def intersection_skeleton_foldlabel(arr_foldlabel, arr_skel):
 def remove_bottom_branches(a):
     """Removes bottom branches from foldlabel.
 
-    Bottom branches are numerated between 2000 and 2999"""
-    return a*((a < 2000) | (a >= 3000)).astype(int)
+    Bottom branches are numerated between 7000 and 7999"""
+    return a*((a < 7000) | (a >= 8000)).astype(int)
 
 def remove_top_branches(a):
     """Removes top branches from foldlabel.
 
-    Top branches are numerated between 2000 and 2999"""
-    return a*((a < 8000) | (a >= 9000)).astype(int)
+    Top branches are numerated between 6000 and 6999"""
+    return a*((a < 6000) | (a >= 7000)).astype(int)
 
 
 def remove_branches_up_to_percent(arr_foldlabel, arr_skel,
-                                  percentage, keep_bottom, keep_top):
+                                  percentage, keep_extremity):
     """Removes from arr_skel random branches up to percentage of pixels
     If percentage==0, no pixel is deleted
     If percentage==100, all pixels are deleted
@@ -228,9 +228,9 @@ def remove_branches_up_to_percent(arr_foldlabel, arr_skel,
     total_pixels_after = intersection_skeleton_foldlabel(arr_foldlabel,
                                                          arr_skel)
 
-    if keep_bottom:
+    if keep_extremity=='bottom':
         arr_foldlabel = remove_bottom_branches(arr_foldlabel)
-    elif keep_top:
+    elif keep_extremity=='top':
         arr_foldlabel = remove_top_branches(arr_foldlabel)
     # if keep_bottom:
     #     arr_foldlabel_without_bottom = remove_bottom_branches(arr_foldlabel)
@@ -285,13 +285,22 @@ class RemoveRandomBranchTensor(object):
 
     def __init__(self, sample_foldlabel,
                  percentage, input_size,
-                 keep_bottom, keep_top, variable_percentage):
+                 keep_extremity, variable_percentage):
         self.sample_foldlabel = sample_foldlabel
         self.percentage = percentage
         self.variable_percentage = variable_percentage
         self.input_size = input_size
-        self.keep_bottom = keep_bottom
-        self.keep_top = keep_top
+        if keep_extremity=='random':
+            np.random.seed()
+            r = np.random.randint(3)
+            if r == 0:
+                self.keep_extremity='top'
+            elif r==1:
+                self.keep_extremity='bottom'
+            else:
+                self.keep_extremity=None
+        else:
+            self.keep_extremity = keep_extremity
 
     def __call__(self, tensor_skel):
         log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
@@ -302,7 +311,7 @@ class RemoveRandomBranchTensor(object):
         # log.debug(f"arr_foldlabel.shape = {arr_foldlabel.shape}")
         assert (arr_skel.shape == arr_foldlabel.shape)
         assert (self.percentage >= 0)
-        assert not (self.keep_bottom and self.keep_top), "Choose either keep_bottom or keep_top."
+        #assert not (self.keep_bottom and self.keep_top), "Choose either keep_bottom or keep_top."
 
         if self.variable_percentage:
             percentage = np.random.uniform(0, self.percentage)
@@ -322,15 +331,13 @@ class RemoveRandomBranchTensor(object):
                     remove_branches_up_to_percent(arr_foldlabel[num_img, ...],
                                                   arr_skel[num_img, ...],
                                                   percentage,
-                                                  self.keep_bottom,
-                                                  self.keep_top)
+                                                  self.keep_extremity)
         elif len(arr_skel.shape) == len(self.input_size):
             arr_skel_without_branches = \
                 remove_branches_up_to_percent(arr_foldlabel,
                                               arr_skel,
                                               percentage,
-                                              self.keep_bottom,
-                                              self.keep_top)
+                                              self.keep_extremity)
         else:
             raise RuntimeError(
                 f"Unexpected skeleton shape."
@@ -381,8 +388,8 @@ class PartialCutOutTensor_Roll(object):
     We assume that the rectangle to be cut is inside the image.
     """
 
-    def __init__(self, from_skeleton=True,
-                 keep_top=True, keep_bottom=False, patch_size=None,
+    def __init__(self, from_skeleton=True, input_size=None,
+                 keep_extremity='bottom', patch_size=None,
                  random_size=False, localization=None):
         """[summary]
         If from_skeleton==True,
@@ -392,27 +399,46 @@ class PartialCutOutTensor_Roll(object):
         Args:
             from_skeleton (bool, optional): Defaults to True.
             patch_size (either int or list of int): Defaults to None.
+                if int, percentage of the volume to cutout.
+                Defines a rectangle with same proportions as input.
             random_size (bool, optional): Defaults to False.
             inplace (bool, optional): Defaults to False.
             localization ([type], optional): Defaults to None.
         """
-        self.patch_size = rotate_list(patch_size)
+        if not isinstance(patch_size, int):
+            self.patch_size = rotate_list(patch_size)
+        else:
+            self.patch_size = patch_size
+        self.input_size = input_size
         self.random_size = random_size
         self.localization = localization
         self.from_skeleton = from_skeleton
-        self.keep_top = keep_top
-        self.keep_bottom = keep_bottom
+        if keep_extremity=='random':
+            np.random.seed()
+            r = np.random.randint(3)
+            if r == 0:
+                self.keep_extremity='top'
+            elif r==1:
+                self.keep_extremity='bottom'
+            else:
+                self.keep_extremity=None
+        else:
+            self.keep_extremity = keep_extremity
 
     def __call__(self, tensor):
 
         arr = tensor.numpy()
         img_shape = np.array(arr.shape)
         if isinstance(self.patch_size, int):
-            size = [self.patch_size for _ in range(len(img_shape))]
+            proportion = (1/100*self.patch_size)**(1/(len(img_shape)-1))
+            size = rotate_list(self.input_size)
+            size = proportion*np.array(size)
+            size = np.round(size).astype(int)
+            size[-1]=1
+            
         else:
             size = np.copy(self.patch_size)
         assert len(size) == len(img_shape), "Incorrect patch dimension."
-        assert not (self.keep_bottom and self.keep_top), "Choose either keep_bottom or keep_top."
         start_cutout = []
         for ndim in range(len(img_shape)):
             if size[ndim] > img_shape[ndim] or size[ndim] < 0:
@@ -446,9 +472,9 @@ class PartialCutOutTensor_Roll(object):
         # This keeps the whole skeleton outside the cutout
         # and keeps only bottom value inside the cutout
         if self.from_skeleton:
-            if self.keep_top:
+            if self.keep_extremity=='top':
                 arr_inside = arr_inside * (arr_inside == 35)
-            elif self.keep_bottom:
+            elif self.keep_extremity=='bottom':
                 arr_inside = arr_inside * (arr_inside == 30)
             else:
                 arr_inside = arr_inside * (arr_inside == 0)
@@ -457,9 +483,9 @@ class PartialCutOutTensor_Roll(object):
         # This keeps only bottom value outside the cutout
         # and keeps the whole skeleton inside the cutout
         else:
-            if self.keep_top:
+            if self.keep_extremity=='top':
                 arr_outside = arr_outside * (arr_outside == 35)
-            elif self.keep_bottom:
+            elif self.keep_extremity=='bottom':
                 arr_outside = arr_outside * (arr_outside == 30)
             else:
                 arr_outside = arr_outside * (arr_outside == 0)
@@ -769,16 +795,26 @@ class TrimDepthTensor(object):
     Trim depth based on distbottom.
     Set max_distance to 0 to remove bottom only.
     Set max_distance to -1 to remove nothing.
+    Then the scale is 100 = 2mm.
     """
 
     def __init__(self, sample_distbottom, sample_foldlabel,
-                 max_distance, input_size, keep_top, uniform):
+                 max_distance, input_size, keep_extremity, uniform, binary):
         self.max_distance = max_distance
         self.input_size = input_size
         self.sample_distbottom = sample_distbottom
         self.sample_foldlabel = sample_foldlabel
-        self.keep_top=keep_top
         self.uniform=uniform
+        self.binary=binary
+        if keep_extremity=='random':
+            np.random.seed()
+            r = np.random.randint(2)
+            if r == 0:
+                self.keep_extremity='top'
+            else:
+                self.keep_extremity=None
+        else:
+            self.keep_extremity = keep_extremity
     
     def __call__(self, tensor_skel):
         log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
@@ -796,7 +832,7 @@ class TrimDepthTensor(object):
             # get random threshold
             threshold = np.random.randint(-1, self.max_distance+1)
             # mask skel with thresholded distbottom
-            if self.keep_top:
+            if self.keep_extremity=='top':
                 arr_trimmed[np.logical_and(arr_distbottom<=threshold, arr_skel!=35)]=0
             else:
                 arr_trimmed[arr_distbottom<=threshold]=0
@@ -812,8 +848,15 @@ class TrimDepthTensor(object):
                 arr_trimmed = arr_skel.copy()
                 mask_branch = np.mod(arr_foldlabel,
                                     np.full(arr_foldlabel.shape, fill_value=1000))==index
-                threshold = np.random.randint(-1, self.max_distance+1)
-                if self.keep_top:
+                if self.binary:
+                    r = np.random.randint(2)
+                    if r == 0:
+                        threshold = -1
+                    else:
+                        threshold = self.max_distance
+                else:
+                    threshold = np.random.randint(-1, self.max_distance+1)
+                if self.keep_extremity=='top':
                     arr_trimmed[np.logical_and(arr_distbottom<=threshold, arr_skel!=35)]=0
                 else:
                     arr_trimmed[arr_distbottom<=threshold]=0

@@ -77,8 +77,8 @@ class DataModule_Learning(DataModule):
                                       data_source=self.dataset_train),
                                   pin_memory=self.config.pin_mem,
                                   multiprocessing_context='fork',
-                                  num_workers=self.config.num_cpu_workers
-                                  )
+                                  num_workers=self.config.num_cpu_workers,
+                                  drop_last=True)
         return loader_train
 
     def val_dataloader(self):
@@ -87,8 +87,8 @@ class DataModule_Learning(DataModule):
                                 pin_memory=self.config.pin_mem,
                                 multiprocessing_context='fork',
                                 num_workers=self.config.num_cpu_workers,
-                                shuffle=False
-                                )
+                                shuffle=False,
+                                drop_last=True)
         return loader_val
 
     def test_dataloader(self):
@@ -97,8 +97,8 @@ class DataModule_Learning(DataModule):
                                  pin_memory=self.config.pin_mem,
                                  multiprocessing_context='fork',
                                  num_workers=self.config.num_cpu_workers,
-                                 shuffle=False
-                                 )
+                                 shuffle=False,
+                                 drop_last=True)
         return loader_test
 
     def test_intra_dataloader(self):
@@ -109,8 +109,8 @@ class DataModule_Learning(DataModule):
                 pin_memory=self.config.pin_mem,
                 multiprocessing_context='fork',
                 num_workers=self.config.num_cpu_workers,
-                shuffle=False
-            )
+                shuffle=False,
+                drop_last=True)
             return loader_test_intra
         else:
             raise ValueError(

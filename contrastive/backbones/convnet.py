@@ -88,7 +88,7 @@ class ConvNet(pl.LightningModule):
             See `"paper" <https://arxiv.org/pdf/1707.06990.pdf>`_
     """
 
-    def __init__(self, in_channels=1, encoder_depth=3,
+    def __init__(self, in_channels=1, encoder_depth=3, block_depth=2,
                  num_representation_features=256,
                  drop_rate=0.1, memory_efficient=False,
                  in_shape=None):
@@ -102,6 +102,7 @@ class ConvNet(pl.LightningModule):
         self.in_shape = in_shape
         c, h, w, d = in_shape
         self.encoder_depth = encoder_depth
+        self.block_depth = block_depth
 
         # receptive field downsampled 2 times
         self.z_dim_h = h//2**self.encoder_depth
@@ -109,29 +110,34 @@ class ConvNet(pl.LightningModule):
         self.z_dim_d = d//2**self.encoder_depth
 
         modules_encoder = []
+        layer_name = ['', 'a', 'b', 'c']
         for step in range(encoder_depth):
-            in_channels = 1 if step == 0 else out_channels
-            out_channels = 16 if step == 0 else 16 * (2**step)
+            for depth in range(block_depth-1):
+                name = layer_name[depth]
+                in_channels = 1 if (step == 0 and depth==0) else out_channels
+                out_channels = 16 if step == 0 else 16 * (2**step)
+                modules_encoder.append(
+                    (f'conv{step}{name}',
+                    nn.Conv3d(in_channels, out_channels,
+                            kernel_size=3, stride=1, padding=1)
+                    ))
+                modules_encoder.append(
+                    (f'norm{step}{name}', nn.BatchNorm3d(out_channels)))
+                modules_encoder.append((f'LeakyReLU{step}{name}', nn.LeakyReLU()))
+                modules_encoder.append(
+                    (f'DropOut{step}{name}', nn.Dropout3d(p=drop_rate)))
+
+            name=layer_name[block_depth-1]
             modules_encoder.append(
-                ('conv%s' % step,
-                 nn.Conv3d(in_channels, out_channels,
-                           kernel_size=3, stride=1, padding=1)
-                 ))
+                (f'conv{step}{name}',
+                nn.Conv3d(out_channels, out_channels,
+                        kernel_size=4, stride=2, padding=1)
+                ))
             modules_encoder.append(
-                ('norm%s' % step, nn.BatchNorm3d(out_channels)))
-            modules_encoder.append(('LeakyReLU%s' % step, nn.LeakyReLU()))
+                (f'norm{step}{name}', nn.BatchNorm3d(out_channels)))
+            modules_encoder.append((f'LeakyReLU{step}{name}', nn.LeakyReLU()))
             modules_encoder.append(
-                ('DropOut%s' % step, nn.Dropout3d(p=drop_rate)))
-            modules_encoder.append(
-                ('conv%sa' % step,
-                 nn.Conv3d(out_channels, out_channels,
-                           kernel_size=4, stride=2, padding=1)
-                 ))
-            modules_encoder.append(
-                ('norm%sa' % step, nn.BatchNorm3d(out_channels)))
-            modules_encoder.append(('LeakyReLU%sa' % step, nn.LeakyReLU()))
-            modules_encoder.append(
-                ('DropOut%sa' % step, nn.Dropout3d(p=drop_rate)))
+                (f'DropOut{step}{name}', nn.Dropout3d(p=drop_rate)))
             self.num_features = out_channels
         # flatten and reduce to the desired dimension
         modules_encoder.append(('Flatten', nn.Flatten()))

@@ -96,6 +96,53 @@ def print_info(z_i, z_j, sim_zij, sim_zii, sim_zjj, temperature):
     log.info(
         f"quantile of negatives ij = "
         f"{quantile_negative_ij.cpu()*temperature*100}")
+    
+
+class BarlowTwinsLoss(nn.Module):
+
+    def __init__(self, device, correlation='cross', lambda_param=5e-3):
+        super(BarlowTwinsLoss, self).__init__()
+        self.lambda_param = lambda_param
+        self.device = device
+        self.correlation = correlation
+
+    def forward(self, z_a, z_b):
+        # normalize repr. along the batch dimension
+        # beware: normalization is not robust to batch of size 1
+        # if it happens, it will return a nan loss
+        z_a_norm = (z_a - z_a.mean(0)) / z_a.std(0) # NxD
+        z_b_norm = (z_b - z_b.mean(0)) / z_b.std(0) # NxD
+
+        N = z_a.size(0)
+        D = z_a.size(1)
+
+        if self.correlation=='cross':
+            # cross-correlation matrix
+            c = torch.mm(z_a_norm.T, z_b_norm) / N # DxD
+            # loss
+            c_diff = (c - torch.eye(D,device=self.device)).pow(2) # DxD
+            # multiply off-diagonal elems of c_diff by lambda
+            c_diff[~torch.eye(D, dtype=bool)] *= self.lambda_param
+            loss = c_diff.sum()
+        elif self.correlation=='auto':
+            # auto-correlation matrix
+            c1 = torch.mm(z_a_norm.T, z_a_norm) / N # DxD
+            c2 = torch.mm(z_b_norm.T, z_b_norm) / N # DxD
+            c = (c1.pow(2) + c2.pow(2)) / 2
+            c[torch.eye(D, dtype=bool)]=0
+            redundancy_loss = c.sum()
+            # cross-correlation matrix
+            c = torch.mm(z_a_norm.T, z_b_norm) / N # DxD
+            # loss
+            c_diff = (c - torch.eye(D,device=self.device)).pow(2) # DxD
+            c_diff[~torch.eye(D, dtype=bool)]=0
+            loss = c_diff.sum()
+            loss += self.lambda_param*redundancy_loss
+        else:
+            raise ValueError("Wrong correlation specified in BarlowTwins\
+                             config: use cross or auto.")
+
+        return loss
 
 
 class NTXenLoss(nn.Module):

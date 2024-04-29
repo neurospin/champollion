@@ -2,13 +2,15 @@ import numpy as np
 import os
 from soma import aims
 
-#dataset='UkBioBank'
-dataset='ACCpatterns'
+dataset='UkBioBank'
+#dataset='ACCpatterns'
+root = '/neurospin/dico/data/deep_folding/current/datasets/'
+#root = '/volatile/jl277509/data/' # but I copy only the crops locally..
 
 
-old_foldlabel_dir = f'/neurospin/dico/data/deep_folding/current/datasets/{dataset}/foldlabels/2mm_old/R/'
-new_foldlabel_dir = f'/neurospin/dico/data/deep_folding/current/datasets/{dataset}/foldlabels/2mm/R/'
-skels_dir = f'/neurospin/dico/data/deep_folding/current/datasets/{dataset}/skeletons/2mm/R/'
+old_foldlabel_dir = f'{root}{dataset}/foldlabels/2mm_old/R/'
+new_foldlabel_dir = f'{root}{dataset}/foldlabels/2mm/R/'
+skels_dir = f'{root}{dataset}/skeletons/2mm/R/'
 subjects = os.listdir(skels_dir)
 subjects = [sub[19:] for sub in subjects if sub[-1]!='f']
 

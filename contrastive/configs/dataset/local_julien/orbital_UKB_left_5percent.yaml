@@ -1,5 +1,5 @@
-# @package dataset.orbital_UKB_left
-dataset_name: orbital_UKB_left
+# @package dataset.orbital_UKB_left_5percent
+dataset_name: orbital_UKB_left_5percent
 pickle_normal: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Rskeleton.pkl
 numpy_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Rskeleton.npy
 subjects_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Rskeleton_subject.csv
@@ -13,6 +13,7 @@ subjects_distbottom_all: /neurospin/dico/data/deep_folding/current/datasets/UkBi
 crop_file_suffix: _cropped_skeleton.nii.gz
 pickle_benchmark:
 train_val_csv_file: /volatile/jl277509/data/UkBioBank/subjects_5percent.csv
+test_csv_file: /volatile/jl277509/data/UkBioBank/subjects_5percent.csv
 subject_labels_file: /volatile/jl277509/data/UkBioBank/participants_labels.csv
 subject_column_name: 'Subject'
 input_size: (1, 30, 38, 22)

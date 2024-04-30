@@ -97,6 +97,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             for i in range(n_datasets):
                 self.backbones.append(ConvNet(
                     encoder_depth=config.encoder_depth,
+                    filters=config.filters,
                     block_depth=config.block_depth,
                     num_representation_features=config.backbone_output_size,
                     drop_rate=config.drop_rate,

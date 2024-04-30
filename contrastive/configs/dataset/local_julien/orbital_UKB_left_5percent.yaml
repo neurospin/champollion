@@ -1,15 +1,15 @@
 # @package dataset.orbital_UKB_left_5percent
 dataset_name: orbital_UKB_left_5percent
-pickle_normal: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Rskeleton.pkl
-numpy_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Rskeleton.npy
-subjects_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Rskeleton_subject.csv
-crop_dir: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Rcrops
-foldlabel_dir: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Rlabels
-foldlabel_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Rlabel.npy
-subjects_foldlabel_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Rlabel_subject.csv
-distbottom_dir: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Rdistbottom
-distbottom_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Rdistbottom.npy
-subjects_distbottom_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Rdistbottom_subject.csv
+pickle_normal: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Lskeleton.pkl
+numpy_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Lskeleton.npy
+subjects_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Lskeleton_subject.csv
+crop_dir: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Lcrops
+foldlabel_dir: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Llabels
+foldlabel_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Llabel.npy
+subjects_foldlabel_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Llabel_subject.csv
+distbottom_dir: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Ldistbottom
+distbottom_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Ldistbottom.npy
+subjects_distbottom_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Ldistbottom_subject.csv
 crop_file_suffix: _cropped_skeleton.nii.gz
 pickle_benchmark:
 train_val_csv_file: /volatile/jl277509/data/UkBioBank/subjects_5percent.csv

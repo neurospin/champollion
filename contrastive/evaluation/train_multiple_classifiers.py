@@ -404,6 +404,7 @@ def train_n_repeat_classifiers(config, subset='full'):
         filename = f"{subset}_values.json"
         with open(os.path.join(results_save_folder, filename), 'w+') as file:
             json.dump(values, file)
+        print(f'Regression AUC: {reg_auc}')
     else:
 
         # Actual loop done config.n_repeat times

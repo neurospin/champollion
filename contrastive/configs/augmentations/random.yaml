@@ -8,7 +8,7 @@ uniform_trim: False
 binary_trim: True
 fill_value: 0
 max_angle: 6
-max_distance: 100
+max_distance: 100 # if 1.5mm, should be 75
 max_translation: 1
 checkerboard_size: 4
 keep_extremity: 'bottom'

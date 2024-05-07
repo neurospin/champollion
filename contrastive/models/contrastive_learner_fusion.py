@@ -131,7 +131,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             for backbone in self.backbones:
                 backbone.freeze()
             log.info("The model's encoders weights are frozen. Set 'freeze_encoders' \
-in the config to False to unfreeze them.")
+                      in the config to False to unfreeze them.")
 
         # rename variables
         concat_latent_spaces_size = config.backbone_output_size * n_datasets
@@ -177,6 +177,7 @@ in the config to False to unfreeze them.")
         self.validation_step_outputs = []
 
     def forward(self, x):
+        # log.info(f"x shape: {x.shape}")
         embeddings = []
         for i in range(self.n_datasets):
             embedding = self.backbones[i].forward(x[i])

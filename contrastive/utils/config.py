@@ -58,6 +58,9 @@ def process_config(config) -> DictConfig:
 
     log.info("Working directory : {}".format(os.getcwd()))
 
+    for l in config.datakey:
+        config['dataset'][l] = config['dataset'][l]['yaml']
+
     # Loops over datasets, contained as a list in config.data
     for reg in range(len(config.data)):
         config.data[reg].input_size = eval(config.data[reg].input_size)

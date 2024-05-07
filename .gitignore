@@ -112,6 +112,7 @@ venv.bak/
 venv_local/
 venv_kraken/
 venv_*
+venvis243185
 
 # Spyder project settings
 .spyderproject

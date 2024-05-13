@@ -357,7 +357,7 @@ in the config to False to unfreeze them.")
     
     def barlow_twins_loss(self, z_i, z_j):
         "Loss function for contrastive (BarlowTwins)"
-        loss = BarlowTwinsLoss(lambda_param=self.config.lambda_BT,
+        loss = BarlowTwinsLoss(lambda_param=self.config.lambda_BT / float(self.config.backbone_output_size),
                                correlation=self.config.BT_correlation,
                                device=self.config.device)
         return loss.forward(z_i, z_j)
@@ -565,7 +565,11 @@ in the config to False to unfreeze them.")
             auc = regression_roc_auc_score(labels, X[:, 0])
         else:
             X = nn.functional.softmax(X, dim=1)
-            auc = roc_auc_score(labels, X[:, 1])
+            if self.config.nb_classes==2:
+                auc = roc_auc_score(labels, X[:, 1])
+            else:
+                auc = roc_auc_score(labels, X, multi_class='ovr', average='weighted')
+
         
         # put augmentations back to normal
         loader.dataset.transform = self.config.apply_augmentations

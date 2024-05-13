@@ -202,13 +202,23 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
+    embeddings_pipeline("/neurospin/dico/adufournet/Runs/04_Heritability_Left_PCS_HCP/Program/Output/2024-05-13",
+        datasets=["antoine/cingulate_HCP_left"],
+        labels=['Left_PCS'],
+        short_name='hcp', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
+        subsets=['full'], epochs=range(0,90,10), split='random', cv=3,
+        splits_basedir=None,
+        verbose=False)    
+
+"""
     embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/2024-04-18",
         datasets=["local_julien/1-5mm/orbital_left_hcp_custom_cv_1-5mm"],
         labels=['Left_OFC'],
         short_name='troiani', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
         subsets=['full'], epochs=[None], split='custom', cv=3,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
-        verbose=False)           
+        verbose=False) 
+"""           
     
 """ PCS
         datasets=["local_julien/1-5mm/cingulate_ACCpatterns_custom_cv_1-5mm"],

@@ -1,5 +1,5 @@
-# @package dataset.orbital_left_hcp_custom_cv_2mm
-dataset_name: orbital_left_hcp_custom_cv_2mm
+# @package dataset.orbital_left_hcp_train_test
+dataset_name: orbital_left_hcp_train_test
 numpy_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/ORBITAL/mask/Lskeleton.npy
 subjects_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/ORBITAL/mask/Lskeleton_subject.csv
 foldlabel_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/ORBITAL/mask/Llabel.npy
@@ -8,9 +8,9 @@ crop_dir: /neurospin/dico/data/deep_folding/papers/miccai2023/Input/datasets/hcp
 crop_file_suffix: _cropped_skeleton.nii.gz
 foldlabel_dir: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/ORBITAL/mask/Llabels
 pickle_benchmark: 
-train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/fake_train_val.csv
-#test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/hcp_1_test_without_headers.csv
-test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/union_custom_splits_train_val.csv
+train_csv_file: /neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/split_0-6.csv
+val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/split_7.csv
+test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/split_8-9.csv
 #splits_basedir: /neurospin/dico/data/deep_folding/current/datasets/hcp/hcp_subjects_train_split_
 subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/hcp_OFC_labels.csv
 subject_column_name: 'Subject'

@@ -16,8 +16,8 @@ pickle_benchmark:
 #train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/train_val_subjects.csv
 #subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/preterm_labels.csv
 ###### for preterm_23-28 vs fullterm
-#train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/train_val_subjects_23-28_vs_fullterm.csv
-#subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/preterm_labels_23-28_vs_fullterm.csv
+train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/train_val_subjects_23-28_vs_fullterm.csv
+subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/preterm_labels_23-28_vs_fullterm.csv
 ###### for preterm_23-32 vs fullterm
 #train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/train_val_subjects_23-32_vs_fullterm.csv
 #subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/preterm_labels_23-32_vs_fullterm.csv
@@ -25,8 +25,8 @@ pickle_benchmark:
 #train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/train_val_subjects_28-32_vs_fullterm.csv
 #subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/preterm_labels_28-32_vs_fullterm.csv
 ###### for preterm_32-37 vs fullterm
-train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/train_val_subjects_32-37_vs_fullterm.csv
-subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/preterm_labels_32-37_vs_fullterm.csv
+#train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/train_val_subjects_32-37_vs_fullterm.csv
+#subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/dHCP_374_subjects/preterm_labels_32-37_vs_fullterm.csv
 subject_column_name: 'Subject'
 input_size: (1, 29, 66, 60)
 

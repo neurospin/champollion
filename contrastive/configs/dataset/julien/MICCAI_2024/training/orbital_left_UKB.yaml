@@ -1,5 +1,5 @@
-# @package dataset.orbital_UKB_left_2mm
-dataset_name: orbital_UKB_left_2mm
+# @package dataset.orbital_left_UKB
+dataset_name: orbital_left_UKB
 pickle_normal: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Lskeleton.pkl
 numpy_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Lskeleton.npy
 subjects_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Lskeleton_subject.csv

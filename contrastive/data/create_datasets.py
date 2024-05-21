@@ -46,13 +46,15 @@ try:
 except ImportError:
     print("INFO: you cannot use deep_folding in brainvisa. Probably OK.")
 
-from contrastive.utils.logs import set_file_logger, set_root_logger_level
+from ..utils.logs import set_file_logger, set_root_logger_level
 
-from contrastive.data.datasets import ContrastiveDatasetFusion
+from .datasets import ContrastiveDatasetFusion
 
-from contrastive.data.utils import \
-    check_subject_consistency, extract_data, check_if_same_subjects,\
-    check_distbottom_npy_consistency, check_foldlabel_npy_consistency, check_if_same_shape,\
+from .utils import \
+    check_subject_consistency, extract_data, \
+    check_if_same_subjects, \
+    check_distbottom_npy_consistency, check_foldlabel_npy_consistency, \
+    check_if_same_shape, \
     check_if_skeleton, extract_data_with_labels, read_labels
 
 import logging
@@ -145,11 +147,11 @@ def create_sets_without_labels(config):
                               "subjects_all")
             if 'train_val_csv_file' in config.data[0].keys():
                 check_if_same_csv(config.data[0].train_val_csv_file,
-                                config.data[reg+1].train_val_csv_file,
+                                  config.data[reg+1].train_val_csv_file,
                                 "train_csv")
             else:
                 check_if_same_csv(config.data[0].train_csv_file,
-                                config.data[reg+1].train_csv_file,
+                                  config.data[reg+1].train_csv_file,
                                 "train_csv")
             check_if_numpy_same_length(config.data[0].numpy_all,
                                        config.data[1].numpy_all,

@@ -59,7 +59,8 @@ def process_config(config) -> DictConfig:
     log.info("Working directory : {}".format(os.getcwd()))
 
     for l in config.datakey:
-        config['dataset'][l] = config['dataset'][l]['yaml']
+        if 'yaml' in config['dataset'][l]:
+            config['dataset'][l] = config['dataset'][l]['yaml']
 
     # Loops over datasets, contained as a list in config.data
     for reg in range(len(config.data)):

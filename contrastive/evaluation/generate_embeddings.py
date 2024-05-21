@@ -100,7 +100,7 @@ def compute_embeddings(config):
         #assert os.path.isfile(ckpt_path), f"No weights for selected epoch {config.epoch}"
         valid_path = os.path.isfile(ckpt_path) # check if weights exist for selected epoch
     else:
-        paths = config.model_path+"/logs/*/version_0/checkpoints"+r'/*.ckpt'
+        paths = config.model_path+"/*logs/*/version_0/checkpoints"+r'/*.ckpt'
         if 'use_best_model' in config.keys():
             paths = config.model_path+"/logs/best_model_weights.pt"
         files = glob.glob(paths)

@@ -129,16 +129,19 @@ def train(config):
                                     encoder_only=config.load_encoder_only)
 
     dataset = list(config.dataset.keys())[0]
-    input_size = []
-    # input_size = tuple([1] + list(config.dataset[dataset]['input_size']))
-    for dataset in config.dataset.keys():
-        input_size.extend(config.dataset[dataset]['input_size'][1:])
-    #print(f"Last linear layer dimension : \
+    # input_size = []
+    input_size = tuple([1] + list(config.dataset[dataset]['input_size']))
+    # for dataset in config.dataset.keys():
+    #     input_size.extend(config.dataset[dataset]['input_size'][1:])
+    # print(f"Last linear layer dimension : \
     #      {model.state_dict()['backbones.0.encoder.Linear.weight'].shape}")
-    # if config.backbone_name != 'pointnet':
-    #     summary(model, input_data=input_size, batch_dim=16, device=config.device, depth=6)
-    # else:
-    #     summary(model, device='cpu')
+    if config.backbone_name != 'pointnet':
+        # if (len(config.dataset.keys()) == 1): # if one region
+        #     summary(model, input_data=input_size, batch_dim=16, device=config.device, depth=6)
+        # else:
+        summary(model, batch_dim=16, device=config.device, depth=6)
+    else:
+        summary(model, device='cpu')
 
     # define the early stoppings
     early_stop_callback = \

@@ -8,7 +8,7 @@ import json
 import os
 
 from torch.utils.data import DataLoader, TensorDataset
-from sklearn.metrics import auc, roc_curve, roc_auc_score, balanced_accuracy_score
+from sklearn.metrics import auc, roc_curve, roc_auc_score, balanced_accuracy_score, root_mean_squared_error
 from sklearn.model_selection import cross_val_predict, train_test_split, cross_validate, \
                                     LeaveOneGroupOut, cross_val_score
 
@@ -59,7 +59,7 @@ def load_embeddings(dir_path, labels_path, config, subset='full'):
     if config.split=='custom':
         embeddings = pd.read_csv(
                 dir_path+f'/custom_cross_val_embeddings.csv', index_col=0)
-    elif config.split=='random':
+    elif config.split=='random' or config.split=='train_test':
         # if targeting directly the target csv file
         if not os.path.isdir(dir_path):
             embeddings = pd.read_csv(dir_path, index_col=0)
@@ -267,12 +267,53 @@ def train_one_classifier(config, inputs, subjects, i=0):
     Y = inputs['Y']
     outputs = {}
 
+    #cv stratification
+    if config.split=='random':
+        cv=config.cv
+    elif config.split=='custom':
+        if 'splits_basedir' not in config.keys():
+            raise ValueError("A custom split should be specified for custom CV")
+        else:
+            root_dir = '/'.join(config.splits_basedir.split('/')[:-1])
+            basedir = config.splits_basedir.split('/')[-1]
+            splits_dirs = [os.path.join(root_dir,f) for f in os.listdir(root_dir) if basedir in f and '.csv' in f]
+            splits_subs = [pd.read_csv(file, header=None) for file in splits_dirs]
+            labels = np.concatenate([[i] * len(K) for i, K in enumerate(splits_subs)])
+            splits_subs_and_labels = pd.concat(splits_subs)
+            splits_subs_and_labels.columns=['ID']
+            splits_subs_and_labels['labels'] = labels
+            subs_embeddings = pd.DataFrame({'ID': subjects, 'X': list(X.values), 'Y': Y})
+            df = subs_embeddings.merge(splits_subs_and_labels, on='ID')
+            groups, X, Y = df['labels'], np.vstack(df['X'].values), df['Y']
+            logo = LeaveOneGroupOut()
+            cv = logo.get_n_splits(groups=groups)
+    elif config.split=='train_test':
+        pass
+    else:
+        raise ValueError("Wrong split config specified")
+
     if 'label_type' in config.keys() and config['label_type']=='continuous':
         model = SVR(kernel='linear',max_iter=config.class_max_epochs,
                     C=0.01)
-        val_pred = cross_val_predict(model, X, Y, cv=5)
-        reg_auc = regression_roc_auc_score(Y, val_pred, num_rounds=10000)
+        if config.split=='train_test':
+            train = pd.read_csv(os.path.join(config.embeddings_save_path, 'train_embeddings.csv'), usecols=['ID'])
+            test = pd.read_csv(os.path.join(config.embeddings_save_path, 'test_embeddings.csv'), usecols=['ID'])
+            subs_embeddings = pd.DataFrame({'ID': subjects, 'X': list(X.values), 'Y': Y})
+            subs_embeddings_train = subs_embeddings.merge(train, on='ID')
+            X_train, Y_train = np.vstack(subs_embeddings_train['X'].to_numpy()), subs_embeddings_train['Y']
+            subs_embeddings_test = subs_embeddings.merge(test, on='ID')
+            X_test, Y_test = np.vstack(subs_embeddings_test['X'].to_numpy()), subs_embeddings_test['Y']
+            model.fit(X_train, Y_train)
+            val_pred = model.predict(X_test)
+            X,Y = X_test, Y_test
+        else:
+            val_pred = cross_val_predict(model, X, Y, cv=cv)
+        print(np.mean(Y), np.std(Y))
+        print(np.mean(val_pred), np.std(val_pred))
+        rmse = root_mean_squared_error(Y, val_pred)
+        reg_auc = regression_roc_auc_score(Y, val_pred, num_rounds=50000)
         outputs['labels_pred'] = val_pred
+        outputs['RMSE'] = rmse
         outputs['reg_auc'] = reg_auc
 
     else:
@@ -282,53 +323,43 @@ def train_one_classifier(config, inputs, subjects, i=0):
             model = SVC(kernel='linear', probability=True,
                         max_iter=config.class_max_epochs, random_state=i,
                         C=0.01, class_weight='balanced', decision_function_shape='ovr')
-        elif config.classifier_name == 'neural_network':
+        elif config.classifier_name == 'neural_network': # DEPRECATED ?
             model = MLPClassifier(hidden_layer_sizes=config.classifier_hidden_layers,
                                 activation=config.classifier_activation,
                                 batch_size=config.class_batch_size,
                                 max_iter=config.class_max_epochs, random_state=i)
         else:
             raise ValueError(f"The chosen classifier ({config.classifier_name}) is not handled by the pipeline. \
-    Choose a classifier type that exists in configs/classifier.")
+                               Choose a classifier type that exists in configs/classifier.")
         
-        # SVC predict_proba
-        if config.split=='random':
-            cv=config.cv
-        elif config.split=='custom':
-            if 'splits_basedir' not in config.keys():
-                raise ValueError("A custom split should be specified for custom CV")
-            else:
-                root_dir = '/'.join(config.splits_basedir.split('/')[:-1])
-                basedir = config.splits_basedir.split('/')[-1]
-                splits_dirs = [os.path.join(root_dir,f) for f in os.listdir(root_dir) if basedir in f and '.csv' in f]
-                splits_subs = [pd.read_csv(file, header=None) for file in splits_dirs]
-                labels = np.concatenate([[i] * len(K) for i, K in enumerate(splits_subs)])
-                splits_subs_and_labels = pd.concat(splits_subs)
-                splits_subs_and_labels.columns=['ID']
-                splits_subs_and_labels['labels'] = labels
-                subs_embeddings = pd.DataFrame({'ID': subjects, 'X': list(X.values), 'Y': Y})
-                df = subs_embeddings.merge(splits_subs_and_labels, on='ID')
-                groups, X, Y = df['labels'], np.vstack(df['X'].values), df['Y']
-                logo = LeaveOneGroupOut()
-                cv = logo.get_n_splits(groups=groups)
+        # create function to avoid copy paste ?
+        if config.split=='train_test':
+            train = pd.read_csv(os.path.join(config.embeddings_save_path, 'train_embeddings.csv'), usecols=['ID'])
+            test = pd.read_csv(os.path.join(config.embeddings_save_path, 'test_embeddings.csv'), usecols=['ID'])
+            subs_embeddings = pd.DataFrame({'ID': subjects, 'X': list(X.values), 'Y': Y})
+            subs_embeddings_train = subs_embeddings.merge(train, on='ID')
+            X_train, Y_train = np.vstack(subs_embeddings_train['X'].to_numpy()), subs_embeddings_train['Y']
+            subs_embeddings_test = subs_embeddings.merge(test, on='ID')
+            X_test, Y_test = np.vstack(subs_embeddings_test['X'].to_numpy()), subs_embeddings_test['Y']
+            model.fit(X_train, Y_train)
+            labels_proba = model.predict_proba(X_test)
+            X,Y = X_test, Y_test
         else:
-            raise ValueError("Wrong split config specified")
-        
-        labels_proba = cross_val_predict(model, X, Y, cv=cv, method='predict_proba')
+            #scores = cross_validate(model, X, Y, cv=cv, scoring='roc_auc')
+            #print(scores['test_score']) # TO GET THE INTER SPLIT VARIABILITY
+            labels_proba = cross_val_predict(model, X, Y, cv=cv, method='predict_proba')
 
         if 'label_type' in config.keys() and config['label_type']=='multiclass':
             roc_aucs, accuracies = compute_multiclass_indicators(Y, labels_proba)
+            outputs['proba_of_1'] = labels_proba
             outputs['roc_auc'] = roc_aucs
             outputs['balanced_accuracy'] = accuracies
-            outputs['proba_of_1'] = labels_proba
         else:
             curves, roc_auc, accuracy = compute_binary_indicators(Y, labels_proba)
             outputs['proba_of_1'] = labels_proba[:, 1]
-
-            # Stores in outputs dict
-            outputs['curves'] = curves
             outputs['roc_auc'] = roc_auc
             outputs['balanced_accuracy'] = accuracy
+            outputs['curves'] = curves
 
 
     return outputs
@@ -337,7 +368,7 @@ def train_one_classifier(config, inputs, subjects, i=0):
 @ignore_warnings(category=ConvergenceWarning)
 def train_n_repeat_classifiers(config, subset='full'):
     """Sets up the save paths, loads the embeddings and then loops 
-    to train the n_repeat (=250) classifiers."""
+    to train the n_repeat (=5) classifiers."""
     ## import the data
 
     # set up load and save paths
@@ -367,8 +398,9 @@ def train_n_repeat_classifiers(config, subset='full'):
     Y = labels.label
     subjects = embeddings.index.tolist()
     # Builds objects where the results are saved
+    # Depending on label type
     if 'label_type' in config.keys() and config['label_type']=='continuous':
-        reg_aucs = []
+        pass
     elif 'label_type' in config.keys() and config['label_type']=='multiclass':
         aucs = {'cross_val': []}
         accuracies = {'cross_val': []}
@@ -377,34 +409,50 @@ def train_n_repeat_classifiers(config, subset='full'):
         Curves = {'cross_val': []}
         aucs = {'cross_val': []}
         accuracies = {'cross_val': []}
-        proba_matrix = np.zeros((labels.shape[0], config.n_repeat))
-
-    # Configures loops
-
-    repeats = range(config.n_repeat)
+        if config.split!='train_test':
+            proba_matrix = np.zeros((labels.shape[0], config.n_repeat))
+        else:
+            test = pd.read_csv(os.path.join(config.embeddings_save_path, 'test_embeddings.csv'), usecols=['ID'])
+            proba_matrix = np.zeros((test.shape[0], config.n_repeat)) # report only test samples
 
     inputs = {}
     inputs['X'] = X
     # rescale embeddings
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
-
     inputs['Y'] = Y
+
+    if config.split=='train_test':
+        # Save perfs and probas only for test subs
+        # Reformat subset and labels
+        subset = 'test'
+        test = pd.read_csv(os.path.join(config.embeddings_save_path, 'test_embeddings.csv'), usecols=['ID'])
+        # restrict labels to test
+        labels = labels.loc[labels['Subject'].isin(test.ID)]
+
+    # Configures loops
+
+    repeats = range(config.n_repeat)
+
+    ## Train classifiers
+        
     if 'label_type' in config.keys() and config['label_type']=='continuous':
         #Y.iloc[:, [1]] = scaler.fit_transform(Y.iloc[:, [1]])
-        outputs = train_one_classifier(config, inputs, subjects)
+        outputs = train_one_classifier(config, inputs, subjects) # perform once since it's deterministic
         #labels_preds = outputs['labels_pred']
-        # TODO: add a matrix of labels preds and save like proba matrix
+        # TODO: add a list of labels preds and save like proba matrix
         reg_auc = outputs['reg_auc']
+        rmse = outputs['RMSE']
         
         values = {}
         values[f'{subset}_auc'] = reg_auc
+        values[f'{subset}_mse'] = rmse
         # save results
         print(f"results_save_path = {results_save_folder}")
         filename = f"{subset}_values.json"
         with open(os.path.join(results_save_folder, filename), 'w+') as file:
             json.dump(values, file)
-        print(f'Regression AUC: {reg_auc}')
+        print(f'Regression AUC: {reg_auc}, RMSE: {rmse}')
     else:
 
         # Actual loop done config.n_repeat times
@@ -420,7 +468,6 @@ def train_n_repeat_classifiers(config, subset='full'):
                 print("model number", i)
                 outputs.append(train_one_classifier(config, inputs, subjects, i))
         
-        #TODO: add proba_matrix for multiclass, merge the functions
         if 'label_type' in config.keys() and config['label_type']=='multiclass':
             # Put together the results
             for i, o in enumerate(outputs):
@@ -437,6 +484,7 @@ def train_n_repeat_classifiers(config, subset='full'):
                 filename = f"{subset}_probas_pred_{k}.csv"
                 probas = pd.DataFrame(probas_pred, columns=columns_names, index=labels.Subject)
                 probas.to_csv(os.path.join(results_save_folder, filename))
+
             #compute metrics and print
             values = {}
             mode = 'cross_val'
@@ -486,6 +534,7 @@ def train_n_repeat_classifiers(config, subset='full'):
             # post processing (mainly plotting graphs)
             values = {}
             mode = 'cross_val'
+
             post_processing_results(labels, embeddings, Curves, aucs,
                                     accuracies, values, columns_names,
                                     mode, subset, results_save_folder)
@@ -509,7 +558,7 @@ def train_classifiers(config, subsets=None):
     
     All the relevant information should be passed thanks to the input config.
     
-    It saves txt files containg the acuuracies, the aucs and figures of the ROC curves."""
+    It saves txt files containg the acuracies, the aucs and figures of the ROC curves."""
 
     config = process_config(config)
 
@@ -527,7 +576,12 @@ def train_classifiers(config, subsets=None):
         log.info(f"USING SUBSET test")
         # make sure a train file is given in this mode
         train_n_repeat_classifiers(config, subset='test')
-
+    
+    elif config.split=='train_test':
+        print("\n")
+        log.info(f"USING SUBSET full")
+        # make sure a train file is given in this mode
+        train_n_repeat_classifiers(config, subset='full')
 
 
 if __name__ == "__main__":

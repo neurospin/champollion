@@ -78,7 +78,7 @@ def compute_embeddings(config):
     
     It saves csv files for each subset of the datasets (train, val, test_intra, 
     test) and one with all subjects."""
-    
+
     config = process_config(config)
 
     config.apply_augmentations = False

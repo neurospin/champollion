@@ -160,7 +160,10 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
                             if valid_path and not embeddings_only:
                                 train_classifiers(cfg, subsets=subsets)
                             else:
-                                print('Invalid epoch number, skipped')
+                                if embeddings_only:
+                                    print('Classification skipped')
+                                else :
+                                    print('Invalid epoch number, skipped')
 
                             # compute embeddings for the best model if saved
                             if (use_best_model and os.path.exists(sub_dir+'/logs/best_model_weights.pt')):
@@ -202,11 +205,11 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    embeddings_pipeline("/neurospin/dico/adufournet/Runs/02_Heritability_Left_PCS_HCP/Program/Output/2024-05-13",
-        datasets=["antoine/cingulate_UKB_left"],
-        labels=['Left_PCS'],
-        short_name='UKB', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
-        subsets=['full'], epochs=range(0,90,10), split='random', cv=3,
+    embeddings_pipeline("/neurospin/dico/adufournet/Runs/04_Heritability_Right_PCS_HCP_dim10/Output/2024-05-16",
+        datasets=["antoine/cingulate_HCP_right"],
+        labels=['Right_PCS'],
+        short_name='HCP', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
+        subsets=['full'], epochs=[100], split='random', cv=3,
         splits_basedir=None,
         verbose=False)    
 

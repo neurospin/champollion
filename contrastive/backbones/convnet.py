@@ -90,7 +90,7 @@ class ConvNet(pl.LightningModule):
 
     def __init__(self, in_channels=1, encoder_depth=3, block_depth=2,
                  num_representation_features=256,
-                 filters=[16,32,64],
+                 filters=[16,32,64], initial_kernel_size=3,
                  drop_rate=0.1, memory_efficient=False,
                  in_shape=None):
 
@@ -105,6 +105,7 @@ class ConvNet(pl.LightningModule):
         self.encoder_depth = encoder_depth
         self.filters = filters
         self.block_depth = block_depth
+        self.initial_kernel_size = initial_kernel_size
         assert len(self.filters) >= encoder_depth, "Incomplete filters list given."
 
         # receptive field downsampled 2 times
@@ -118,12 +119,13 @@ class ConvNet(pl.LightningModule):
             for depth in range(block_depth-1):
                 name = layer_name[depth]
                 in_channels = 1 if (step == 0 and depth==0) else out_channels
+                kernel_size = self.initial_kernel_size if (step == 0 and depth==0) else 3
                 out_channels = filters[step]
                 #out_channels = 16 if step == 0 else 16 * (2**step)
                 modules_encoder.append(
                     (f'conv{step}{name}',
                     nn.Conv3d(in_channels, out_channels,
-                            kernel_size=3, stride=1, padding=1)
+                            kernel_size=kernel_size, stride=1, padding=kernel_size//2)
                     ))
                 modules_encoder.append(
                     (f'norm{step}{name}', nn.BatchNorm3d(out_channels)))

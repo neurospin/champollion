@@ -99,6 +99,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     encoder_depth=config.encoder_depth,
                     filters=config.filters,
                     block_depth=config.block_depth,
+                    initial_kernel_size=config.initial_kernel_size,
                     num_representation_features=config.backbone_output_size,
                     drop_rate=config.drop_rate,
                     in_shape=config.data[i].input_size))

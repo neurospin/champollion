@@ -277,7 +277,8 @@ def sanity_checks_with_labels(config, skeleton_output, subject_labels, reg):
         and (config.mode != 'evaluation')
     ):
         check_subject_consistency(config.data[reg].subjects_all,
-                                  config.data[reg].subjects_foldlabel_all)
+                                  config.data[reg].subjects_foldlabel_all,
+                                  name='foldlabel')
         # in order to avoid logging twice the same information
         if root.level == 20:  # root logger in INFO mode
             set_root_logger_level(0)
@@ -453,6 +454,11 @@ def create_sets_with_labels(config):
         # Concatenates labels
         labels = [skeleton_output[subset_name][2]
                   for skeleton_output in skeleton_all]
+        
+        # Convert labels to long
+        for label in label_names:
+            if label in labels[0].columns:
+                labels[0][label] = labels[0][label].to_numpy().astype(np.int64)
 
         # Checks if equality of filenames and labels
         check_if_list_of_equal_dataframes(

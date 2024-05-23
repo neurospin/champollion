@@ -12,7 +12,7 @@ defaults:
   # - dataset/occipital_schiz_L_strat_bis_threshold1
   - embeddings: embeddings
   - hydra: local
-  - label: Preterm_28
+  - label: Left_OFC
   - mode: encoder
   - model: SimCLR_fusion
   - platform: cuda_not_brainvisa

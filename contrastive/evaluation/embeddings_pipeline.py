@@ -111,7 +111,7 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
                 # check if embeddings and ROC already computed
                 # if already computed and don't want to overwrite, then pass
                 # else apply the normal process
-                folder_name = get_save_folder_name(datasets=datasets, short_name=short_name)
+                folder_name = get_save_folder_name(datasets=datasets, short_name=short_name+'_'+split)
                 if (
                     os.path.exists(sub_dir + f"/{folder_name}_embeddings")
                     and (not overwrite)
@@ -160,7 +160,10 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
                             if valid_path and not embeddings_only:
                                 train_classifiers(cfg, subsets=subsets)
                             else:
-                                print('Invalid epoch number, skipped')
+                                if embeddings_only:
+                                    print('Classification skipped')
+                                else :
+                                    print('Invalid epoch number, skipped')
 
                             # compute embeddings for the best model if saved
                             if (use_best_model and os.path.exists(sub_dir+'/logs/best_model_weights.pt')):
@@ -202,11 +205,11 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    embeddings_pipeline("/neurospin/dico/adufournet/Runs/04_Heritability_Left_PCS_HCP/Program/Output/2024-05-13",
-        datasets=["antoine/cingulate_HCP_left"],
+    embeddings_pipeline("/neurospin/dico/adufournet/Runs/02_Heritability_Left_PCS_HCP/Program/Output/2024-05-23",
+        datasets=["antoine/cingulate_UKB_left"],
         labels=['Left_PCS'],
-        short_name='hcp', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
-        subsets=['full'], epochs=range(0,90,10), split='random', cv=3,
+        short_name='UKB', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
+        subsets=['full'], epochs=range(0,110,10), split='random', cv=3,
         splits_basedir=None,
         verbose=False)    
 
@@ -221,19 +224,28 @@ if __name__ == "__main__":
 """           
     
 """ PCS
-        datasets=["local_julien/1-5mm/cingulate_ACCpatterns_custom_cv_1-5mm"],
+        datasets=["local_julien/cingulate_ACCpatterns_custom_cv_2mm"],
         labels=['Right_PCS'],
-        short_name='ACC_custom', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
+        short_name='ACC', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
         subsets=['test'], epochs=[None], split='custom', cv=3,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/ACCpatterns_subjects_train_split_',
         verbose=False)
 """
 
 """OFC
-        datasets=["local_julien/1-5mm/orbital_left_hcp_custom_cv_1-5mm"],
+        datasets=["local_julien/orbital_left_hcp_custom_cv_2mm"],
         labels=['Left_OFC'],
         short_name='troiani', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['full'], epochs=range(0,20,10), split='custom', cv=3,
+        subsets=['full'], epochs=[None], split='custom', cv=3,
+        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
+        verbose=False)
+"""
+
+"""STS Preterm
+        datasets=["local_julien/1-5mm/STs_babies_dHCP_374_subjects_right_1-5mm"],
+        labels=['Preterm_23-28_vs_fullterm'],
+        short_name='dHCP', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
+        subsets=['full'], epochs=range(0,250,10), split='random', cv=3,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
         verbose=False)
 """
@@ -261,19 +273,3 @@ if __name__ == "__main__":
 #label='Age_64'
 #label='Right_PCS'
 #short_name='UKB_1'
-
-#"/neurospin/dico/jlaval/Runs/01_deep_supervised/Program/Output/chosen_model_crop_baby_STS_trained_on_UkBioBank-copy"
-
-# if __name__ == "__main__":
-#     gs_path = "/neurospin/dico/agaudin/Runs/09_new_repo/Output/grid_searches/step2"
-#     #regions = [region for region in os.listdir(gs_path) if not os.path.isfile(os.path.join(gs_path,region))]
-#     regions = ['SFintermediate', 'STs', 'fissure_lateral', 'fissure_collateral', 'SC_sylv', 'SFmedian', 'BROCA', 'lobule_parietal_sup']
-#     print(regions)
-#     for region in regions:
-#         print(region)
-#         if region not in ["cingulate"]:
-#             embeddings_pipeline(gs_path+f"/{region}",
-#                 datasets=[f"{region}_schiz_R_strat_bis",f"{region}_schiz_L_strat_bis"],
-#                 label='diagnosis',
-#                 short_name='schiz_latent_space', overwrite=False, use_best_model=True,
-#                 subsets=['train','val','test_intra','test'], verbose=False)

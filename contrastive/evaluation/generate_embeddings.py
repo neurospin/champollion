@@ -78,7 +78,7 @@ def compute_embeddings(config):
     
     It saves csv files for each subset of the datasets (train, val, test_intra, 
     test) and one with all subjects."""
-    
+
     config = process_config(config)
 
     config.apply_augmentations = False
@@ -124,7 +124,7 @@ def compute_embeddings(config):
         if not os.path.exists(embeddings_path):
             os.makedirs(embeddings_path)
 
-        if config.split=='random':
+        if config.split=='random' or config.split=='train_test':
             print("RANDOM SPLITS FOR CROSS-VAL")
             # calculate embeddings for training set and save them somewhere
             print("TRAIN SET")

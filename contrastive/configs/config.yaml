@@ -3,7 +3,7 @@ defaults:
   - augmentations: random
   - backbone: ConvNet
   - classifier: svm
-  - dataset/antoine/cingulate_UKB_right.yaml
+  - dataset/antoine/cingulate_UKB_left.yaml
   # - dataset/local_julien/cingulate_UKB_right.yaml
   #- dataset/local_julien/1-5mm/STs_babies_UKB_right_1-5mm
   # - dataset/local_julien/1-5mm/orbital_UKB_left_1-5mm

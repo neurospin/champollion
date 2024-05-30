@@ -99,6 +99,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     encoder_depth=config.encoder_depth,
                     filters=config.filters,
                     block_depth=config.block_depth,
+                    initial_kernel_size=config.initial_kernel_size,
                     num_representation_features=config.backbone_output_size,
                     drop_rate=config.drop_rate,
                     in_shape=config.data[i].input_size))
@@ -151,7 +152,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             num_representation_features=num_representation_features,
             layers_shapes=layers_shapes,
             activation=activation,
-            ph_drop_rate=config.ph_drop_rate)
+            drop_rate=config.ph_drop_rate)
 
         # set up class keywords
         self.config = config
@@ -359,7 +360,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
     
     def barlow_twins_loss(self, z_i, z_j):
         "Loss function for contrastive (BarlowTwins)"
-        loss = BarlowTwinsLoss(lambda_param=self.config.lambda_BT,
+        loss = BarlowTwinsLoss(lambda_param=self.config.lambda_BT / float(self.config.backbone_output_size),
                                correlation=self.config.BT_correlation,
                                device=self.config.device)
         return loss.forward(z_i, z_j)
@@ -567,7 +568,11 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             auc = regression_roc_auc_score(labels, X[:, 0])
         else:
             X = nn.functional.softmax(X, dim=1)
-            auc = roc_auc_score(labels, X[:, 1])
+            if self.config.nb_classes==2:
+                auc = roc_auc_score(labels, X[:, 1])
+            else:
+                auc = roc_auc_score(labels, X, multi_class='ovr', average='weighted')
+
         
         # put augmentations back to normal
         loader.dataset.transform = self.config.apply_augmentations

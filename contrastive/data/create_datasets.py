@@ -497,6 +497,11 @@ def create_sets_with_labels(config):
         # Concatenates labels
         labels = [skeleton_output[subset_name][2]
                   for skeleton_output in skeleton_all]
+        
+        # Convert labels to long
+        for label in label_names:
+            if label in labels[0].columns:
+                labels[0][label] = labels[0][label].to_numpy().astype(np.int64)
 
         # Checks if equality of filenames and labels
         check_if_list_of_equal_dataframes(

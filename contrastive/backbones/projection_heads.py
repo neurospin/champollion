@@ -9,7 +9,7 @@ class ProjectionHead(pl.LightningModule):
     def __init__(self, num_representation_features=256,
                  layers_shapes=[256,10],
                  activation='linear',
-                 ph_drop_rate=0):
+                 drop_rate=0):
         super(ProjectionHead, self).__init__()
         self.num_representation_features = num_representation_features
 
@@ -32,8 +32,7 @@ class ProjectionHead(pl.LightningModule):
             else:
                 raise ValueError(f"The given activation '{activation}' is not \
 handled. Choose between 'linear', 'relu' or 'sigmoid'.")
-            
-            layers.append((f'DropOut{i}', nn.Dropout(p=ph_drop_rate)))
+            layers.append((f'DropOut{i}', nn.Dropout(p=drop_rate)))
             
             input_size = output_size
         

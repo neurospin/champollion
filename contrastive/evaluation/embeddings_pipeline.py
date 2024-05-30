@@ -212,10 +212,9 @@ def embeddings_pipeline(dir_path, dataset_localization, datasets, labels,
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/2024-05-07",
+    embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/2024-05-22",
                         dataset_localization="neurospin",
-                        datasets=["with_reskel_distbottom/2mm/schiz/SC_SPeC_left",
-                                  "with_reskel_distbottom/2mm/schiz/SC_SPeC_right"],
+                        datasets=["with_reskel_distbottom/2mm/schiz/SC_SPeC_left"],
                         labels=['diagnosis'],
                         short_name='schiz', overwrite=True, embeddings=True,
                         embeddings_only=False, use_best_model=False,

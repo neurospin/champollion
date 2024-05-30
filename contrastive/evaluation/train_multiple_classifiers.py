@@ -279,9 +279,9 @@ def train_one_classifier(config, inputs, subjects, i=0):
         # choose the classifier type
         # /!\ The chosen classifier must have a predict_proba method.
         if config.classifier_name == 'svm':
-            model = SVC(kernel='linear', probability=True,
+            model = SVC(kernel='rbf', probability=True,
                         max_iter=config.class_max_epochs, random_state=i,
-                        C=0.01, class_weight='balanced', decision_function_shape='ovr')
+                        C=10, class_weight='balanced', decision_function_shape='ovr')
         elif config.classifier_name == 'neural_network':
             model = MLPClassifier(hidden_layer_sizes=config.classifier_hidden_layers,
                                 activation=config.classifier_activation,

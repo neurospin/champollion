@@ -92,7 +92,7 @@ def check_consistency(filename, labels, idx):
     """Checks if filenames are identical"""
     filename_label = labels.Subject[idx]
     if filename_label != filename:
-        raise ValueError("Filenames are not consitent between data and labels"
+        raise ValueError("Filenames are not consistent between data and labels"
                          f"For idx = {idx}, filename = {filename}"
                          f"and filename_label = {filename_label}")
 
@@ -105,6 +105,18 @@ def padd_foldlabel(sample_foldlabel, input_size):
     sample_foldlabel = transform_foldlabel(sample_foldlabel)
     return sample_foldlabel
 
+
+def check_equal_non_zero_voxels(sample1, sample2, name):
+    b1 = (sample1 > 0)
+    if name == "distbottom":
+        b2 = (sample2 < 32500)
+    else:
+        b2 = (sample2 > 0)
+    if torch.count_nonzero((b1!=b2) * b1):
+        print(f"Skeleton and {name} volumes do not have the same number "
+                 "of non-zero voxels. "
+                 f"{torch.count_nonzero((b1!=b2) * b1)} voxels differ "
+                 f"over {torch.count_nonzero(b1)} skeleton voxels")
 
 class ContrastiveDatasetFusion():
     """Custom dataset that includes image file paths.
@@ -169,6 +181,9 @@ class ContrastiveDatasetFusion():
             sample_foldlabels = [padd_foldlabel(sample_foldlabel,
                                                 self.config.data[reg].input_size)
                                  for reg, sample_foldlabel in enumerate(sample_foldlabels)]
+            for s, f in zip(samples, sample_foldlabels):
+                check_equal_non_zero_voxels(s, f, "foldlabel")
+
             
 
         if self.distbottom_arrs[0] is not None:
@@ -177,6 +192,8 @@ class ContrastiveDatasetFusion():
             sample_distbottoms = [padd_foldlabel(sample_distbottom,
                                                 self.config.data[reg].input_size)
                                  for reg, sample_distbottom in enumerate(sample_distbottoms)]
+            for s, d in zip(samples, sample_distbottoms):
+                check_equal_non_zero_voxels(s, d, "distbottom")
 
         if self.labels is not None:
             for reg in range(len(filenames)):

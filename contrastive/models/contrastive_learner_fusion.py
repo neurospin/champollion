@@ -150,7 +150,8 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         self.projection_head = ProjectionHead(
             num_representation_features=num_representation_features,
             layers_shapes=layers_shapes,
-            activation=activation)
+            activation=activation,
+            ph_drop_rate=config.ph_drop_rate)
 
         # set up class keywords
         self.config = config

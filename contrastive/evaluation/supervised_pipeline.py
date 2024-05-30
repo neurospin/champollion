@@ -250,7 +250,7 @@ def pipeline(dir_path, dataset_localization, datasets, label, short_name=None, o
                                          save_outputs=save_outputs)
                     if use_best_model:  # do both
                         log.info("Repeat with the best model")
-                        cfg = preprocess_config(sub_dir, datasets, label)
+                        cfg = preprocess_config(sub_dir, dataset_localization, datasets, label)
                         supervised_auc_eval(cfg, os.path.abspath(sub_dir),
                                          folder_name=folder_name, use_best_model=True,
                                          save_outputs=save_outputs)
@@ -264,9 +264,9 @@ def pipeline(dir_path, dataset_localization, datasets, label, short_name=None, o
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/", 
+    pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/2024-05-29_gridsearch", 
              dataset_localization="neurospin",  
              datasets=["with_reskel_distbottom/2mm/schiz/SC_SPeC_left",
                         "with_reskel_distbottom/2mm/schiz/SC_SPeC_right"],
-             label='diagnosis', short_name='schiz', overwrite=True, use_best_model=False,
+             label='diagnosis', short_name='schiz', overwrite=True, use_best_model=True,
              save_outputs=True)

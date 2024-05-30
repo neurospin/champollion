@@ -77,7 +77,7 @@ def get_projection_head_shape(config, num_representation_features):
         if config.mode == 'encoder':
             output_shape = num_representation_features
         elif config.mode == 'classifier':
-            output_shape = 2
+            output_shape = config.nb_classes
         elif config.mode == 'regresser':
             output_shape = 1
         else:

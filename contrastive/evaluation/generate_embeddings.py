@@ -124,7 +124,7 @@ def compute_embeddings(config):
         if not os.path.exists(embeddings_path):
             os.makedirs(embeddings_path)
 
-        if config.split=='random':
+        if config.split=='random' or config.split=='train_test':
             print("RANDOM SPLITS FOR CROSS-VAL")
             # calculate embeddings for training set and save them somewhere
             print("TRAIN SET")

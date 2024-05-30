@@ -186,7 +186,7 @@ class ContrastiveDatasetFusion():
 
             
 
-        if self.distbottom_arrs[0] is not None:
+        if isinstance(self.distbottom_arrs, list) and self.distbottom_arrs[0] is not None:
             sample_distbottoms = [get_sample(distbottom_arr, idx, 'int32')
                                  for distbottom_arr in self.distbottom_arrs]
             sample_distbottoms = [padd_foldlabel(sample_distbottom,

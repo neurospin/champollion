@@ -2,7 +2,8 @@
 # Characterization of the ConvNet model used
 backbone_name: convnet
 encoder_depth: 3
-filters: [32,64,128] #[16,32,64]
+filters: [32,64,128]
+initial_kernel_size: 7
 block_depth: 4
 backbone_output_size: 256
 projection_head_hidden_layers:

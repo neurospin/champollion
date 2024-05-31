@@ -308,12 +308,15 @@ def train_one_classifier(config, inputs, subjects, i=0):
             X,Y = X_test, Y_test
         else:
             val_pred = cross_val_predict(model, X, Y, cv=cv)
-        print(np.mean(Y), np.std(Y))
-        print(np.mean(val_pred), np.std(val_pred))
+        print(f'True label mean: {np.mean(Y):.3f}, std: {np.std(Y):.3f}')
+        print(f'Predicted label mean: {np.mean(val_pred):.3f}, std: {np.std(val_pred):.3f}')
         rmse = root_mean_squared_error(Y, val_pred)
+        mae = mean_absolute_error(Y, val_pred)
         reg_auc = regression_roc_auc_score(Y, val_pred, num_rounds=50000)
-        outputs['labels_pred'] = val_pred
+        pred_vs_true = np.vstack((Y,val_pred)).T
+        outputs['pred_vs_true'] = pred_vs_true
         outputs['RMSE'] = rmse
+        outputs['MAE'] = mae
         outputs['reg_auc'] = reg_auc
 
     else:
@@ -400,7 +403,7 @@ def train_n_repeat_classifiers(config, subset='full'):
     # Builds objects where the results are saved
     # Depending on label type
     if 'label_type' in config.keys() and config['label_type']=='continuous':
-        pass
+        pred_values_list = []
     elif 'label_type' in config.keys() and config['label_type']=='multiclass':
         aucs = {'cross_val': []}
         accuracies = {'cross_val': []}
@@ -416,10 +419,15 @@ def train_n_repeat_classifiers(config, subset='full'):
             proba_matrix = np.zeros((test.shape[0], config.n_repeat)) # report only test samples
 
     inputs = {}
-    inputs['X'] = X
     # rescale embeddings
     scaler = StandardScaler()
-    X = scaler.fit_transform(X)
+    X[X.columns] = scaler.fit_transform(X)
+    if 'label_type' in config.keys() and config['label_type']=='continuous':
+        Y= Y.to_numpy().reshape(-1, 1)
+        Y = scaler.fit_transform(Y)
+        Y = Y.reshape(-1)
+        Y = pd.Series(Y)
+    inputs['X'] = X
     inputs['Y'] = Y
 
     if config.split=='train_test':
@@ -437,22 +445,34 @@ def train_n_repeat_classifiers(config, subset='full'):
     ## Train classifiers
         
     if 'label_type' in config.keys() and config['label_type']=='continuous':
-        #Y.iloc[:, [1]] = scaler.fit_transform(Y.iloc[:, [1]])
         outputs = train_one_classifier(config, inputs, subjects) # perform once since it's deterministic
         #labels_preds = outputs['labels_pred']
         # TODO: add a list of labels preds and save like proba matrix
         reg_auc = outputs['reg_auc']
         rmse = outputs['RMSE']
+        mae = outputs['MAE']
+        pred_vs_true = outputs['pred_vs_true']
         
         values = {}
         values[f'{subset}_auc'] = reg_auc
-        values[f'{subset}_mse'] = rmse
+        values[f'{subset}_rmse'] = rmse
+        values[f'{subset}_mae'] = mae
         # save results
         print(f"results_save_path = {results_save_folder}")
         filename = f"{subset}_values.json"
         with open(os.path.join(results_save_folder, filename), 'w+') as file:
             json.dump(values, file)
-        print(f'Regression AUC: {reg_auc}, RMSE: {rmse}')
+        print(f'Regression AUC: {reg_auc}, RMSE: {rmse}, MAE: {mae}')
+
+        #plot regression
+        print(pred_vs_true.shape)
+        plt.scatter(pred_vs_true[:, 0], pred_vs_true[:, 1])
+        plt.xlabel('True label')
+        plt.ylabel('prediction')
+        filename = f"{subset}_prediction_plot.png"
+        plt.savefig(os.path.join(results_save_folder, filename))
+        plt.close()
+
     else:
 
         # Actual loop done config.n_repeat times

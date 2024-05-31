@@ -205,9 +205,9 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    embeddings_pipeline("/neurospin/dico/adufournet/Runs/02_Heritability_Left_PCS_HCP/Output/2024-05-29",
-        datasets=["antoine/cingulate_HCP_left"],
-        labels=['Left_PCS'],
+    embeddings_pipeline("/neurospin/dico/adufournet/Runs/08_Heritability_Left_Orbital_HCP_dim256/Output",
+        datasets=["antoine/orbital_HCP_left"],
+        labels=['Left_OFC'],
         short_name='HCP', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
         subsets=['full'], epochs=range(0,110,10), split='random', cv=3,
         splits_basedir=None,

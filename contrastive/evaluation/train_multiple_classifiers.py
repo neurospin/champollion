@@ -8,7 +8,8 @@ import json
 import os
 
 from torch.utils.data import DataLoader, TensorDataset
-from sklearn.metrics import auc, roc_curve, roc_auc_score, balanced_accuracy_score, root_mean_squared_error
+from sklearn.metrics import auc, roc_curve, roc_auc_score, balanced_accuracy_score, \
+                            root_mean_squared_error, mean_absolute_error
 from sklearn.model_selection import cross_val_predict, train_test_split, cross_validate, \
                                     LeaveOneGroupOut, cross_val_score
 

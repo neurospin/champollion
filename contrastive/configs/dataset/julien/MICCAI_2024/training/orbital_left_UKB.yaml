@@ -16,4 +16,3 @@ train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank
 subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/participants_labels.csv
 subject_column_name: 'Subject'
 input_size: (1, 30, 38, 22)
-

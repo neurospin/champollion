@@ -202,16 +202,16 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/BT_ORBITAL",
-        datasets=["local_julien/orbital_left_hcp_train_test_2mm"],
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/ORBITAL_12-layer_1-5mm_k11",
+        datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom_1-5mm"],
         labels=['Left_OFC'],
         short_name='troiani', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['full'], epochs=[None], split='train_test', cv=3,
+        subsets=['full'], epochs=[None], split='custom', cv=3,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
         verbose=False)
     
 """Isomap Cingulate (hcp)
-        datasets=["local_julien/cingulate_left_hcp_custom_cv_2mm"],
+        datasets=["julien/MICCAI_2024/evaluation/cingulate_left_hcp_custom_cv_2mm"],
         labels=[f'Isomap_cingulate_left_dim{k}' for k in range(1,7)],
         short_name='troiani', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
         subsets=['full'], epochs=[None], split='custom', cv=5,
@@ -220,7 +220,7 @@ if __name__ == "__main__":
 """
     
 """ Isomap Central (hcp)
-        datasets=["local_julien/SC-sylv_left_hcp_custom_cv_2mm"],
+        datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_hcp_custom"],
         labels=[f'Isomap_central_left_dim{k}' for k in range(1,7)],
         short_name='troiani', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
         subsets=['full'], epochs=[None], split='custom', cv=3,
@@ -248,7 +248,7 @@ if __name__ == "__main__":
 """
 
 """ PCS
-        datasets=["local_julien/cingulate_ACCpatterns_custom_cv_2mm"],
+        datasets=["julien/MICCAI_2024/evaluation/cingulate_right_ACCpatterns_custom"],
         labels=['Right_PCS'],
         short_name='ACC', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
         subsets=['test'], epochs=[None], split='custom', cv=3,
@@ -257,10 +257,10 @@ if __name__ == "__main__":
 """
 
 """OFC
-        datasets=["local_julien/orbital_left_hcp_custom_cv_2mm"],
+        datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
         labels=['Left_OFC'],
         short_name='troiani', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['full'], epochs=[None], split='custom', cv=3,
+        subsets=['full'], epochs=range(0,250,10), split='custom', cv=3,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
         verbose=False)
 """

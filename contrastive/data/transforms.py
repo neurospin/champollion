@@ -84,6 +84,7 @@ def transform_foldlabel(sample_foldlabel, percentage, input_size, config):
                             keep_extremity=config.keep_extremity),
                        BinarizeTensor(),
                        TranslateTensor(config.max_translation)]
+                       #RotateTensor(max_angle=config.max_angle)]
     
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))

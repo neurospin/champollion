@@ -4,18 +4,23 @@ defaults:
   - backbone: ConvNet
   - classifier: svm
   #- dataset/julien/MICCAI_2024/training/cingulate_right_UKB.yaml
+  #- dataset/julien/cingulate_left_UKB_old.yaml
   #- dataset/local_julien/1-5mm/STs_babies_UKB_right_1-5mm
   #- dataset/local_julien/1-5mm/orbital_UKB_left_1-5mm
-  - dataset/julien/MICCAI_2024/training/orbital_left_UKB.yaml
+  #- dataset/julien/MICCAI_2024/training/orbital_left_UKB.yaml
+  - dataset/julien/MICCAI_2024/training/orbital_left_UKB_1-5mm.yaml
+  #- dataset/julien/merged_ukb/cingulate_all_UKB.yaml
+  #- dataset/julien/merged_ukb/orbital_all_UKB.yaml
   #- dataset/julien/MICCAI_2024/training/SC-sylv_left_UKB
   #- dataset/julien/MICCAI_2024/training/cingulate_left_UKB
-  #- dataset/local_julien/orbital_left_hcp_supervised
+  #- dataset/julien/MICCAI_2024/supervised/orbital_left_hcp_supervised
+  #- dataset/julien/MICCAI_2024/supervised/cingulate_right_ACCpatterns_supervised
   #- dataset/local_julien/1-5mm/cingulate_UKB_right_1-5mm.yaml
   #- dataset/local_julien/old/STs_UkBioBank.yaml
   # - dataset/occipital_schiz_L_strat_bis_threshold1
   - embeddings: embeddings
   - hydra: local
-  - label: Left_OFC
+  - label: Right_PCS
   - mode: encoder
   - model: SimCLR_fusion
   - platform: cuda_not_brainvisa

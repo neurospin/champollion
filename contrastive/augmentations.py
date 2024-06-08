@@ -37,7 +37,7 @@ from collections import namedtuple
 
 import numpy as np
 import torch
-from scipy.ndimage import rotate, zoom
+from scipy.ndimage import rotate, zoom, binary_erosion
 from sklearn.preprocessing import OneHotEncoder
 
 from contrastive.utils import logs
@@ -867,65 +867,66 @@ class TrimDepthTensor(object):
         arr_trimmed = arr_trimmed.astype('float32')
 
         return torch.from_numpy(arr_trimmed)
-
-"""
-class TrimDepthTensor(object):
-    
-    Trim depth based on distbottom.
-    Set max_distance to 0 to remove bottom only.
-    Set max_distance to -1 to remove nothing.
     
 
-    def __init__(self, sample_distbottom, sample_foldlabel,
-                 max_distance, input_size, keep_top, uniform):
+class TrimSidesTensor(object):
+    """
+    Trim sides
+    """
+
+    def __init__(self, sample_foldlabel,
+                 max_distance, input_size, uniform, binary):
         self.max_distance = max_distance
         self.input_size = input_size
-        self.sample_distbottom = sample_distbottom
         self.sample_foldlabel = sample_foldlabel
-        self.keep_top=keep_top
         self.uniform=uniform
+        self.binary=binary
     
     def __call__(self, tensor_skel):
         log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
-        arr_skel = tensor_skel.numpy() # NEED SKEL ?
-        arr_distbottom = self.sample_distbottom.numpy()
+        arr_skel = tensor_skel.numpy()
         arr_foldlabel = self.sample_foldlabel.numpy()
 
         # log.debug(f"arr_skel.shape = {arr_skel.shape}")
         # log.debug(f"arr_foldlabel.shape = {arr_foldlabel.shape}")
-        assert (arr_skel.shape == arr_distbottom.shape)
         assert (self.max_distance >= -1)
 
-        arr_trimmed = arr_skel.copy()
-
-        if self.max_distance >= 0:
-            if self.uniform:
-                # get random threshold
-                threshold = np.random.randint(-1, self.max_distance+1)
-                # mask skel with thresholded distbottom
-                if self.keep_top:
-                    arr_trimmed[np.logical_and(arr_distbottom<=threshold, arr_skel!=35)]=0
-                else:
-                    arr_trimmed[arr_distbottom<=threshold]=0
-            else:
-                # select a threshold for each branch
-                arr_trimmed_branches = np.zeros(arr_skel.shape)
-                indexes = np.unique(arr_foldlabel*(arr_foldlabel<1000))
-                for index in indexes:
-                    mask_branch = np.mod(arr_foldlabel,
-                                        np.full(arr_skel.shape, fill_value=1000))==index
-                    threshold = np.random.randint(-1, self.max_distance+1)
-                    arr_dist = arr_distbottom.copy()
-                    if self.keep_top:
-                        arr_dist[np.logical_and(arr_distbottom<=threshold, arr_skel!=35)]=0
+        if self.uniform:
+            arr_trimmed = arr_skel.copy()
+            # get random threshold
+            threshold = np.random.randint(-1, self.max_distance+1)
+            # mask skel with thresholded distbottom
+            arr_trimmed = arr_trimmed*binary_erosion(arr_trimmed.astype(bool))
+            #### arr_trimmed = arr_trimmed*erode(arr_skel_bin, threshold)
+        else:
+            # select a threshold for each branch
+            arr_trimmed_branches = np.zeros(arr_skel.shape)
+            indexes =  np.unique(
+                                np.mod(arr_foldlabel,
+                                        np.full(arr_foldlabel.shape, fill_value=1000))
+                                )
+            assert (len(indexes)>1), 'No branch in foldlabel'
+            for index in indexes[1:]:
+                arr_trimmed = arr_skel.copy()
+                mask_branch = np.mod(arr_foldlabel,
+                                    np.full(arr_foldlabel.shape, fill_value=1000))==index
+                if self.binary:
+                    r = np.random.randint(2)
+                    if r == 0:
+                        threshold = -1
                     else:
-                        arr_dist[arr_distbottom<=threshold]=0
-                    arr_trimmed_branches += arr_dist * mask_branch
-                arr_trimmed = arr_trimmed_branches.copy()
-
+                        threshold = self.max_distance
+                else:
+                    threshold = np.random.randint(-1, self.max_distance+1)
+                #### arr_trimmed = arr_trimmed*erode(arr_skel_bin, threshold)
+                arr_trimmed_branches += (arr_trimmed * mask_branch)
+            arr_trimmed = arr_trimmed_branches.copy()
         
 
+        #### arr_trimmed += mask top + mask bottom (pas binaire, garder les valeurs)
+
+        
         arr_trimmed = arr_trimmed.astype('float32')
 
         return torch.from_numpy(arr_trimmed)
-"""
+    

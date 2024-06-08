@@ -86,7 +86,7 @@ def preprocess_config(sub_dir, datasets, label):
 
 
 def supervised_auc_eval(config, model_path, folder_name=None, use_best_model=True,
-                        save_outputs=False):
+                        save_outputs=False, grad_cam=False):
     """Actually computes the test, train and val (and test_intra if existing) auc 
     of a target model."""
 
@@ -155,15 +155,16 @@ def supervised_auc_eval(config, model_path, folder_name=None, use_best_model=Tru
         json.dump(aucs_dict, file)
 
     # compute and save grad cam if required
-    if len(config.data) == 1:
-        attributions_dict = compute_all_grad_cams(loaders_dict, model,
-                                                  with_labels=config.with_labels)
-        if use_best_model:
-            filename = '/attributions_best_model.pkl'
-        else:
-            filename = '/attributions.pkl'
-        with open(save_path+filename, 'wb') as f:
-            pickle.dump(attributions_dict, f)
+    if grad_cam:
+        if len(config.data) == 1:
+            attributions_dict = compute_all_grad_cams(loaders_dict, model,
+                                                    with_labels=config.with_labels)
+            if use_best_model:
+                filename = '/attributions_best_model.pkl'
+            else:
+                filename = '/attributions.pkl'
+            with open(save_path+filename, 'wb') as f:
+                pickle.dump(attributions_dict, f)
 
     # compute and save outputs if required
     if save_outputs:
@@ -198,7 +199,7 @@ def supervised_auc_eval(config, model_path, folder_name=None, use_best_model=Tru
 
 
 def pipeline(dir_path, datasets, label, short_name=None, overwrite=False, use_best_model=True,
-             save_outputs=False):
+             save_outputs=False, grad_cam=False):
     """Pipeline to generate automatically the output aucs for supervised classifiers only.
 
     Arguments:
@@ -242,24 +243,24 @@ def pipeline(dir_path, datasets, label, short_name=None, overwrite=False, use_be
                     folder_name = get_save_folder_name(datasets, short_name)
                     supervised_auc_eval(cfg, os.path.abspath(sub_dir),
                                          folder_name=folder_name, use_best_model=False,
-                                         save_outputs=save_outputs)
+                                         save_outputs=save_outputs, grad_cam=grad_cam)
                     if use_best_model:  # do both
                         log.info("Repeat with the best model")
                         cfg = preprocess_config(sub_dir, datasets, label)
                         supervised_auc_eval(cfg, os.path.abspath(sub_dir),
                                          folder_name=folder_name, use_best_model=True,
-                                         save_outputs=save_outputs)
+                                         save_outputs=save_outputs, grad_cam=grad_cam)
 
             else:
                 print(f"{sub_dir} not associated to a model. Continue")
                 pipeline(sub_dir, datasets, label, short_name=short_name,
                          overwrite=overwrite, use_best_model=use_best_model,
-                         save_outputs=save_outputs)
+                         save_outputs=save_outputs, grad_cam=grad_cam)
         else:
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    pipeline("/neurospin/dico/jlaval/Runs/02_STS_babies/Program/Output/2023-12-01/",    
-            datasets=['STs_babies/STs_dHCP_374_subjects'],
-            label='Preterm_28', short_name='dHCP_fold2', overwrite=True, use_best_model=False,
-            save_outputs=True)
+    pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/SUPERVISED_OFC/",    
+            datasets=['julien/MICCAI_2024/supervised/orbital_left_hcp_supervised'],
+            label='Left_OFC', short_name='ACC', overwrite=True, use_best_model=True,
+            save_outputs=True, grad_cam=False)

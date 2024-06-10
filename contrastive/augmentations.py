@@ -225,6 +225,10 @@ def remove_branches_up_to_percent(arr_foldlabel, arr_skel,
     """
     # We make some initial checks
     # of alignments between skeletons and foldlabels
+    # TODO: remove voxels from foldlabel, based on skel. If trimdepth applied earlier, skel lost voxels, so they need to be removed from foldlabel INUTILE SI STEP 2 ?
+    # TODO 2: remove_bottom_branches (+ top) : à enlerver ! Comme ça on en enlève toute la branche, puis à la fin on superpose le masque des bottoms, attention à pas additionner 30+30 ? Mais que 30+0. Prendre le max des deux arrays ?
+    #NB: il faut bien enlever les bottoms à foldlabel, pour éviter que la branche puisse être sélectionner en dessous ! anciens bottoms + les nouveaux ! (0 et 30)
+    # pas besoin d'ajouter les bottoms à la fin car ils n'auront pas pu être enlevé.
     total_pixels_after = intersection_skeleton_foldlabel(arr_foldlabel,
                                                          arr_skel)
 
@@ -261,6 +265,12 @@ def remove_branches_up_to_percent(arr_foldlabel, arr_skel,
     # We loop over shuffled indexes until enough branches have been removed
     for index in indexes:
         if total_pixels_after <= total_pixels*(100.-percentage)/100.:
+            # TODO: éviter cas pathologique où l'on supprime un long paracingulaire car c'est la première branche de la liste ? Peut arriver quelque soit la proportion imposée.
+            # Limiter la proportion avant d'enlever la branche !! explique pk auc diminue dans le temps sur PCS ?
+            # est-ce souhaitable de supprimer les gros sillons ?
+            # vu qu'on garde les bottoms c'est peut-être pas grave, mais ça explique peut-être pk la proportion importe peu.
+            # choisir entre pourcentage des branches et pourcentage des voxels.
+            # FOR NOW, KEEP LIKE THIS
             break
         arr_skel_without_branches = \
             remove_branch(arr_foldlabel,
@@ -533,6 +543,7 @@ class CheckerboardTensor(object):
         return torch.from_numpy(arr * mask)
 
 
+# OBSOLETE, INCOMPATIBILITIES
 class PartialCutOutTensor(object):
     """Apply a cutout on the images and puts only bottom value inside
     cf. Improved Regularization of Convolutional Neural Networks with Cutout,
@@ -601,6 +612,7 @@ class PartialCutOutTensor(object):
             return torch.from_numpy(arr_bottom)
 
 
+# OBSOLETE, INCOMPATIBILITIES
 class CutoutTensor(object):
     """Apply a cutout on the images
     cf. Improved Regularization of Convolutional Neural Networks with Cutout,
@@ -799,8 +811,9 @@ class TrimDepthTensor(object):
     """
 
     def __init__(self, sample_distbottom, sample_foldlabel,
-                 max_distance, input_size, keep_extremity, uniform, binary):
+                 max_distance, delta, input_size, keep_extremity, uniform, binary):
         self.max_distance = max_distance
+        self.delta = delta
         self.input_size = input_size
         self.sample_distbottom = sample_distbottom
         self.sample_foldlabel = sample_foldlabel
@@ -827,7 +840,7 @@ class TrimDepthTensor(object):
         assert (arr_skel.shape == arr_distbottom.shape)
         assert (self.max_distance >= -1)
 
-        if self.uniform:
+        if self.uniform: # OBSOLETE, need to rewrite bottom values
             arr_trimmed = arr_skel.copy()
             # get random threshold
             threshold = np.random.randint(-1, self.max_distance+1)
@@ -849,18 +862,24 @@ class TrimDepthTensor(object):
                 mask_branch = np.mod(arr_foldlabel,
                                     np.full(arr_foldlabel.shape, fill_value=1000))==index
                 if self.binary:
-                    r = np.random.randint(2)
+                    r = np.random.randint(2) # 50% of branches affected
                     if r == 0:
                         threshold = -1
                     else:
                         threshold = self.max_distance
-                else:
-                    threshold = np.random.randint(-1, self.max_distance+1)
+                else: # OBSOLETE, is scaling by 100 correct ?
+                    threshold = np.random.randint(-1, (self.max_distance+1)//100)*100
                 if self.keep_extremity=='top':
                     arr_trimmed[np.logical_and(arr_distbottom<=threshold, arr_skel!=35)]=0
                 else:
                     arr_trimmed[arr_distbottom<=threshold]=0
-                arr_trimmed_branches += (arr_trimmed * mask_branch)
+                arr_trimmed_branch = arr_trimmed * mask_branch
+                if threshold != -1: # if so no need to redefine the bottoms.
+                    # define distbottom pour la branche !
+                    arr_distbottom_branch = arr_distbottom * (arr_trimmed_branch != 0)
+                    # get smallest distbottom value + delta margin and replace topological value
+                    arr_trimmed_branch[arr_distbottom_branch <= threshold + self.delta]=30
+                arr_trimmed_branches += arr_trimmed_branch
             arr_trimmed = arr_trimmed_branches.copy()
 
         

@@ -205,17 +205,11 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-<<<<<<< HEAD
-    embeddings_pipeline("/neurospin/dico/adufournet/Runs/04_Heritability_Right_PCS_HCP_dim10/Output/2024-05-29",
-        datasets=["antoine/cingulate_HCP_right"],
-        labels=['Right_PCS'],
-=======
-    embeddings_pipeline("/neurospin/dico/adufournet/Runs/08_Heritability_Left_Orbital_HCP_dim256/Output",
-        datasets=["antoine/orbital_HCP_left"],
+    embeddings_pipeline("/neurospin/dico/adufournet/mycode/Output",
+        datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_train_test"],
         labels=['Left_OFC'],
->>>>>>> 56b598aafb7266d6bf3d65fe0f53e5a4461892d8
-        short_name='HCP', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
-        subsets=['full'], epochs=range(0,110,10), split='random', cv=3,
+        short_name='HCP', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
+        subsets=['full'], epochs=range(0,30,10), split='train_test', cv=3,
         splits_basedir=None,
         verbose=False)    
 

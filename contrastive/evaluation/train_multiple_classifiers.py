@@ -8,7 +8,7 @@ import json
 import os
 
 from torch.utils.data import DataLoader, TensorDataset
-from sklearn.metrics import auc, roc_curve, roc_auc_score, balanced_accuracy_score, root_mean_squared_error
+from sklearn.metrics import auc, roc_curve, roc_auc_score, balanced_accuracy_score #, root_mean_squared_error
 from sklearn.model_selection import cross_val_predict, train_test_split, cross_validate, \
                                     LeaveOneGroupOut, cross_val_score
 
@@ -59,7 +59,7 @@ def load_embeddings(dir_path, labels_path, config, subset='full'):
     if config.split=='custom':
         embeddings = pd.read_csv(
                 dir_path+f'/custom_cross_val_embeddings.csv', index_col=0)
-    elif config.split=='random' or config.split=='train_test':
+    elif config.split=='random' or config.split=='train_test' or config.split=='train_val_test_intra_test':
         # if targeting directly the target csv file
         if not os.path.isdir(dir_path):
             embeddings = pd.read_csv(dir_path, index_col=0)
@@ -192,7 +192,8 @@ def get_average_model(labels_df):
 
 
 def post_processing_results(labels, embeddings, Curves, aucs, accuracies,
-                            values, columns_names, mode, subset, results_save_path):
+                            values, columns_names, mode, subset,
+                            results_save_path):
     """Get the mean and the median AUC and accuracy, plot the ROC curves and 
     the generated files."""
 
@@ -264,6 +265,8 @@ def train_one_classifier(config, inputs, subjects, i=0):
     """
 
     X = inputs['X']
+    norm = X.apply(np.linalg.norm, axis=1)
+    X = X.div(norm, axis=0)
     Y = inputs['Y']
     outputs = {}
 
@@ -287,7 +290,7 @@ def train_one_classifier(config, inputs, subjects, i=0):
             groups, X, Y = df['labels'], np.vstack(df['X'].values), df['Y']
             logo = LeaveOneGroupOut()
             cv = logo.get_n_splits(groups=groups)
-    elif config.split=='train_test':
+    elif config.split=='train_test' or config.split=='train_val_test_intra_test':
         pass
     else:
         raise ValueError("Wrong split config specified")
@@ -344,9 +347,34 @@ def train_one_classifier(config, inputs, subjects, i=0):
             model.fit(X_train, Y_train)
             labels_proba = model.predict_proba(X_test)
             X,Y = X_test, Y_test
+        elif config.split=='train_val_test_intra_test':
+            train = pd.read_csv(os.path.join(config.embeddings_save_path, 'train_embeddings.csv'), usecols=['ID'])
+            val = pd.read_csv(os.path.join(config.embeddings_save_path, 'val_embeddings.csv'), usecols=['ID'])
+            test_intra = pd.read_csv(os.path.join(config.embeddings_save_path, 'test_intra_embeddings.csv'), usecols=['ID'])
+            test = pd.read_csv(os.path.join(config.embeddings_save_path, 'test_embeddings.csv'), usecols=['ID'])
+            subs_embeddings = pd.DataFrame({'ID': subjects, 'X': list(X.values), 'Y': Y})
+            subs_embeddings_train = subs_embeddings.merge(train, on='ID')
+            X_train, Y_train = np.vstack(subs_embeddings_train['X'].to_numpy()), subs_embeddings_train['Y']
+            subs_embeddings_val = subs_embeddings.merge(val, on='ID')
+            X_val, Y_val = np.vstack(subs_embeddings_val['X'].to_numpy()), subs_embeddings_val['Y']
+            subs_embeddings_test_intra = subs_embeddings.merge(test_intra, on='ID')
+            X_test_intra, Y_test_intra = np.vstack(subs_embeddings_test_intra['X'].to_numpy()), subs_embeddings_test_intra['Y']
+            subs_embeddings_test = subs_embeddings.merge(test, on='ID')
+            X_test, Y_test = np.vstack(subs_embeddings_test['X'].to_numpy()), subs_embeddings_test['Y']
+            model.fit(X_train, Y_train)
+            for (X, Y, mode) in ((X_train, Y_train, "train"),
+                                 (X_val, Y_val, "val"),
+                                 (X_test_intra, Y_test_intra, "test_intra"),
+                                 (X_test, Y_test, "test")):
+                labels_proba = model.predict_proba(X)
+                _, roc_auc, accuracy = compute_binary_indicators(Y, labels_proba)
+                print(f"{mode}: AUC = {roc_auc}, accuracy = {accuracy} -- ")
+            print("")
+            labels_proba = model.predict_proba(X_test)
+            X, Y = X_test, Y_test
         else:
-            #scores = cross_validate(model, X, Y, cv=cv, scoring='roc_auc')
-            #print(scores['test_score']) # TO GET THE INTER SPLIT VARIABILITY
+            # scores = cross_validate(model, X, Y, cv=cv, scoring='roc_auc')
+            # print(scores['test_score']) # TO GET THE INTER SPLIT VARIABILITY
             labels_proba = cross_val_predict(model, X, Y, cv=cv, method='predict_proba')
 
         if 'label_type' in config.keys() and config['label_type']=='multiclass':
@@ -354,6 +382,12 @@ def train_one_classifier(config, inputs, subjects, i=0):
             outputs['proba_of_1'] = labels_proba
             outputs['roc_auc'] = roc_aucs
             outputs['balanced_accuracy'] = accuracies
+        elif config.split=='train_val_test_intra_test':
+            curves, roc_auc, accuracy = compute_binary_indicators(Y, labels_proba)
+            outputs['proba_of_1'] = labels_proba[:, 1]
+            outputs['roc_auc'] = roc_auc
+            outputs['balanced_accuracy'] = accuracy
+            outputs['curves'] = curves         
         else:
             curves, roc_auc, accuracy = compute_binary_indicators(Y, labels_proba)
             outputs['proba_of_1'] = labels_proba[:, 1]
@@ -409,7 +443,7 @@ def train_n_repeat_classifiers(config, subset='full'):
         Curves = {'cross_val': []}
         aucs = {'cross_val': []}
         accuracies = {'cross_val': []}
-        if config.split!='train_test':
+        if (config.split!='train_test') and (config.split!='train_val_test_intra_test'):
             proba_matrix = np.zeros((labels.shape[0], config.n_repeat))
         else:
             test = pd.read_csv(os.path.join(config.embeddings_save_path, 'test_embeddings.csv'), usecols=['ID'])
@@ -422,7 +456,7 @@ def train_n_repeat_classifiers(config, subset='full'):
     X = scaler.fit_transform(X)
     inputs['Y'] = Y
 
-    if config.split=='train_test':
+    if config.split=='train_test' or config.split=='train_val_test_intra_test':
         # Save perfs and probas only for test subs
         # Reformat subset and labels
         subset = 'test'
@@ -577,7 +611,7 @@ def train_classifiers(config, subsets=None):
         # make sure a train file is given in this mode
         train_n_repeat_classifiers(config, subset='test')
     
-    elif config.split=='train_test':
+    elif config.split=='train_test' or config.split=='train_val_test_intra_test':
         print("\n")
         log.info(f"USING SUBSET full")
         # make sure a train file is given in this mode

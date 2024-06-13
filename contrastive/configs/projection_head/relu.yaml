@@ -2,4 +2,4 @@
 projection_head_name: relu
 proj_layers_shapes:        # priority over length_projection_head
 length_projection_head: 2
-ph_drop_rate: 0
+ph_drop_rate: 0.3

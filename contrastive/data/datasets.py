@@ -112,7 +112,7 @@ def check_equal_non_zero_voxels(sample1, sample2, name):
         b2 = (sample2 < 32500)
     else:
         b2 = (sample2 > 0)
-    if torch.count_nonzero((b1!=b2) * b1):
+    if torch.count_nonzero((b1!=b2) * b1) > 50:
         print(f"Skeleton and {name} volumes do not have the same number "
                  "of non-zero voxels. "
                  f"{torch.count_nonzero((b1!=b2) * b1)} voxels differ "

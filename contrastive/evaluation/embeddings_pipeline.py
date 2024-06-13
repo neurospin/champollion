@@ -212,16 +212,39 @@ def embeddings_pipeline(dir_path, dataset_localization, datasets, labels,
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/2024-05-22",
+    embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/ORBITAL_BT",
                         dataset_localization="neurospin",
-                        datasets=["with_reskel_distbottom/2mm/schiz/SC_SPeC_left"],
-                        labels=['diagnosis'],
-                        short_name='schiz', overwrite=True, embeddings=True,
+                        datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_train_test"],
+                        labels=['Left_OFC'],
+                        short_name='troiani', overwrite=True, embeddings=True,
                         embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='random', cv=3,
-                        splits_basedir='',
+                        subsets=['full'], epochs=[None], split='train_test', cv=3,
+                        splits_basedir=None,
                         verbose=False)
- 
+    
+    # embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/ORBITAL_BT",
+    #                     dataset_localization="neurospin",
+    #                     datasets=["with_reskel_distbottom/2mm/schiz_extended/ORBITAL_left"],
+    #                     labels=['diagnosis'],
+    #                     short_name='schiz_extended', overwrite=True, embeddings=True,
+    #                     embeddings_only=True, use_best_model=True,
+    #                     subsets=['full'], epochs=[None], split='random', cv=3,
+    #                     splits_basedir='',
+    #                     verbose=False)
+
+    # embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/2024-06-06_pretraining",
+    #                     dataset_localization="neurospin",
+    #                     datasets=["with_reskel_distbottom/2mm/UKB/SC_SPeC_left",
+    #                               "with_reskel_distbottom/2mm/UKB/SC_SPeC_right"],
+    #                     labels=['diagnosis'],
+    #                     short_name='ukb', overwrite=True, embeddings=True,
+    #                     embeddings_only=True, use_best_model=False,
+    #                     subsets=['full'], epochs=[None], split='random', cv=3,
+    #                     splits_basedir='',
+    #                     verbose=False)
+
+
+
 """ PCS
         datasets=["local_julien/cingulate_ACCpatterns_custom_cv_2mm"],
         labels=['Right_PCS'],

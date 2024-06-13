@@ -264,9 +264,9 @@ def pipeline(dir_path, dataset_localization, datasets, label, short_name=None, o
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/2024-05-29_gridsearch", 
+    pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/2024-06-11", 
              dataset_localization="neurospin",  
-             datasets=["with_reskel_distbottom/2mm/schiz/SC_SPeC_left",
-                        "with_reskel_distbottom/2mm/schiz/SC_SPeC_right"],
-             label='diagnosis', short_name='schiz', overwrite=True, use_best_model=True,
+             datasets=["with_reskel_distbottom/2mm/schiz_extended/SC_SPeC_left_female",
+                       "with_reskel_distbottom/2mm/schiz_extended/SC_SPeC_right_female"],
+             label='diagnosis', short_name='schiz_female', overwrite=True, use_best_model=True,
              save_outputs=True)

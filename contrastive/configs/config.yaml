@@ -1,14 +1,15 @@
 defaults:
   - _self_
-  - augmentations: translation_only # random
+  - augmentations: random # translation_only
   - backbone: ConvNet
   - classifier: svm
   - dataset_localization: neurospin
+  - dataset/with_reskel_distbottom/2mm/UKB/ORBITAL_left
   # - dataset/with_reskel_distbottom/2mm/schiz_extended/ORBITAL_left
   # - dataset/with_reskel_distbottom/2mm/UKB/SC_SPeC_left
   # - dataset/with_reskel_distbottom/2mm/UKB/SC_SPeC_right
-  - dataset/with_reskel_distbottom/2mm/schiz_extended/SC_SPeC_left_female
-  - dataset/with_reskel_distbottom/2mm/schiz_extended/SC_SPeC_right_female
+  # - dataset/with_reskel_distbottom/2mm/schiz_extended/SC_SPeC_left_female
+  # - dataset/with_reskel_distbottom/2mm/schiz_extended/SC_SPeC_right_female
   # - dataset/local_julien/cingulate_UKB_right.yaml
   #- dataset/local_julien/1-5mm/STs_babies_UKB_right_1-5mm
   # - dataset/local_julien/1-5mm/orbital_UKB_left_1-5mm
@@ -18,11 +19,11 @@ defaults:
   - embeddings: embeddings
   - hydra: local
   - label: diagnosis
-  - mode: classifier
+  - mode: encoder
   - model: SimCLR_fusion
   - platform: cuda_not_brainvisa
   - projection_head: relu
-  - trainer: classifier
+  - trainer: default
   - wandb: identity
   - override hydra/job_logging: custom
 

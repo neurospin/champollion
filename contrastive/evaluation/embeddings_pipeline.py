@@ -218,7 +218,7 @@ if __name__ == "__main__":
                         labels=['Left_OFC'],
                         short_name='troiani', overwrite=True, embeddings=True,
                         embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=range(0,90,10), split='custom', cv=3,
+                        subsets=['full'], epochs=[None], split='custom', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
                         verbose=False)
 

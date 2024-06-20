@@ -4,6 +4,9 @@ sigma_labels: 2.0
 sigma: 5
 drop_rate: 0.05
 pretrained_model_path:
+#pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Program/Output/ORBITAL_12-layer_k7/16-19-26_238/logs/lightning_logs/version_0/checkpoints/epoch=50-step=30192.ckpt
+#pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Program/Output/2024-06-11/11-45-40_220/logs/lightning_logs/version_0/checkpoints/epoch=80-step=47952.ckpt
+#pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Program/Output/2024-06-11/09-29-48_234/logs/lightning_logs/version_0/checkpoints/epoch=10-step=6512.ckpt
 #pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Program/Output/grid_search_ofc/BT_bs32_L256/logs/lightning_logs/version_0/checkpoints/epoch=249-step=148000.ckpt
 #pretrained_model_path: /neurospin/dico/jlaval/Runs/01_deep_supervised/Program/Output/2023-06-15/14-36-49/logs/lightning_logs/version_0/checkpoints/epoch=250-step=297435.ckpt #UKB
 #pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Program/Output/2024-05-13/16-34-19_0/logs/lightning_logs/version_0/checkpoints/epoch=130-step=1572.ckpt #supervised

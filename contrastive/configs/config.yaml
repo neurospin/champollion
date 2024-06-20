@@ -3,12 +3,14 @@ defaults:
   - augmentations: random
   - backbone: ConvNet
   - classifier: svm
-  #- dataset/julien/MICCAI_2024/training/cingulate_right_UKB.yaml
+  - dataset/julien/MICCAI_2024/training/cingulate_right_UKB.yaml
+  #- dataset/julien/MICCAI_2024/training/cingulate_right_UKB_1-5mm.yaml
   #- dataset/julien/cingulate_left_UKB_old.yaml
   #- dataset/local_julien/1-5mm/STs_babies_UKB_right_1-5mm
   #- dataset/local_julien/1-5mm/orbital_UKB_left_1-5mm
   #- dataset/julien/MICCAI_2024/training/orbital_left_UKB.yaml
-  - dataset/julien/MICCAI_2024/training/orbital_left_UKB_1-5mm.yaml
+  #- dataset/julien/MICCAI_2024/training/orbital_left_UKB_5000.yaml
+  #- dataset/julien/MICCAI_2024/training/orbital_left_UKB_1-5mm.yaml
   #- dataset/julien/merged_ukb/cingulate_all_UKB.yaml
   #- dataset/julien/merged_ukb/orbital_all_UKB.yaml
   #- dataset/julien/MICCAI_2024/training/SC-sylv_left_UKB

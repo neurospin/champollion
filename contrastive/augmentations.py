@@ -204,11 +204,12 @@ def intersection_skeleton_foldlabel(arr_foldlabel, arr_skel):
     return count_intersec
 
 
-def remove_bottom_branches(a):
+def remove_bottom_branches(a, arr_skel):
     """Removes bottom branches from foldlabel.
 
     Bottom branches are numerated between 7000 and 7999"""
-    return a*((a < 7000) | (a >= 8000)).astype(int)
+    #return a*((a < 7000) | (a >= 8000)).astype(int)
+    return a*(arr_skel==30)
 
 def remove_top_branches(a):
     """Removes top branches from foldlabel.
@@ -233,7 +234,7 @@ def remove_branches_up_to_percent(arr_foldlabel, arr_skel,
                                                          arr_skel)
 
     if keep_extremity=='bottom':
-        arr_foldlabel = remove_bottom_branches(arr_foldlabel)
+        arr_foldlabel = remove_bottom_branches(arr_foldlabel, arr_skel) # TODO: mask la valeur 30 de arr_skel (les 0 sont déjà masqués dans la ft principale)
     elif keep_extremity=='top':
         arr_foldlabel = remove_top_branches(arr_foldlabel)
     # if keep_bottom:
@@ -333,6 +334,9 @@ class RemoveRandomBranchTensor(object):
         arr_skel_without_branches = np.zeros(arr_skel.shape)
         log.debug("Shape of arr_skel before calling transform: "
                   f"{arr_skel_without_branches.shape}")
+
+        # mask foldlabel with skeleton, as other augmentations might have shrunk skeleton
+        arr_foldlabel = arr_foldlabel * (arr_skel!=0)
 
         # Checks if it is only one image or a batch of images
         if len(arr_skel.shape) == len(self.input_size)+1:
@@ -811,7 +815,7 @@ class TrimDepthTensor(object):
     """
 
     def __init__(self, sample_distbottom, sample_foldlabel,
-                 max_distance, delta, input_size, keep_extremity, uniform, binary):
+                 max_distance, delta, input_size, keep_extremity, uniform, binary, binary_proba=0.5):
         self.max_distance = max_distance
         self.delta = delta
         self.input_size = input_size
@@ -819,6 +823,7 @@ class TrimDepthTensor(object):
         self.sample_foldlabel = sample_foldlabel
         self.uniform=uniform
         self.binary=binary
+        self.binary_proba=binary_proba
         if keep_extremity=='random':
             np.random.seed()
             r = np.random.randint(2)
@@ -862,8 +867,9 @@ class TrimDepthTensor(object):
                 mask_branch = np.mod(arr_foldlabel,
                                     np.full(arr_foldlabel.shape, fill_value=1000))==index
                 if self.binary:
-                    r = np.random.randint(2) # 50% of branches affected
-                    if r == 0:
+                    #r = np.random.randint(2) # 50% of branches affected
+                    r = np.random.uniform()
+                    if r > self.binary_proba:
                         threshold = -1
                     else:
                         threshold = self.max_distance
@@ -878,7 +884,7 @@ class TrimDepthTensor(object):
                     # define distbottom pour la branche !
                     arr_distbottom_branch = arr_distbottom * (arr_trimmed_branch != 0)
                     # get smallest distbottom value + delta margin and replace topological value
-                    arr_trimmed_branch[arr_distbottom_branch <= threshold + self.delta]=30
+                    arr_trimmed_branch[(arr_distbottom_branch <= threshold + self.delta)&(arr_distbottom_branch > threshold)]=30
                 arr_trimmed_branches += arr_trimmed_branch
             arr_trimmed = arr_trimmed_branches.copy()
 

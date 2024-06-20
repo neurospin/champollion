@@ -12,6 +12,7 @@ from sklearn.metrics import auc, roc_curve, roc_auc_score, balanced_accuracy_sco
                             root_mean_squared_error, mean_absolute_error
 from sklearn.model_selection import cross_val_predict, train_test_split, cross_validate, \
                                     LeaveOneGroupOut, cross_val_score
+from scipy.stats import pearsonr
 
 from pqdm.processes import pqdm
 from joblib import cpu_count
@@ -311,11 +312,14 @@ def train_one_classifier(config, inputs, subjects, i=0):
             val_pred = cross_val_predict(model, X, Y, cv=cv)
         print(f'True label mean: {np.mean(Y):.3f}, std: {np.std(Y):.3f}')
         print(f'Predicted label mean: {np.mean(val_pred):.3f}, std: {np.std(val_pred):.3f}')
+        res = pearsonr(Y, val_pred)
+        correlation = res.statistic
         rmse = root_mean_squared_error(Y, val_pred)
         mae = mean_absolute_error(Y, val_pred)
         reg_auc = regression_roc_auc_score(Y, val_pred, num_rounds=50000)
         pred_vs_true = np.vstack((Y,val_pred)).T
         outputs['pred_vs_true'] = pred_vs_true
+        outputs['R2'] = correlation**2
         outputs['RMSE'] = rmse
         outputs['MAE'] = mae
         outputs['reg_auc'] = reg_auc
@@ -451,11 +455,13 @@ def train_n_repeat_classifiers(config, subset='full'):
         # TODO: add a list of labels preds and save like proba matrix
         reg_auc = outputs['reg_auc']
         rmse = outputs['RMSE']
+        r2 = outputs['R2']
         mae = outputs['MAE']
         pred_vs_true = outputs['pred_vs_true']
         
         values = {}
         values[f'{subset}_auc'] = reg_auc
+        values[f'{subset}_R2'] = r2
         values[f'{subset}_rmse'] = rmse
         values[f'{subset}_mae'] = mae
         # save results
@@ -463,7 +469,7 @@ def train_n_repeat_classifiers(config, subset='full'):
         filename = f"{subset}_values.json"
         with open(os.path.join(results_save_folder, filename), 'w+') as file:
             json.dump(values, file)
-        print(f'Regression AUC: {reg_auc}, RMSE: {rmse}, MAE: {mae}')
+        print(f'Regression AUC: {reg_auc}, R2: {r2}, RMSE: {rmse}, MAE: {mae}')
 
         #plot regression
         print(pred_vs_true.shape)

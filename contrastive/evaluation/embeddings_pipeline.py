@@ -202,10 +202,10 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/OLD_ORBITAL_10dims",
-        datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_train_test"],
-        labels=['Left_OFC'],
-        short_name='troiani', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/PCS_FINAL_MODEL",
+        datasets=["julien/MICCAI_2024/training/cingulate_right_UKB"],
+        labels=['Right_PCS'],
+        short_name='hcp', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
         subsets=['full'], epochs=[None], split='train_test', cv=3,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
         verbose=False)

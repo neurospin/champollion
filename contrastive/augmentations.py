@@ -184,7 +184,7 @@ def count_non_null(arr):
 def remove_branch(arr_foldlabel, arr_skel, selected_branch):
     """It masks the selected branch in arr_skel
     """
-    mask = ((arr_foldlabel != 0) & (arr_foldlabel != selected_branch))
+    mask = arr_foldlabel != selected_branch
     mask = mask.astype(int)
     return arr_skel * mask
 

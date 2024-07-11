@@ -4,7 +4,11 @@ defaults:
   - backbone: ConvNet
   - classifier: svm
   - dataset_localization: neurospin
-  - dataset/with_reskel_distbottom/2mm/UKB/ORBITAL_left
+  - dataset/with_reskel_distbottom/2mm/UKB/FIP_right
+  # - dataset/with_reskel_distbottom/2mm/UKB/SC-sylv_right
+  # - dataset/with_reskel_distbottom/2mm/UKB/CINGULATE_right
+  # - dataset/with_reskel_distbottom/2mm/UKB/STs-SGSM_left
+  # - dataset/with_reskel_distbottom/2mm/UKB/FCLp-SGSM_left
   # - dataset/with_reskel_distbottom/2mm/schiz_extended/ORBITAL_left
   # - dataset/with_reskel_distbottom/2mm/UKB/SC_SPeC_left
   # - dataset/with_reskel_distbottom/2mm/UKB/SC_SPeC_right

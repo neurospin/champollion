@@ -212,14 +212,25 @@ def embeddings_pipeline(dir_path, dataset_localization, datasets, labels,
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/2024-06-24",
+    # embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/2024-06-21",
+    #                     dataset_localization="neurospin",
+    #                     datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
+    #                     labels=['Left_OFC'],
+    #                     short_name='troiani', overwrite=True, embeddings=True,
+    #                     embeddings_only=False, use_best_model=False,
+    #                     subsets=['full'], epochs=[None], split='custom', cv=3,
+    #                     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
+    #                     verbose=False)
+
+    embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/ORBITAL_left",
                         dataset_localization="neurospin",
-                        datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
-                        labels=['Left_OFC'],
-                        short_name='troiani', overwrite=True, embeddings=True,
+                        datasets=["with_reskel_distbottom/2mm/UKB/ORBITAL_left"],
+                        labels=['Sex'],
+                        classifier_name='logistic',
+                        short_name='ukb', overwrite=True, embeddings=True,
                         embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='custom', cv=3,
-                        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
+                        subsets=['full'], epochs=[None], split='random', cv=3,
+                        splits_basedir='',
                         verbose=False)
 
     # embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/ORBITAL_BT",

@@ -3,7 +3,7 @@ batch_size: 32
 pin_mem: True
 lr: 0.0004
 weight_decay: 5.0e-05
-max_epochs: 81
+max_epochs: 1
 nb_epochs_per_saving: 1  # doesn't seem to be used anymore
 nb_epochs_per_tSNE: -1
 nb_epochs_per_matrix_plot: 10

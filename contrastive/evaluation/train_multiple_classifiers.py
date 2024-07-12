@@ -19,7 +19,7 @@ from functools import partial
 
 from sklearn.preprocessing import StandardScaler
 # from contrastive.models.binary_classifier import BinaryClassifier
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.svm import SVC, SVR
 from sklearn.neural_network import MLPClassifier
 
@@ -35,7 +35,7 @@ from sklearn.metrics import r2_score
 from sklearn.exceptions import ConvergenceWarning
 
 
-_parallel = True
+_parallel = False
 
 log = set_file_logger(__file__)
 
@@ -298,8 +298,11 @@ def train_one_classifier(config, inputs, subjects, i=0):
         raise ValueError("Wrong split config specified")
 
     if 'label_type' in config.keys() and config['label_type']=='continuous':
-        model = SVR(kernel='linear',max_iter=config.class_max_epochs,
-                    C=0.01)
+        if config.classifier_name == 'logistic':
+            model = LinearRegression()    
+        else:
+            model = SVR(kernel='linear',max_iter=config.class_max_epochs,
+                        C=0.01)
         if config.split=='train_test':
             train = pd.read_csv(os.path.join(config.embeddings_save_path, 'train_embeddings.csv'), usecols=['ID'])
             test = pd.read_csv(os.path.join(config.embeddings_save_path, 'test_embeddings.csv'), usecols=['ID'])

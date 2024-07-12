@@ -1,5 +1,5 @@
 # @package _global_
-output_dir: ../../../Output
+output_dir: ../../Output
 sweep_day: ${now:%Y-%m-%d}
 suffix_dir: ""
 sweep_dir: ${output_dir}/${sweep_day}${suffix_dir}

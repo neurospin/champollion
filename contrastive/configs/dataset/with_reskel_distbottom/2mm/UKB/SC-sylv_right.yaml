@@ -1,5 +1,5 @@
-# @package dataset.SC-sylv_right
-dataset_name: SC-sylv_right
+# @package dataset.SC-sylv
+dataset_name: SC-sylv
 pickle_normal: ${dataset_folder}/UkBioBank/crops/2mm/S.C.-sylv./mask/Rskeleton.pkl
 numpy_all: ${dataset_folder}/UkBioBank/crops/2mm/S.C.-sylv./mask/Rskeleton.npy
 subjects_all: ${dataset_folder}/UkBioBank/crops/2mm/S.C.-sylv./mask/Rskeleton_subject.csv

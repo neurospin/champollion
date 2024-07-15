@@ -5,7 +5,8 @@ import omegaconf
 
 from generate_embeddings import compute_embeddings
 from train_multiple_classifiers import train_classifiers
-from utils_pipelines import get_save_folder_name, change_config_datasets, change_config_label
+from utils_pipelines import get_save_folder_name, change_config_datasets,\
+                            change_config_label, change_config_dataset_localization
 
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
@@ -13,7 +14,7 @@ from sklearn.exceptions import ConvergenceWarning
 
 # Auxilary function used to process the config linked to the model.
 # For instance, change the embeddings save path to being next to the model.
-def preprocess_config(sub_dir, datasets, label, folder_name, classifier_name='svm',
+def preprocess_config(sub_dir, dataset_localization, datasets, label, folder_name, classifier_name='svm',
                       epoch=None, split=None, cv=5, splits_basedir=None, verbose=False):
     """Loads the associated config of the given model and changes what has to be done,
     mainly the datasets, the classifier type and a few other keywords.
@@ -39,6 +40,8 @@ def preprocess_config(sub_dir, datasets, label, folder_name, classifier_name='sv
     change_config_datasets(cfg, datasets)
     # replace the label
     change_config_label(cfg, label)
+    # replace the dataset localizatyion
+    change_config_dataset_localization(cfg, dataset_localization)
 
     # get the right classifiers parameters
     with open(os.getcwd() + f'/configs/classifier/{classifier_name}.yaml', 'r') as file:
@@ -71,7 +74,8 @@ def preprocess_config(sub_dir, datasets, label, folder_name, classifier_name='sv
 # main function
 # creates embeddings and train classifiers for all models contained in folder
 @ignore_warnings(category=ConvergenceWarning)
-def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_name='svm',
+def embeddings_pipeline(dir_path, dataset_localization, datasets, labels,
+                        short_name=None, classifier_name='svm',
                         overwrite=False, embeddings=True, embeddings_only=False,
                         use_best_model=False, subsets=['full'],
                         epochs=None, split='random', cv=5, splits_basedir=None, verbose=False):
@@ -82,6 +86,7 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
     Arguments:
         - dir_path: str. Path where the models are stored and where is applied 
         recursively the process.
+        - dataset_localization: gives position of dataset
         - datasets: list of str. Datasets the embeddings are generated from.
         - labels: str list. Names of the labels to be used for evaluation.
         - short_name: str or None. Name of the directory where to store both embeddings 
@@ -136,7 +141,11 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
                                 f_name = folder_name + f'_epoch{epoch}'
                             else:
                                 f_name = folder_name
-                            cfg = preprocess_config(sub_dir, datasets, label, f_name,
+                            cfg = preprocess_config(sub_dir,
+                                                    dataset_localization=dataset_localization,
+                                                    datasets=datasets,
+                                                    label=label,
+                                                    folder_name=f_name,
                                                     classifier_name=classifier_name,
                                                     epoch=epoch, split=split, cv=cv,
                                                     splits_basedir=splits_basedir)
@@ -159,7 +168,7 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
                                 sub_dir+'/.hydra/config_classifiers.yaml')
                             if valid_path and not embeddings_only:
                                 train_classifiers(cfg, subsets=subsets)
-                            else:
+                            elif not valid_path:
                                 print('Invalid epoch number, skipped')
 
                             # compute embeddings for the best model if saved
@@ -184,6 +193,7 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
             else:
                 print(f"\n{sub_dir} not associated to a model. Continue")
                 embeddings_pipeline(sub_dir,
+                                    dataset_localization,
                                     datasets=datasets,
                                     labels=labels,
                                     short_name=short_name,
@@ -202,50 +212,70 @@ def embeddings_pipeline(dir_path, datasets, labels, short_name=None, classifier_
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/2024-07-01",
-        datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
-        labels=['Left_OFC'],
-        short_name='troiani', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['full'], epochs=[None], split='custom', cv=3,
-        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
-        verbose=False)
-    
-"""Isomap Cingulate (hcp)
-        datasets=["julien/MICCAI_2024/evaluation/cingulate_left_hcp_custom_cv_2mm"],
-        labels=[f'Isomap_cingulate_left_dim{k}' for k in range(1,7)],
-        short_name='troiani', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['full'], epochs=[None], split='custom', cv=5,
-        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
-        verbose=False)
-"""
-    
-""" Isomap Central (hcp)
-        datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_hcp_custom"],
-        labels=[f'Isomap_central_left_dim{k}' for k in range(1,7)],
-        short_name='troiani', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['full'], epochs=[None], split='custom', cv=3,
-        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
-        verbose=False)
-"""
+    # embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/2024-06-21",
+    #                     dataset_localization="neurospin",
+    #                     datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
+    #                     labels=['Left_OFC'],
+    #                     short_name='troiani', overwrite=True, embeddings=True,
+    #                     embeddings_only=False, use_best_model=False,
+    #                     subsets=['full'], epochs=[None], split='custom', cv=3,
+    #                     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
+    #                     verbose=False)
 
-    
-""" Age, Sex (ukb)
-        datasets=["local_julien/orbital_UKB_left_5percent"],
-        labels=['Age', 'Sex'],
-        short_name='UKB_5percent', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['test'], epochs=[None], split='random', cv=5,
-        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/ACCpatterns_subjects_train_split_',
-        verbose=False)
-"""
+    embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V0/SC-sylv_right",
+                        dataset_localization="neurospin",
+                        datasets=["with_reskel_distbottom/2mm/UKB/SC-sylv_right"],
+                        labels=['isOld'],
+                        classifier_name='logistic',
+                        short_name='ukb', overwrite=True, embeddings=False,
+                        embeddings_only=False, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='random', cv=3,
+                        splits_basedir='',
+                        verbose=False)
 
-""" site effect Orbital / cingulate
-        datasets=["local_julien/orbital_left_site_effect_ukb_hcp_2mm"],
-        labels=['Site'],
-        short_name='Site_UKB_hcp', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['test'], epochs=[None], split='random', cv=5,
-        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/ACCpatterns_subjects_train_split_',
-        verbose=False)
-"""
+    # embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/ORBITAL_BT",
+    #                     dataset_localization="neurospin",
+    #                     datasets=["with_reskel_distbottom/2mm/schiz_extended/ORBITAL_left"],
+    #                     labels=['diagnosis'],
+    #                     short_name='schiz_extended', overwrite=True, embeddings=True,
+    #                     embeddings_only=True, use_best_model=False,
+    #                     subsets=['full'], epochs=[None], split='random', cv=3,
+    #                     splits_basedir='',
+    #                     verbose=False)
+    
+    # embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/ORBITAL_BT",
+    #                     dataset_localization="neurospin",
+    #                     datasets=["with_reskel_distbottom/2mm/schiz_extended/ORBITAL_left"],
+    #                     labels=['diagnosis'],
+    #                     short_name='schiz_extended', overwrite=True, embeddings=True,
+    #                     embeddings_only=True, use_best_model=True,
+    #                     subsets=['full'], epochs=[None], split='random', cv=3,
+    #                     splits_basedir='',
+    #                     verbose=False)
+
+    # embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/2024-06-06_pretraining",
+    #                     dataset_localization="neurospin",
+    #                     datasets=["with_reskel_distbottom/2mm/schiz_extended/SC_SPeC_left_female",
+    #                               "with_reskel_distbottom/2mm/schiz_extended/SC_SPeC_right_female"],
+    #                     labels=['diagnosis'],
+    #                     short_name='schiz_extended', overwrite=True, embeddings=True,
+    #                     embeddings_only=False, use_best_model=False,
+    #                     subsets=['full'], epochs=[None], split='random', cv=3,
+    #                     splits_basedir='',
+    #                     verbose=False)
+    
+    # embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/2024-06-06_pretraining",
+    #                     dataset_localization="neurospin",
+    #                     datasets=["with_reskel_distbottom/2mm/UKB/SC_SPeC_left",
+    #                               "with_reskel_distbottom/2mm/UKB/SC_SPeC_right"],
+    #                     labels=['diagnosis'],
+    #                     short_name='ukb', overwrite=True, embeddings=True,
+    #                     embeddings_only=True, use_best_model=False,
+    #                     subsets=['full'], epochs=[None], split='random', cv=3,
+    #                     splits_basedir='',
+    #                     verbose=False)
+
+
 
 """ PCS
         datasets=["julien/MICCAI_2024/evaluation/cingulate_right_ACCpatterns_custom"],

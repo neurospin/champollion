@@ -14,6 +14,9 @@ from contrastive.models.contrastive_learner_fusion import \
 from contrastive.utils.config import process_config
 from contrastive.utils.logs import set_root_logger_level, set_file_logger
 
+from utils_pipelines import get_save_folder_name, change_config_datasets,\
+                            change_config_label, change_config_dataset_localization
+
 from utils_pipelines import *
 
 log = set_file_logger(__file__)
@@ -59,7 +62,7 @@ overwrite to True if you still want to evaluate it.")
 
 # Auxilary function used to process the config linked to the model.
 # For instance, change the embeddings save path to being next to the model.
-def preprocess_config(sub_dir, datasets, label):
+def preprocess_config(sub_dir, dataset_localization, datasets, label):
     """Loads the associated config of the given model and changes what has to be done,
     mainly the datasets and a few other keywords.
     
@@ -77,6 +80,8 @@ def preprocess_config(sub_dir, datasets, label):
     # replace the datasets in place
     change_config_datasets(cfg, datasets)
     change_config_label(cfg, label)
+    # replace the dataset localizatyion
+    change_config_dataset_localization(cfg, dataset_localization)
 
     # replace the possibly incorrect config parameters
     cfg.with_labels = True
@@ -198,8 +203,8 @@ def supervised_auc_eval(config, model_path, folder_name=None, use_best_model=Tru
     save_used_label(save_path, config)
 
 
-def pipeline(dir_path, datasets, label, short_name=None, overwrite=False, use_best_model=True,
-             save_outputs=False, grad_cam=False):
+def pipeline(dir_path, dataset_localization, datasets, label, short_name=None, overwrite=False, use_best_model=True,
+             save_outputs=False):
     """Pipeline to generate automatically the output aucs for supervised classifiers only.
 
     Arguments:
@@ -234,7 +239,7 @@ def pipeline(dir_path, datasets, label, short_name=None, overwrite=False, use_be
                     print("Start post processing")
                     # get the config
                     # and correct it to suit what is needed for classifiers
-                    cfg = preprocess_config(sub_dir, datasets, label)
+                    cfg = preprocess_config(sub_dir, dataset_localization, datasets, label)
                     # save the modified config next to the real one
                     with open(sub_dir+'/.hydra/config_evaluation.yaml', 'w') \
                             as file:
@@ -246,21 +251,23 @@ def pipeline(dir_path, datasets, label, short_name=None, overwrite=False, use_be
                                          save_outputs=save_outputs, grad_cam=grad_cam)
                     if use_best_model:  # do both
                         log.info("Repeat with the best model")
-                        cfg = preprocess_config(sub_dir, datasets, label)
+                        cfg = preprocess_config(sub_dir, dataset_localization, datasets, label)
                         supervised_auc_eval(cfg, os.path.abspath(sub_dir),
                                          folder_name=folder_name, use_best_model=True,
                                          save_outputs=save_outputs, grad_cam=grad_cam)
 
             else:
                 print(f"{sub_dir} not associated to a model. Continue")
-                pipeline(sub_dir, datasets, label, short_name=short_name,
+                pipeline(sub_dir, dataset_localization, datasets, label, short_name=short_name,
                          overwrite=overwrite, use_best_model=use_best_model,
                          save_outputs=save_outputs, grad_cam=grad_cam)
         else:
             print(f"{sub_dir} is a file. Continue.")
 
 if __name__ == "__main__":
-    pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/SUPERVISED_OFC/",    
-            datasets=['julien/MICCAI_2024/supervised/orbital_left_hcp_supervised'],
-            label='Left_OFC', short_name='ACC', overwrite=True, use_best_model=True,
-            save_outputs=True, grad_cam=False)
+    pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/2024-06-11", 
+             dataset_localization="neurospin",  
+             datasets=["with_reskel_distbottom/2mm/schiz_extended/SC_SPeC_left_female",
+                       "with_reskel_distbottom/2mm/schiz_extended/SC_SPeC_right_female"],
+             label='diagnosis', short_name='schiz_female', overwrite=True, use_best_model=True,
+             save_outputs=True)

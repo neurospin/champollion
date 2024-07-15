@@ -9,7 +9,7 @@ import os
 
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.metrics import auc, roc_curve, roc_auc_score, balanced_accuracy_score, \
-                            root_mean_squared_error, mean_absolute_error
+                            mean_absolute_error, mean_squared_error
 from sklearn.model_selection import cross_val_predict, train_test_split, cross_validate, \
                                     LeaveOneGroupOut, cross_val_score
 from scipy.stats import pearsonr
@@ -20,6 +20,7 @@ from functools import partial
 
 from sklearn.preprocessing import StandardScaler
 # from contrastive.models.binary_classifier import BinaryClassifier
+from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.svm import SVC, SVR
 from sklearn.neural_network import MLPClassifier
 
@@ -31,10 +32,11 @@ from contrastive.evaluation.utils_pipelines import save_used_label
 from contrastive.evaluation.auc_score import regression_roc_auc_score
 
 from sklearn.utils._testing import ignore_warnings
+from sklearn.metrics import r2_score
 from sklearn.exceptions import ConvergenceWarning
 
 
-_parallel = True
+_parallel = False
 
 log = set_file_logger(__file__)
 
@@ -116,6 +118,8 @@ def load_embeddings(dir_path, labels_path, config, subset='full'):
 
     embeddings = embeddings[embeddings.index.isin(labels.Subject)]
     embeddings.sort_index(inplace=True)
+    if not embeddings.reset_index().ID.equals(labels.Subject):
+        raise ValueError("Embeddings and labels do not have the same list of subjects")
     log.debug(f"sorted embeddings: {embeddings.head()}")
 
     # /!\ multiple labels is not handled
@@ -295,8 +299,11 @@ def train_one_classifier(config, inputs, subjects, i=0):
         raise ValueError("Wrong split config specified")
 
     if 'label_type' in config.keys() and config['label_type']=='continuous':
-        model = SVR(kernel='linear',max_iter=config.class_max_epochs,
-                    C=0.01)
+        if config.classifier_name == 'logistic':
+            model = LinearRegression()    
+        else:
+            model = SVR(kernel='linear',max_iter=config.class_max_epochs,
+                        C=0.01)
         if config.split=='train_test':
             train = pd.read_csv(os.path.join(config.embeddings_save_path, 'train_embeddings.csv'), usecols=['ID'])
             test = pd.read_csv(os.path.join(config.embeddings_save_path, 'test_embeddings.csv'), usecols=['ID'])
@@ -312,14 +319,13 @@ def train_one_classifier(config, inputs, subjects, i=0):
             val_pred = cross_val_predict(model, X, Y, cv=cv)
         print(f'True label mean: {np.mean(Y):.3f}, std: {np.std(Y):.3f}')
         print(f'Predicted label mean: {np.mean(val_pred):.3f}, std: {np.std(val_pred):.3f}')
-        res = pearsonr(Y, val_pred)
-        correlation = res.statistic
-        rmse = root_mean_squared_error(Y, val_pred)
+        r2 = r2_score(Y, val_pred)
+        print(f'r2 score: {r2}')
+        rmse = mean_squared_error(Y, val_pred)
         mae = mean_absolute_error(Y, val_pred)
         reg_auc = regression_roc_auc_score(Y, val_pred, num_rounds=50000)
         pred_vs_true = np.vstack((Y,val_pred)).T
         outputs['pred_vs_true'] = pred_vs_true
-        outputs['R2'] = correlation**2
         outputs['RMSE'] = rmse
         outputs['MAE'] = mae
         outputs['reg_auc'] = reg_auc
@@ -336,6 +342,9 @@ def train_one_classifier(config, inputs, subjects, i=0):
                                 activation=config.classifier_activation,
                                 batch_size=config.class_batch_size,
                                 max_iter=config.class_max_epochs, random_state=i)
+        elif config.classifier_name == 'logistic':
+            model = LogisticRegression(max_iter=config.class_max_epochs,
+                                       random_state=i)
         else:
             raise ValueError(f"The chosen classifier ({config.classifier_name}) is not handled by the pipeline. \
                                Choose a classifier type that exists in configs/classifier.")
@@ -455,13 +464,11 @@ def train_n_repeat_classifiers(config, subset='full'):
         # TODO: add a list of labels preds and save like proba matrix
         reg_auc = outputs['reg_auc']
         rmse = outputs['RMSE']
-        r2 = outputs['R2']
         mae = outputs['MAE']
         pred_vs_true = outputs['pred_vs_true']
         
         values = {}
         values[f'{subset}_auc'] = reg_auc
-        values[f'{subset}_R2'] = r2
         values[f'{subset}_rmse'] = rmse
         values[f'{subset}_mae'] = mae
         # save results
@@ -469,7 +476,7 @@ def train_n_repeat_classifiers(config, subset='full'):
         filename = f"{subset}_values.json"
         with open(os.path.join(results_save_folder, filename), 'w+') as file:
             json.dump(values, file)
-        print(f'Regression AUC: {reg_auc}, R2: {r2}, RMSE: {rmse}, MAE: {mae}')
+        print(f'Regression AUC: {reg_auc}, RMSE: {rmse}, MAE: {mae}')
 
         #plot regression
         print(pred_vs_true.shape)

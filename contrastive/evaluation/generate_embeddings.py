@@ -58,6 +58,8 @@ def embeddings_to_pandas(embeddings, csv_path=None, verbose=False):
 
     # Solves the case in which index type is tensor
     if len(df_embeddings.index) > 0:  # avoid cases where empty df
+        if df_embeddings.index.dtype==int:
+            df_embeddings.index = df_embeddings.index.astype(str)
         if type(df_embeddings.index[0]) != str:
             index = [idx.item() for idx in df_embeddings.index]
             index_name = df_embeddings.index.name
@@ -100,7 +102,7 @@ def compute_embeddings(config):
         #assert os.path.isfile(ckpt_path), f"No weights for selected epoch {config.epoch}"
         valid_path = os.path.isfile(ckpt_path) # check if weights exist for selected epoch
     else:
-        paths = config.model_path+"/logs/*/version_0/checkpoints"+r'/*.ckpt'
+        paths = config.model_path+"/*logs/*/version_0/checkpoints"+r'/*.ckpt'
         if 'use_best_model' in config.keys():
             paths = config.model_path+"/logs/best_model_weights.pt"
         files = glob.glob(paths)
@@ -124,7 +126,7 @@ def compute_embeddings(config):
         if not os.path.exists(embeddings_path):
             os.makedirs(embeddings_path)
 
-        if config.split=='random' or config.split=='train_test':
+        if config.split=='random' or config.split=='train_test' or config.split=='train_val_test_intra_test' :
             print("RANDOM SPLITS FOR CROSS-VAL")
             # calculate embeddings for training set and save them somewhere
             print("TRAIN SET")

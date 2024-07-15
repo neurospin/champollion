@@ -46,13 +46,15 @@ try:
 except ImportError:
     print("INFO: you cannot use deep_folding in brainvisa. Probably OK.")
 
-from contrastive.utils.logs import set_file_logger, set_root_logger_level
+from ..utils.logs import set_file_logger, set_root_logger_level
 
-from contrastive.data.datasets import ContrastiveDatasetFusion
+from .datasets import ContrastiveDatasetFusion
 
-from contrastive.data.utils import \
-    check_subject_consistency, extract_data, check_if_same_subjects,\
-    check_distbottom_npy_consistency, check_foldlabel_npy_consistency, check_if_same_shape,\
+from .utils import \
+    check_subject_consistency, extract_data, \
+    check_if_same_subjects, \
+    check_distbottom_npy_consistency, check_foldlabel_npy_consistency, \
+    check_if_same_shape, \
     check_if_skeleton, extract_data_with_labels, read_labels
 
 import logging
@@ -145,12 +147,12 @@ def create_sets_without_labels(config):
                               "subjects_all")
             if 'train_val_csv_file' in config.data[0].keys():
                 check_if_same_csv(config.data[0].train_val_csv_file,
-                                config.data[reg+1].train_val_csv_file,
-                                "train_csv")
+                                  config.data[reg+1].train_val_csv_file,
+                                  "train_csv")
             else:
                 check_if_same_csv(config.data[0].train_csv_file,
-                                config.data[reg+1].train_csv_file,
-                                "train_csv")
+                                  config.data[reg+1].train_csv_file,
+                                  "train_csv")
             check_if_numpy_same_length(config.data[0].numpy_all,
                                        config.data[1].numpy_all,
                                        "numpy_all")
@@ -278,7 +280,7 @@ def sanity_checks_with_labels(config, skeleton_output, subject_labels, reg):
     ):
         check_subject_consistency(config.data[reg].subjects_all,
                                   config.data[reg].subjects_foldlabel_all,
-                                  name='foldlabel')
+                                  subset_name)
         # in order to avoid logging twice the same information
         if root.level == 20:  # root logger in INFO mode
             set_root_logger_level(0)
@@ -376,6 +378,7 @@ def create_sets_with_labels(config):
 
     skeleton_all = []
     foldlabel_all = []
+    distbottom_all = []
     
     # checks consistency among regions
     if len(config.data) > 1:
@@ -388,15 +391,23 @@ def create_sets_with_labels(config):
                               "subjects_all")
             if 'train_val_csv_file' in config.data[0].keys():
                 check_if_same_csv(config.data[0].train_val_csv_file,
-                                config.data[reg+1].train_val_csv_file,
-                                "train_val_csv", header=None)
+                                  config.data[reg+1].train_val_csv_file,
+                                  "train_val_csv", header=None)
+            else:
+                check_if_same_csv(config.data[0].train_csv_file,
+                                  config.data[reg+1].train_csv_file,
+                                  "train_csv")                
             check_if_numpy_same_length(config.data[0].numpy_all,
                                        config.data[1].numpy_all,
                                        "numpy_all")
-            if config.foldlabel:
+            if config.foldlabel or config.trimdepth or config.random_choice or config.mixed:
                 check_if_numpy_same_length(config.data[0].foldlabel_all,
                                            config.data[1].foldlabel_all,
                                            "foldlabel_all")
+            if config.trimdepth or config.random_choice or config.mixed:
+                check_if_numpy_same_length(config.data[0].distbottom_all,
+                                           config.data[1].distbottom_all,
+                                           "distbottom_all")
 
     for reg in range(len(config.data)):
         # Gets labels for all subjects
@@ -421,8 +432,27 @@ def create_sets_with_labels(config):
             config.data[reg].numpy_all, subject_labels,
             config.data[reg].crop_dir, config, reg)
 
-        foldlabel_output = sanity_checks_with_labels(
-            config, skeleton_output, subject_labels, reg)
+        # Loads and separates in train_val/test set foldlabels if requested
+        if config.apply_augmentations and (config.foldlabel or config.trimdepth
+                                           or config.random_choice or config.mixed):
+            foldlabel_output = sanity_checks_with_labels(config,
+                                                         skeleton_output,
+                                                         subject_labels,
+                                                         reg)
+        else:
+            foldlabel_output = None
+            log.info("foldlabel data NOT requested. Foldlabel data NOT loaded")
+
+        # same with distbottom
+        if config.apply_augmentations and (config.trimdepth or config.random_choice or config.mixed):
+            distbottom_output = sanity_checks_distbottoms_without_labels(config,
+                                                            skeleton_output,
+                                                            reg)
+        else:
+            distbottom_output = None
+            log.info("distbottom data NOT requested. Distbottom data NOT loaded")
+        
+        distbottom_all.append(distbottom_output)
 
         skeleton_all.append(skeleton_output)
         foldlabel_all.append(foldlabel_output)
@@ -443,13 +473,26 @@ def create_sets_with_labels(config):
         for foldlabel_output in foldlabel_all:
             # select the augmentation method
             if config.apply_augmentations:
-                if config.foldlabel:  # branch_clipping
+                if config.trimdepth or config.random_choice or config.mixed or config.foldlabel:  # branch_clipping
                     foldlabel_array = foldlabel_output[subset_name][1]
                 else:  # cutout
                     foldlabel_array = None  # no need of fold labels
             else:  # no augmentation
                 foldlabel_array = None
             foldlabel_arrays.append(foldlabel_array)
+
+        # Concatenates distbottom arrays
+        distbottom_arrays = []
+        for distbottom_output in distbottom_all:
+            # select the augmentation method
+            if config.apply_augmentations:
+                if config.random_choice or config.mixed or config.trimdepth:  # trimdepth
+                    distbottom_array = distbottom_output[subset_name][1]
+                else:  # cutout
+                    distbottom_array = None  # no need of fold labels
+            else:  # no augmentation
+                distbottom_array = None
+            distbottom_arrays.append(distbottom_array)
 
         # Concatenates labels
         labels = [skeleton_output[subset_name][2]
@@ -473,6 +516,7 @@ def create_sets_with_labels(config):
             filenames=filenames,
             arrays=arrays,
             foldlabel_arrays=foldlabel_arrays,
+            distbottom_arrays=distbottom_arrays,
             labels=labels,
             config=config,
             apply_transform=config.apply_augmentations)

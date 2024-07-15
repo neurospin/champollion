@@ -42,7 +42,7 @@ import pandas as pd
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
-from contrastive.utils.logs import set_file_logger
+from ..utils.logs import set_file_logger
 # only if foldlabel == True
 try:
     from deep_folding.brainvisa.utils.save_data import compare_array_aims_files
@@ -65,7 +65,7 @@ def read_npy_file(npy_file_path: str) -> np.ndarray:
 
 def read_subject_csv(csv_file_path: str) -> pd.DataFrame:
     """Reads csv subject file.
-    It contains on a column named \'Subject\' all subject names"""
+    It contains one column named \'Subject\' with all subject names"""
     subjects = pd.read_csv(csv_file_path)
     if 'Subject' in subjects.columns:
         return subjects
@@ -80,7 +80,7 @@ def length_object(object):
 
 
 def is_equal_length(object_1, object_2):
-    """Checks of the two objects have equal length"""
+    """Checks if the two objects have equal length"""
     len_1 = length_object(object_1)
     len_2 = length_object(object_2)
     return (len_1 == len_2)
@@ -333,6 +333,10 @@ def split_data(normal_data, normal_subjects, sample_dir, config, reg):
     train_val_subjects, train_val_data = \
         extract_partial_numpy(normal_subjects, train_val_subjects,
                               normal_data, name='train_val')
+    
+    assert len(train_val_subjects), \
+        "train_val is empty. " \
+        "It could be a problem with the subject names"
 
     if config.environment == "brainvisa" and config.checking:
         compare_array_aims_files(train_subjects, train_data, sample_dir)

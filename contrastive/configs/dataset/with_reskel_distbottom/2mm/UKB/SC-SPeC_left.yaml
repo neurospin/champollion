@@ -1,5 +1,5 @@
-# @package dataset.SC-SPeC
-dataset_name: SC-SPeC
+# @package dataset.SC-SPeC_left
+dataset_name: SC-SPeC_left
 pickle_normal: ${dataset_folder}/UkBioBank/crops/2mm/S.C.-S.Pe.C./mask/Lskeleton.pkl
 numpy_all: ${dataset_folder}/UkBioBank/crops/2mm/S.C.-S.Pe.C./mask/Lskeleton.npy
 subjects_all: ${dataset_folder}/UkBioBank/crops/2mm/S.C.-S.Pe.C./mask/Lskeleton_subject.csv

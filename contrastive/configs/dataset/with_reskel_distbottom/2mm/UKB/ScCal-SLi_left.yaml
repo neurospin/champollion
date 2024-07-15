@@ -1,5 +1,5 @@
-# @package dataset.ScCal-SLi
-dataset_name: ScCal-SLi
+# @package dataset.ScCal-SLi_left
+dataset_name: ScCal-SLi_left
 pickle_normal: ${dataset_folder}/UkBioBank/crops/2mm/Sc.Cal.-S.Li./mask/Lskeleton.pkl
 numpy_all: ${dataset_folder}/UkBioBank/crops/2mm/Sc.Cal.-S.Li./mask/Lskeleton.npy
 subjects_all: ${dataset_folder}/UkBioBank/crops/2mm/Sc.Cal.-S.Li./mask/Lskeleton_subject.csv

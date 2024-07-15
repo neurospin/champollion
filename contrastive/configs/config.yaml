@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - augmentations: random
+  - augmentations: random # translation_only
   - backbone: ConvNet
   - classifier: svm
   #- dataset/julien/MICCAI_2024/training/cingulate_right_UKB.yaml
@@ -32,3 +32,4 @@ defaults:
   - override hydra/job_logging: custom
 
 data: ${oc.dict.values:dataset}
+datakey: ${oc.dict.keys:dataset}

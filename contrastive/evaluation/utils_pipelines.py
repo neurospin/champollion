@@ -76,6 +76,21 @@ def change_config_label(config, new_label):
         config[key] = label_yaml[key]
 
 
+def change_config_dataset_localization(config, new_localization):
+    """Replace the 'dataset_localization' entry of a config 
+    with the new target dataset localization. Works in place.
+    
+    Arguments:
+        - config: a config object (omegaconf).
+        - new_localization: str corresponding to the name 
+        of a target yaml file."""
+    
+    # Replaces datset_localization with the new localization
+    with open(os.getcwd() + f'/configs/dataset_localization/{new_localization}.yaml', 'r') as file:
+        dataset_localization_yaml = yaml.load(file, yaml.FullLoader)
+    config["dataset_folder"] = dataset_localization_yaml["dataset_folder"]
+
+
 def save_used_datasets(save_path, datasets):
     """Save the datasets given in order in a .txt file. Used in embeddings and supervised
     pipelines to know which datasets have been used for the results generation.

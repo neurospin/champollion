@@ -321,12 +321,12 @@ def train_one_classifier(config, inputs, subjects, i=0):
         print(f'Predicted label mean: {np.mean(val_pred):.3f}, std: {np.std(val_pred):.3f}')
         r2 = r2_score(Y, val_pred)
         print(f'r2 score: {r2}')
-        rmse = mean_squared_error(Y, val_pred)
+        mse = mean_squared_error(Y, val_pred)
         mae = mean_absolute_error(Y, val_pred)
         reg_auc = regression_roc_auc_score(Y, val_pred, num_rounds=50000)
         pred_vs_true = np.vstack((Y,val_pred)).T
         outputs['pred_vs_true'] = pred_vs_true
-        outputs['RMSE'] = rmse
+        outputs['MSE'] = mse
         outputs['MAE'] = mae
         outputs['reg_auc'] = reg_auc
 
@@ -463,20 +463,20 @@ def train_n_repeat_classifiers(config, subset='full'):
         #labels_preds = outputs['labels_pred']
         # TODO: add a list of labels preds and save like proba matrix
         reg_auc = outputs['reg_auc']
-        rmse = outputs['RMSE']
+        mse = outputs['MSE']
         mae = outputs['MAE']
         pred_vs_true = outputs['pred_vs_true']
         
         values = {}
         values[f'{subset}_auc'] = reg_auc
-        values[f'{subset}_rmse'] = rmse
+        values[f'{subset}_mse'] = mse
         values[f'{subset}_mae'] = mae
         # save results
         print(f"results_save_path = {results_save_folder}")
         filename = f"{subset}_values.json"
         with open(os.path.join(results_save_folder, filename), 'w+') as file:
             json.dump(values, file)
-        print(f'Regression AUC: {reg_auc}, RMSE: {rmse}, MAE: {mae}')
+        print(f'Regression AUC: {reg_auc}, MSE: {mse}, MAE: {mae}')
 
         #plot regression
         print(pred_vs_true.shape)

@@ -2,7 +2,7 @@
 model: SimCLR_fusion
 sigma_labels: 2.0
 sigma: 5
-drop_rate: 0.0
+drop_rate: 0.05
 # pretrained_model_path: #path/to/cpkt
 pretrained_model_path: #/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/2024-06-06/18-01-17_177/logs/lightning_logs/version_0/checkpoints/epoch=80-step=47952.ckpt #UKB
 # pretrained_model_path: /neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/ORBITAL_BT/20-56-02_1/logs/lightning_logs/version_0/checkpoints/epoch=70-step=42032.ckpt

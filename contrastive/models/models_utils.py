@@ -38,6 +38,8 @@ def build_converter(config, concat_latent_spaces_size):
             pass
         else:
             raise ValueError(f"Such activation ({converter_activation}) is not handled for converter.")
+        
+        converter.append(nn.Dropout(p=config.ph_drop_rate))
     
     return converter, num_representation_features
 

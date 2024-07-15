@@ -13,6 +13,6 @@ subjects_distbottom_all: ${dataset_folder}/UkBioBank/crops/2mm/CINGULATE/mask/Ld
 crop_file_suffix: _cropped_skeleton.nii.gz
 pickle_benchmark: 
 train_val_csv_file: ${dataset_folder}/UkBioBank/subjects_full.csv
-subject_labels_file: ${dataset_folder}/UkBioBank/participants_sex_age.csv
+subject_labels_file: ${dataset_folder}/UkBioBank/participants.csv
 subject_column_name: 'participant_id'
 input_size: (1, 18, 41, 38)

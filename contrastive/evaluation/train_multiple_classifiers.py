@@ -35,7 +35,7 @@ from sklearn.metrics import r2_score
 from sklearn.exceptions import ConvergenceWarning
 
 
-_parallel = False
+_parallel = True
 
 log = set_file_logger(__file__)
 
@@ -341,7 +341,7 @@ def train_one_classifier(config, inputs, subjects, i=0):
                                 activation=config.classifier_activation,
                                 batch_size=config.class_batch_size,
                                 max_iter=config.class_max_epochs, random_state=i)
-        if config.classifier_name == 'logistic':
+        elif config.classifier_name == 'logistic':
             model = LogisticRegression(max_iter=config.class_max_epochs,
                                        random_state=i)
         else:

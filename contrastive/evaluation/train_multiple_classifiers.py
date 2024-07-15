@@ -320,7 +320,6 @@ def train_one_classifier(config, inputs, subjects, i=0):
         print(f'True label mean: {np.mean(Y):.3f}, std: {np.std(Y):.3f}')
         print(f'Predicted label mean: {np.mean(val_pred):.3f}, std: {np.std(val_pred):.3f}')
         r2 = r2_score(Y, val_pred)
-        print(f'r2 score: {r2}')
         mse = mean_squared_error(Y, val_pred)
         mae = mean_absolute_error(Y, val_pred)
         reg_auc = regression_roc_auc_score(Y, val_pred, num_rounds=50000)
@@ -328,6 +327,7 @@ def train_one_classifier(config, inputs, subjects, i=0):
         outputs['pred_vs_true'] = pred_vs_true
         outputs['MSE'] = mse
         outputs['MAE'] = mae
+        outputs['r2'] = r2
         outputs['reg_auc'] = reg_auc
 
     else:
@@ -465,18 +465,20 @@ def train_n_repeat_classifiers(config, subset='full'):
         reg_auc = outputs['reg_auc']
         mse = outputs['MSE']
         mae = outputs['MAE']
+        r2 = outputs['r2']
         pred_vs_true = outputs['pred_vs_true']
         
         values = {}
         values[f'{subset}_auc'] = reg_auc
         values[f'{subset}_mse'] = mse
         values[f'{subset}_mae'] = mae
+        values[f'{subset}_r2'] = r2
         # save results
         print(f"results_save_path = {results_save_folder}")
         filename = f"{subset}_values.json"
         with open(os.path.join(results_save_folder, filename), 'w+') as file:
             json.dump(values, file)
-        print(f'Regression AUC: {reg_auc}, MSE: {mse}, MAE: {mae}')
+        print(f'Regression AUC: {reg_auc}, MSE: {mse}, MAE: {mae}, r2: {r2}')
 
         #plot regression
         print(pred_vs_true.shape)

@@ -1,5 +1,5 @@
-# @package dataset.SC_SPeC_left.yaml
-dataset_name: SC_SPeC_left
+# @package dataset.SC-SPeC_left
+dataset_name: SC-SPeC_left
 pickle_normal: ${dataset_folder}/UkBioBank/crops/2mm/S.C.-S.Pe.C./mask/Lskeleton.pkl
 numpy_all: ${dataset_folder}/UkBioBank/crops/2mm/S.C.-S.Pe.C./mask/Lskeleton.npy
 subjects_all: ${dataset_folder}/UkBioBank/crops/2mm/S.C.-S.Pe.C./mask/Lskeleton_subject.csv
@@ -11,9 +11,8 @@ distbottom_dir: ${dataset_folder}/UkBioBank/crops/2mm/S.C.-S.Pe.C./mask/Ldistbot
 distbottom_all: ${dataset_folder}/UkBioBank/crops/2mm/S.C.-S.Pe.C./mask/Ldistbottom.npy
 subjects_distbottom_all: ${dataset_folder}/UkBioBank/crops/2mm/S.C.-S.Pe.C./mask/Ldistbottom_subject.csv
 crop_file_suffix: _cropped_skeleton.nii.gz
-pickle_benchmark:
+pickle_benchmark: 
 train_val_csv_file: ${dataset_folder}/UkBioBank/subjects_full.csv
-subject_labels_file: ${dataset_folder}/UkBioBank/participants_labels.csv
-subject_column_name: 'Subject'
+subject_labels_file: ${dataset_folder}/UkBioBank/participants.csv
+subject_column_name: 'participant_id'
 input_size: (1, 38, 49, 52)
-

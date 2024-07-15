@@ -1,5 +1,5 @@
-# @package dataset.SFinf-BROCA-SPeCinf
-dataset_name: SFinf-BROCA-SPeCinf
+# @package dataset.SFinf-BROCA-SPeCinf_left
+dataset_name: SFinf-BROCA-SPeCinf_left
 pickle_normal: ${dataset_folder}/UkBioBank/crops/2mm/S.F.inf.-BROCA-S.Pe.C.inf./mask/Lskeleton.pkl
 numpy_all: ${dataset_folder}/UkBioBank/crops/2mm/S.F.inf.-BROCA-S.Pe.C.inf./mask/Lskeleton.npy
 subjects_all: ${dataset_folder}/UkBioBank/crops/2mm/S.F.inf.-BROCA-S.Pe.C.inf./mask/Lskeleton_subject.csv

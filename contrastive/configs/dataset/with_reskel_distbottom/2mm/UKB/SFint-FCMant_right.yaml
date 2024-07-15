@@ -1,5 +1,5 @@
-# @package dataset.SFint-FCMant
-dataset_name: SFint-FCMant
+# @package dataset.SFint-FCMant_right
+dataset_name: SFint-FCMant_right
 pickle_normal: ${dataset_folder}/UkBioBank/crops/2mm/S.F.int.-F.C.M.ant./mask/Rskeleton.pkl
 numpy_all: ${dataset_folder}/UkBioBank/crops/2mm/S.F.int.-F.C.M.ant./mask/Rskeleton.npy
 subjects_all: ${dataset_folder}/UkBioBank/crops/2mm/S.F.int.-F.C.M.ant./mask/Rskeleton_subject.csv

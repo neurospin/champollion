@@ -1,5 +1,5 @@
-# @package dataset.STi-SOTlat
-dataset_name: STi-SOTlat
+# @package dataset.STi-SOTlat_left
+dataset_name: STi-SOTlat_left
 pickle_normal: ${dataset_folder}/UkBioBank/crops/2mm/S.T.i.-S.O.T.lat./mask/Lskeleton.pkl
 numpy_all: ${dataset_folder}/UkBioBank/crops/2mm/S.T.i.-S.O.T.lat./mask/Lskeleton.npy
 subjects_all: ${dataset_folder}/UkBioBank/crops/2mm/S.T.i.-S.O.T.lat./mask/Lskeleton_subject.csv

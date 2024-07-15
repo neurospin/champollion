@@ -1,5 +1,5 @@
-# @package dataset.STs
-dataset_name: STs
+# @package dataset.STs_right
+dataset_name: STs_right
 pickle_normal: ${dataset_folder}/UkBioBank/crops/2mm/S.T.s./mask/Rskeleton.pkl
 numpy_all: ${dataset_folder}/UkBioBank/crops/2mm/S.T.s./mask/Rskeleton.npy
 subjects_all: ${dataset_folder}/UkBioBank/crops/2mm/S.T.s./mask/Rskeleton_subject.csv

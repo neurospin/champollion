@@ -1,5 +1,5 @@
-# @package dataset.ORBITAL
-dataset_name: ORBITAL
+# @package dataset.ORBITAL_right
+dataset_name: ORBITAL_right
 pickle_normal: ${dataset_folder}/UkBioBank/crops/2mm/ORBITAL/mask/Rskeleton.pkl
 numpy_all: ${dataset_folder}/UkBioBank/crops/2mm/ORBITAL/mask/Rskeleton.npy
 subjects_all: ${dataset_folder}/UkBioBank/crops/2mm/ORBITAL/mask/Rskeleton_subject.csv

@@ -1,9 +1,21 @@
 defaults:
   - _self_
-  - augmentations: random
+  - augmentations: random # translation_only
   - backbone: ConvNet
   - classifier: svm
-  - dataset/antoine/cingulate_UKB_right.yaml
+  - dataset_localization: neurospin
+  - dataset/with_reskel_distbottom/2mm/UKB/CINGULATE_left
+  #- dataset/with_reskel_distbottom/2mm/UKB/SC-sylv_left
+  # - dataset/with_reskel_distbottom/2mm/UKB/FIP_right
+  # - dataset/with_reskel_distbottom/2mm/UKB/SC-sylv_right
+  # - dataset/with_reskel_distbottom/2mm/UKB/CINGULATE_right
+  # - dataset/with_reskel_distbottom/2mm/UKB/STs-SGSM_left
+  # - dataset/with_reskel_distbottom/2mm/UKB/FCLp-SGSM_left
+  # - dataset/with_reskel_distbottom/2mm/schiz_extended/ORBITAL_left
+  # - dataset/with_reskel_distbottom/2mm/UKB/SC_SPeC_left
+  # - dataset/with_reskel_distbottom/2mm/UKB/SC_SPeC_right
+  # - dataset/with_reskel_distbottom/2mm/schiz_extended/SC_SPeC_left_female
+  # - dataset/with_reskel_distbottom/2mm/schiz_extended/SC_SPeC_right_female
   # - dataset/local_julien/cingulate_UKB_right.yaml
   #- dataset/local_julien/1-5mm/STs_babies_UKB_right_1-5mm
   # - dataset/local_julien/1-5mm/orbital_UKB_left_1-5mm
@@ -12,7 +24,7 @@ defaults:
   # - dataset/occipital_schiz_L_strat_bis_threshold1
   - embeddings: embeddings
   - hydra: local
-  - label: Left_OFC
+  - label: diagnosis
   - mode: encoder
   - model: SimCLR_fusion
   - platform: cuda_not_brainvisa
@@ -22,3 +34,4 @@ defaults:
   - override hydra/job_logging: custom
 
 data: ${oc.dict.values:dataset}
+datakey: ${oc.dict.keys:dataset}

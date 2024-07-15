@@ -1,5 +1,5 @@
-# @package dataset.FCMpost-SpC
-dataset_name: FCMpost-SpC
+# @package dataset.FCMpost-SpC_right
+dataset_name: FCMpost-SpC_right
 pickle_normal: ${dataset_folder}/UkBioBank/crops/2mm/F.C.M.post.-S.p.C./mask/Rskeleton.pkl
 numpy_all: ${dataset_folder}/UkBioBank/crops/2mm/F.C.M.post.-S.p.C./mask/Rskeleton.npy
 subjects_all: ${dataset_folder}/UkBioBank/crops/2mm/F.C.M.post.-S.p.C./mask/Rskeleton_subject.csv

@@ -225,14 +225,14 @@ if __name__ == "__main__":
     #                     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
     #                     verbose=False)
 
-    embeddings_pipeline("/neurospin/dico/adufournet/mycode/Output/2024-07-12",
+    embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V0/CINGULATE_right",
                         dataset_localization="neurospin",
-                        datasets=["antoine/cingulate_ACCpatterns_left"],
+                        datasets=["antoine/cingulate_UKB_right"],
                         labels=['Left_PCS'],
                         classifier_name='logistic',
-                        short_name='ACCP', overwrite=True, embeddings=True,
-                        embeddings_only=False, use_best_model=False,
-                        subsets=['test'], epochs=[10,20,30,40,50,60,70,80], split='custom', cv=3,
+                        short_name='ukb', overwrite=True, embeddings=True,
+                        embeddings_only=True, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='random', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/ACCpatterns_subjects_train_split_',
                         verbose=False)
 

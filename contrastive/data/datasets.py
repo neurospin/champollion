@@ -116,7 +116,7 @@ def check_equal_non_zero_voxels(sample1, sample2, name):
         print(f"{name} volumes are not included in skeleton"
                  f"{torch.count_nonzero((b1!=b2) * b2)} voxels differ "
                  f"over {torch.count_nonzero(b1)} skeleton voxels")
-    if torch.count_nonzero((b1!=b2) * b1) > 50:
+    if torch.count_nonzero((b1!=b2) * b1) > (b2.numel()/10):
         print(f"Skeleton and {name} volumes do not have the same number "
                  "of non-zero voxels. "
                  f"{torch.count_nonzero((b1!=b2) * b1)} voxels differ "

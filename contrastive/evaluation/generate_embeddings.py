@@ -72,8 +72,8 @@ def embeddings_to_pandas(embeddings, csv_path=None, verbose=False):
         return df_embeddings
 
 
-@hydra.main(config_name='config_no_save', config_path="../configs")
-def compute_embeddings(config):
+#@hydra.main(config_name='config_no_save', config_path="../configs")
+def compute_embeddings(config, subsets=None):
     """Compute the embeddings (= output of the backbone(s)) for a given model. 
     It relies on the hydra config framework, especially the backbone, datasets 
     and model parts.
@@ -127,31 +127,33 @@ def compute_embeddings(config):
             os.makedirs(embeddings_path)
 
         if config.split=='random' or config.split=='train_test' or config.split=='train_val_test_intra_test' :
-            print("RANDOM SPLITS FOR CROSS-VAL")
             # calculate embeddings for training set and save them somewhere
-            print("TRAIN SET")
-            train_embeddings = model.compute_representations(
-                data_module.train_dataloader())
+            if 'train' in subsets or 'train_val' in subsets or 'full' in subsets:
+                print("TRAIN SET")
+                train_embeddings = model.compute_representations(
+                    data_module.train_dataloader())
 
-            # convert the embeddings to pandas df and save them
-            train_embeddings_df = embeddings_to_pandas(train_embeddings)
-            train_embeddings_df.to_csv(embeddings_path+"/train_embeddings.csv")
+                # convert the embeddings to pandas df and save them
+                train_embeddings_df = embeddings_to_pandas(train_embeddings)
+                train_embeddings_df.to_csv(embeddings_path+"/train_embeddings.csv")
 
             # same thing for validation set
-            print("VAL SET")
-            val_embeddings = model.compute_representations(
-                data_module.val_dataloader())
+            if 'val' in subsets or 'train_val' in subsets or 'full' in subsets:
+                print("VAL SET")
+                val_embeddings = model.compute_representations(
+                    data_module.val_dataloader())
 
-            val_embeddings_df = embeddings_to_pandas(val_embeddings)
-            val_embeddings_df.to_csv(embeddings_path+"/val_embeddings.csv")
+                val_embeddings_df = embeddings_to_pandas(val_embeddings)
+                val_embeddings_df.to_csv(embeddings_path+"/val_embeddings.csv")
 
             # same thing for test set
-            print("TEST SET")
-            test_embeddings = model.compute_representations(
-                data_module.test_dataloader())
+            if 'test' in subsets or 'full' in subsets:
+                print("TEST SET")
+                test_embeddings = model.compute_representations(
+                    data_module.test_dataloader())
 
-            test_embeddings_df = embeddings_to_pandas(test_embeddings)
-            test_embeddings_df.to_csv(embeddings_path+"/test_embeddings.csv")
+                test_embeddings_df = embeddings_to_pandas(test_embeddings)
+                test_embeddings_df.to_csv(embeddings_path+"/test_embeddings.csv")
 
             # same thing for test_intra if it exists
             try:
@@ -166,27 +168,29 @@ def compute_embeddings(config):
                 print("No test_intra set")
 
             # same thing on the train_val dataset
-            print("TRAIN_VAL SET")
-            train_val_df = pd.concat([train_embeddings_df, val_embeddings_df],
-                                    axis=0)
-            train_val_df.to_csv(embeddings_path+"/train_val_embeddings.csv")
+            if 'train_val' in subsets or 'full' in subsets:
+                print("TRAIN_VAL SET")
+                train_val_df = pd.concat([train_embeddings_df, val_embeddings_df],
+                                        axis=0)
+                train_val_df.to_csv(embeddings_path+"/train_val_embeddings.csv")
 
             # same thing on the entire dataset
             print("FULL SET")
-            try:
-                full_df = pd.concat([train_embeddings_df,
-                                    val_embeddings_df,
-                                    test_intra_embeddings_df,
-                                    test_embeddings_df],
-                                    axis=0)
-            except:
-                full_df = pd.concat([train_embeddings_df,
-                                    val_embeddings_df,
-                                    test_embeddings_df],
-                                    axis=0)
+            if 'full' in subsets:
+                try:
+                    full_df = pd.concat([train_embeddings_df,
+                                        val_embeddings_df,
+                                        test_intra_embeddings_df,
+                                        test_embeddings_df],
+                                        axis=0)
+                except:
+                    full_df = pd.concat([train_embeddings_df,
+                                        val_embeddings_df,
+                                        test_embeddings_df],
+                                        axis=0)
 
-            full_df = full_df.sort_values(by='ID')
-            full_df.to_csv(embeddings_path+"/full_embeddings.csv")
+                full_df = full_df.sort_values(by='ID')
+                full_df.to_csv(embeddings_path+"/full_embeddings.csv")
 
         print("ALL EMBEDDINGS GENERATED: OK")
 

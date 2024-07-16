@@ -160,7 +160,7 @@ def embeddings_pipeline(dir_path, dataset_localization, datasets, labels,
 
                             # apply the functions
                             if embeddings and idx==0:
-                                valid_path = compute_embeddings(cfg)
+                                valid_path = compute_embeddings(cfg, subsets=subsets)
                             elif not embeddings:
                                 valid_path=True # assume that the embeddings exist
                             # reload config for train_classifiers to work properly
@@ -179,7 +179,7 @@ def embeddings_pipeline(dir_path, dataset_localization, datasets, labels,
                                     sub_dir+'/.hydra/config_classifiers.yaml')
                                 cfg.use_best_model = True
                                 if embeddings and idx==0:
-                                    _ = compute_embeddings(cfg)
+                                    _ = compute_embeddings(cfg, subsets=subsets)
                                 # reload config for train_classifiers to work properly
                                 cfg = omegaconf.OmegaConf.load(
                                     sub_dir+'/.hydra/config_classifiers.yaml')
@@ -222,7 +222,19 @@ if __name__ == "__main__":
     #                     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
     #                     verbose=False)
 
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/2024-07-15/",
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/multiple_regions",
+                        dataset_localization="neurospin",
+                        datasets=["julien/multiple_regions_UKB_2000subs"],
+                        labels=['region'],
+                        classifier_name='logistic',
+                        short_name='ukb', overwrite=True, embeddings=True,
+                        embeddings_only=False, use_best_model=False,
+                        subsets=['train_val'], epochs=range(0,20,10), split='random', cv=5,
+                        splits_basedir='',
+                        verbose=False)
+
+    """
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/multiple_regions",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
                         labels=['Left_OFC'],
@@ -232,6 +244,7 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='custom', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
                         verbose=False)
+    """
 
     # embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/ORBITAL_BT",
     #                     dataset_localization="neurospin",

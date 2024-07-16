@@ -216,7 +216,8 @@ class ContrastiveLearnerFusion(pl.LightningModule):
 
 
     def load_pretrained_model(self, pretrained_model_path, encoder_only=False,
-                              convolutions_only=False, freeze_loaded_layers=False):
+                              convolutions_only=False, freeze_loaded_layers=False,
+                              freeze_bias=False):
         """Load weights stored in a state_dict at pretrained_model_path
         """
 
@@ -224,7 +225,8 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         if convolutions_only:
             pretrained_state_dict = OrderedDict(
                 {k: v for k, v in pretrained_state_dict.items()
-                 if 'encoder' in k and ('conv' in k or 'norm' in k)})
+                 if 'encoder' in k and
+                 ('conv' in k or 'norm' in k)})
         elif encoder_only:
             pretrained_state_dict = OrderedDict(
                 {k: v for k, v in pretrained_state_dict.items()
@@ -250,6 +252,9 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             for name, para in self.named_parameters():
                 if name in loaded_layers:
                     para.requires_grad = False
+                if 'bias' in name and not freeze_bias:
+                    para.requires_grad = True
+
         
 
 

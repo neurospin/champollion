@@ -127,7 +127,9 @@ def train(config):
         log.info(f"Load weigths stored at {config.pretrained_model_path}")
         model.load_pretrained_model(config.pretrained_model_path,
                                     encoder_only=config.load_encoder_only,
-                                    convolutions_only=config.load_convolutions_only)
+                                    convolutions_only=config.load_convolutions_only,
+                                    freeze_loaded_layers=config.freeze_loaded_layers,
+                                    freeze_bias=config.freeze_bias)
 
     dataset = list(config.dataset.keys())[0]
     # input_size = []

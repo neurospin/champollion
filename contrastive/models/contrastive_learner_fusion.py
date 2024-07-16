@@ -215,12 +215,16 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         return (inputs, filenames, labels, view3)
 
 
-    def load_pretrained_model(self, pretrained_model_path, encoder_only=False):
+    def load_pretrained_model(self, pretrained_model_path, encoder_only=False, convolutions_only=False):
         """Load weights stored in a state_dict at pretrained_model_path
         """
 
         pretrained_state_dict = torch.load(pretrained_model_path)['state_dict']
-        if encoder_only:
+        if convolutions_only:
+            pretrained_state_dict = OrderedDict(
+                {k: v for k, v in pretrained_state_dict.items()
+                 if 'encoder' in k and ('conv' in k or 'norm' in k)})
+        elif encoder_only:
             pretrained_state_dict = OrderedDict(
                 {k: v for k, v in pretrained_state_dict.items()
                  if 'encoder' in k})

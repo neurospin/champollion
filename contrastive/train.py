@@ -126,7 +126,8 @@ def train(config):
     if config.pretrained_model_path is not None:
         log.info(f"Load weigths stored at {config.pretrained_model_path}")
         model.load_pretrained_model(config.pretrained_model_path,
-                                    encoder_only=config.load_encoder_only)
+                                    encoder_only=config.load_encoder_only,
+                                    convolutions_only=config.load_convolutions_only)
 
     dataset = list(config.dataset.keys())[0]
     # input_size = []

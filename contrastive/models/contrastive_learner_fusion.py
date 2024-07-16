@@ -215,7 +215,8 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         return (inputs, filenames, labels, view3)
 
 
-    def load_pretrained_model(self, pretrained_model_path, encoder_only=False, convolutions_only=False):
+    def load_pretrained_model(self, pretrained_model_path, encoder_only=False,
+                              convolutions_only=False, freeze_loaded_layers=False):
         """Load weights stored in a state_dict at pretrained_model_path
         """
 
@@ -243,6 +244,13 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             key for key in model_dict.keys() if key not in loaded_layers]
         # print(f"Loaded layers = {loaded_layers}")
         log.info(f"Layers not loaded = {not_loaded_layers}")
+
+        # freeze loaded layers
+        if freeze_loaded_layers:
+            for name, para in self.named_parameters():
+                if name in loaded_layers:
+                    para.requires_grad = False
+        
 
 
     def custom_histogram_adder(self):

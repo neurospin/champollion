@@ -14,7 +14,7 @@ trimdepth_delta: 141
 max_translation: 1
 checkerboard_size: 4
 keep_extremity: 'bottom'
-percentage: 20
+percentage: 1
 variable_percentage: False
 sigma_noise: 0.  # set to positive to allow noise
 patch_size: 30

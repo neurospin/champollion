@@ -222,7 +222,7 @@ if __name__ == "__main__":
     #                     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
     #                     verbose=False)
 
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/ORBITAL_12-layer_k7",
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/2024-07-15/",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
                         labels=['Left_OFC'],

@@ -39,6 +39,7 @@ import numpy as np
 import torch
 from scipy.ndimage import rotate, zoom, binary_erosion
 from sklearn.preprocessing import OneHotEncoder
+import elasticdeform
 
 from contrastive.utils import logs
 from contrastive.utils.test_timeit import timeit
@@ -892,6 +893,24 @@ class TrimDepthTensor(object):
         arr_trimmed = arr_trimmed.astype('float32')
 
         return torch.from_numpy(arr_trimmed)
+    
+
+class ElasticDeformTensor(object):
+
+    def __init__(self, sigma, points):
+        self.sigma=sigma
+        self.points=points
+    
+    def __call__(self, tensor):
+        arr = tensor.numpy()
+        arr = arr.reshape(arr.shape[:-1])
+        deformed_arr = elasticdeform.deform_random_grid(arr, sigma=self.sigma, points=self.points, order=0)
+        shape = list(arr.shape) + [1]
+        deformed_arr = deformed_arr.reshape(shape)
+
+        deformed_arr = deformed_arr.astype('float32')
+
+        return torch.from_numpy(deformed_arr)
     
 
 class TrimSidesTensor(object):

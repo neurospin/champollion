@@ -222,14 +222,14 @@ if __name__ == "__main__":
     #                     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
     #                     verbose=False)
 
-    embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V0/SC-sylv_right",
+    embeddings_pipeline("/neurospin/dico/adufournet/mycode/Output/2024-07-22",
                         dataset_localization="neurospin",
-                        datasets=["with_reskel_distbottom/2mm/UKB/SC-sylv_right"],
-                        labels=['isOld'],
-                        classifier_name='logistic',
-                        short_name='ukb', overwrite=True, embeddings=False,
-                        embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='random', cv=3,
+                        datasets=["with_reskel_distbottom/2mm/UKB/CINGULATE_left"],
+                        labels=['Left_PCS'],
+                        classifier_name='svm',
+                        short_name='ukb', overwrite=False, embeddings=True,
+                        embeddings_only=True, use_best_model=False,
+                        subsets=['full'], epochs=[i for i in range(0,121,10)], split='random', cv=5,
                         splits_basedir='',
                         verbose=False)
 

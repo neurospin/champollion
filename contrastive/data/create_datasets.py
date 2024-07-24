@@ -154,15 +154,15 @@ def create_sets_without_labels(config):
                                   config.data[reg+1].train_csv_file,
                                   "train_csv")
             check_if_numpy_same_length(config.data[0].numpy_all,
-                                       config.data[1].numpy_all,
+                                       config.data[reg+1].numpy_all,
                                        "numpy_all")
             if config.foldlabel or config.trimdepth or config.random_choice or config.mixed:
                 check_if_numpy_same_length(config.data[0].foldlabel_all,
-                                           config.data[1].foldlabel_all,
+                                           config.data[reg+1].foldlabel_all,
                                            "foldlabel_all")
             if config.trimdepth or config.random_choice or config.mixed:
                 check_if_numpy_same_length(config.data[0].distbottom_all,
-                                           config.data[1].distbottom_all,
+                                           config.data[reg+1].distbottom_all,
                                            "distbottom_all")
 
     for reg in range(len(config.data)):

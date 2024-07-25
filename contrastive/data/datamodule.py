@@ -35,10 +35,65 @@
 """
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
-from torch.utils.data import RandomSampler
+from torch.utils.data import RandomSampler, BatchSampler
+from torch.utils.data.sampler import Sampler
+import random
 
 from .create_datasets import create_sets_with_labels
 from .create_datasets import create_sets_without_labels
+
+
+
+class CustomSampler(Sampler):
+    """Yield a mini-batch of indices. The sampler will drop the last batch of
+            an image size bin if it is not equal to batch_size
+
+    Args:
+        data_source (list): Arrays corresponding to specific regions.
+        batch_size (int): Size of mini-batch.
+    """
+
+    def __init__(self, data_source, batch_size, shuffle=False):
+        super(CustomSampler, self).__init__(data_source)
+        # build data for sampling here
+        self.data_source = data_source
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        
+    def __iter__(self):
+        # implement logic of sampling here
+
+        nb_subjects = len(self.data_source.arrs[0])
+        nb_regions = len(self.data_source.arrs)
+
+        # drop random idxs to get n*batch_size idxs per region
+        idx_subjects = [i for i in range(nb_subjects)]
+        if self.shuffle:
+            random.shuffle(idx_subjects)
+        n_to_drop = nb_subjects % self.batch_size
+        if n_to_drop!=0:
+            idx_subjects = idx_subjects[:-n_to_drop]
+        
+        # gather all indexes in a single list
+        len_idx_subjects = len(idx_subjects)
+        full_indexes = []
+        for k in range(nb_regions):
+            if self.shuffle:
+                random.shuffle(idx_subjects)
+            rescaled_idx_subjects = [i+k*nb_subjects for i in idx_subjects]
+            full_indexes += rescaled_idx_subjects
+        # cut batches and shuffle before reassembling
+        nb_batches = int(len(full_indexes)//self.batch_size)
+        partition_full_indexes = [full_indexes[k*self.batch_size:(k+1)*self.batch_size]
+                                  for k in range(nb_batches)]
+        if self.shuffle:
+            random.shuffle(partition_full_indexes)
+        full_indexes = [x for xs in partition_full_indexes for x in xs]
+        
+        return(iter(full_indexes))
+
+    def __len__(self):
+        return (int(len(self.data_source)*len(self.data_source[0])))
 
 
 class DataModule(pl.LightningDataModule):
@@ -71,24 +126,49 @@ class DataModule_Learning(DataModule):
         super(DataModule_Learning, self).__init__(config)
 
     def train_dataloader(self):
-        loader_train = DataLoader(self.dataset_train,
-                                  batch_size=self.config.batch_size,
-                                  sampler=RandomSampler(
-                                      data_source=self.dataset_train),
-                                  pin_memory=self.config.pin_mem,
-                                  multiprocessing_context='fork',
-                                  num_workers=self.config.num_cpu_workers,
-                                  drop_last=True)
+        if self.config.multiregion_single_encoder:
+            cb_sampler = BatchSampler(CustomSampler(self.dataset_train,
+                                                         batch_size=self.config.batch_size,
+                                                         shuffle=True),
+                                            batch_size=self.config.batch_size,
+                                            drop_last=False)
+            loader_train = DataLoader(self.dataset_train,
+                                    batch_sampler=cb_sampler,
+                                    pin_memory=self.config.pin_mem,
+                                    multiprocessing_context='fork',
+                                    num_workers=self.config.num_cpu_workers)
+
+        else:
+            loader_train = DataLoader(self.dataset_train,
+                                    batch_size=self.config.batch_size,
+                                    sampler=RandomSampler(
+                                        data_source=self.dataset_train),
+                                    pin_memory=self.config.pin_mem,
+                                    multiprocessing_context='fork',
+                                    num_workers=self.config.num_cpu_workers,
+                                    drop_last=True)
         return loader_train
 
     def val_dataloader(self):
-        loader_val = DataLoader(self.dataset_val,
-                                batch_size=self.config.batch_size,
-                                pin_memory=self.config.pin_mem,
-                                multiprocessing_context='fork',
-                                num_workers=self.config.num_cpu_workers,
-                                shuffle=False,
-                                drop_last=True)
+        if self.config.multiregion_single_encoder:
+            cb_sampler = BatchSampler(CustomSampler(self.dataset_val,
+                                                         batch_size=self.config.batch_size,
+                                                         shuffle=False),
+                                            batch_size=self.config.batch_size,
+                                            drop_last=False)
+            loader_val = DataLoader(self.dataset_val,
+                                    batch_sampler=cb_sampler,
+                                    pin_memory=self.config.pin_mem,
+                                    multiprocessing_context='fork',
+                                    num_workers=self.config.num_cpu_workers)
+        else:
+            loader_val = DataLoader(self.dataset_val,
+                                    batch_size=self.config.batch_size,
+                                    pin_memory=self.config.pin_mem,
+                                    multiprocessing_context='fork',
+                                    num_workers=self.config.num_cpu_workers,
+                                    shuffle=False,
+                                    drop_last=True)
         return loader_val
 
     def test_dataloader(self):

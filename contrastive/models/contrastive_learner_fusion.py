@@ -79,8 +79,12 @@ class ContrastiveLearnerFusion(pl.LightningModule):
     def __init__(self, config, sample_data, with_labels=False):
         super(ContrastiveLearnerFusion, self).__init__()
 
-        n_datasets = len(config.data)
-        log.info(f"n_datasets {n_datasets}")
+        if config.multiregion_single_encoder:
+            n_datasets = 1
+            log.info("n_datasets 1 because a single encoder is used for multiple regions")
+        else:
+            n_datasets = len(config.data)
+            log.info(f"n_datasets {n_datasets}")
 
         # define the encoder structure
         self.backbones = nn.ModuleList()

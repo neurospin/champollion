@@ -97,13 +97,13 @@ def check_consistency(filename, labels, idx):
                          f"and filename_label = {filename_label}")
 
 
-def padd_foldlabel(sample_foldlabel, input_size):
-    """Padds foldlabel according to input_size"""
-    transform_foldlabel = PaddingTensor(
+def padd_array(sample, input_size, fill_value=0):
+    """Padds array according to input_size"""
+    transfo = PaddingTensor(
         input_size,
-        fill_value=0)
-    sample_foldlabel = transform_foldlabel(sample_foldlabel)
-    return sample_foldlabel
+        fill_value=fill_value)
+    sample = transfo(sample)
+    return sample
 
 
 def check_equal_non_zero_voxels(sample1, sample2, name):
@@ -129,7 +129,8 @@ class ContrastiveDatasetFusion():
     """
 
     def __init__(self, arrays, filenames, config, apply_transform=True,
-                 labels=None, foldlabel_arrays=None, distbottom_arrays=None):
+                 labels=None, foldlabel_arrays=None,
+                 distbottom_arrays=None):
         """
         Every data argument is a list over regions
 
@@ -156,7 +157,10 @@ class ContrastiveDatasetFusion():
             log.debug(label0[label0[config.label_names[0]].isna()])
 
     def __len__(self):
-        return (self.nb_train)
+        if self.config.multiregion_single_encoder:
+            return (self.nb_train*len(self.arrs))
+        else:
+            return (self.nb_train)
 
     def __getitem__(self, idx):
         """Returns the two views corresponding to index idx
@@ -175,27 +179,58 @@ class ContrastiveDatasetFusion():
         # Gets data corresponding to idx
         log.debug(f"length = {self.nb_train}")
         log.debug(f"filenames = {self.filenames[0]}")
-        samples = [get_sample(arr, idx, 'float32') for arr in self.arrs]
-        filenames = [get_filename(filename, idx)
-                     for filename in self.filenames]
+        if self.config.multiregion_single_encoder:
+            idx_region, idx = idx // self.nb_train, idx%self.nb_train
+            arr = self.arrs[idx_region]
+            samples = get_sample(arr, idx, 'float32')
+            samples = [padd_array(samples,
+                                  self.config.data[idx_region].input_size,
+                                  fill_value=0)]
+            filename = self.filenames[idx_region]
+            filenames = [get_filename(filename, idx)]
+        else:
+            samples = [get_sample(arr, idx, 'float32')
+                       for arr in self.arrs]
+            samples = [padd_array(sample,
+                                  self.config.data[reg].input_size,
+                                  fill_value=0)
+                        for reg, sample in enumerate(samples)]
+            filenames = [get_filename(filename, idx)
+                        for filename in self.filenames]
 
         if self.foldlabel_arrs[0] is not None:
-            sample_foldlabels = [get_sample(foldlabel_arr, idx, 'int32')
-                                 for foldlabel_arr in self.foldlabel_arrs]
-            sample_foldlabels = [padd_foldlabel(sample_foldlabel,
-                                                self.config.data[reg].input_size)
-                                 for reg, sample_foldlabel in enumerate(sample_foldlabels)]
+            if self.config.multiregion_single_encoder:
+                foldlabel_arr = self.foldlabel_arrs[idx_region]
+                sample_foldlabels = get_sample(foldlabel_arr, idx, 'int32')
+                sample_foldlabels = [padd_array(sample_foldlabels,
+                                                self.config.data[idx_region].input_size,
+                                                fill_value=0)]
+            else:
+                sample_foldlabels = [get_sample(foldlabel_arr, idx, 'int32')
+                                    for foldlabel_arr in self.foldlabel_arrs]
+                sample_foldlabels = [padd_array(sample_foldlabel,
+                                                self.config.data[reg].input_size,
+                                                fill_value=0)
+                                    for reg, sample_foldlabel in enumerate(sample_foldlabels)]
             for s, f in zip(samples, sample_foldlabels):
                 check_equal_non_zero_voxels(s, f, "foldlabel")
 
             
 
         if isinstance(self.distbottom_arrs, list) and self.distbottom_arrs[0] is not None:
-            sample_distbottoms = [get_sample(distbottom_arr, idx, 'int32')
-                                 for distbottom_arr in self.distbottom_arrs]
-            sample_distbottoms = [padd_foldlabel(sample_distbottom,
-                                                self.config.data[reg].input_size)
-                                 for reg, sample_distbottom in enumerate(sample_distbottoms)]
+            if self.config.multiregion_single_encoder:
+                distbottoms_arr = self.distbottom_arrs[idx_region]
+                sample_distbottoms = get_sample(distbottoms_arr, idx, 'int32')
+                sample_distbottoms = [padd_array(sample_distbottoms,
+                                                 self.config.data[idx_region].input_size,
+                                                 fill_value=32500)]
+            else:
+                sample_distbottoms = [get_sample(distbottom_arr, idx, 'int32')
+                                    for distbottom_arr in self.distbottom_arrs]
+                sample_distbottoms = [padd_array(sample_distbottom,
+                                                    self.config.data[reg].input_size,
+                                                    fill_value=32500)
+                                    for reg, sample_distbottom in enumerate(sample_distbottoms)]
             for s, d in zip(samples, sample_distbottoms):
                 check_equal_non_zero_voxels(s, d, "distbottom")
 
@@ -208,89 +243,174 @@ class ContrastiveDatasetFusion():
         self.transform2 = []
         self.transform3 = []
 
+        if self.config.multiregion_single_encoder:
         # compute the transforms
-        for reg in range(len(filenames)):
             if self.transform:
                 # mix of branch clipping, cutout, cutin, and trimdepth
                 if self.config.random_choice:
                     transform1 = transform_random(
-                        sample_foldlabels[reg],
+                        sample_foldlabels[0],
                         self.config.percentage,
-                        sample_distbottoms[reg],
-                        input_size=self.config.data[reg].input_size,
+                        sample_distbottoms[0],
+                        input_size=self.config.data[idx_region].input_size,
                         config=self.config)
                     transform2 = transform_random(
-                        sample_foldlabels[reg],
+                        sample_foldlabels[0],
                         self.config.percentage,
-                        sample_distbottoms[reg],
-                        input_size=self.config.data[reg].input_size,
+                        sample_distbottoms[0],
+                        input_size=self.config.data[idx_region].input_size,
                         config=self.config)
                 elif self.config.mixed:
                     transform1 = transform_mixed(
-                        sample_foldlabels[reg],
+                        sample_foldlabels[0],
                         self.config.percentage,
-                        sample_distbottoms[reg],
-                        input_size=self.config.data[reg].input_size,
+                        sample_distbottoms[0],
+                        input_size=self.config.data[idx_region].input_size,
                         config=self.config)
                     transform2 = transform_mixed(
-                        sample_foldlabels[reg],
+                        sample_foldlabels[0],
                         self.config.percentage,
-                        sample_distbottoms[reg],
-                        input_size=self.config.data[reg].input_size,
+                        sample_distbottoms[0],
+                        input_size=self.config.data[idx_region].input_size,
                         config=self.config)
                 # branch clipping
                 elif self.config.foldlabel:
                     transform1 = transform_foldlabel(
-                        sample_foldlabels[reg],
+                        sample_foldlabels[0],
                         self.config.percentage,
-                        self.config.data[reg].input_size,
+                        self.config.data[idx_region].input_size,
                         self.config)
                     transform2 = transform_foldlabel(
-                        sample_foldlabels[reg],
+                        sample_foldlabels[0],
                         self.config.percentage,
-                        self.config.data[reg].input_size,
+                        self.config.data[idx_region].input_size,
                         self.config)
                 # trimdepth
                 elif self.config.trimdepth:
                         transform1 = transform_trimdepth(
-                            sample_distbottoms[reg],
-                            sample_foldlabels[reg],
-                            self.config.data[reg].input_size,
+                            sample_distbottoms[0],
+                            sample_foldlabels[0],
+                            self.config.data[idx_region].input_size,
                             self.config)
                         transform2 = transform_trimdepth(
-                            sample_distbottoms[reg],
-                            sample_foldlabels[reg],
-                            self.config.data[reg].input_size,
+                            sample_distbottoms[0],
+                            sample_foldlabels[0],
+                            self.config.data[idx_region].input_size,
                             self.config)
                 # cutout with or without noise
                 else:
                     transform1 = transform_cutout(
-                        input_size=self.config.data[reg].input_size,
+                        input_size=self.config.data[idx_region].input_size,
                         config=self.config)
                     transform2 = transform_cutin(
-                        input_size=self.config.data[reg].input_size,
+                        input_size=self.config.data[idx_region].input_size,
                         config=self.config)
                     
             else:
                 transform1 = transform_only_padding(
-                    self.config.data[reg].input_size, self.config)
+                    self.config.data[idx_region].input_size, self.config)
                 transform2 = transform_only_padding(
-                    self.config.data[reg].input_size, self.config)
+                    self.config.data[idx_region].input_size, self.config)
             self.transform1.append(transform1)
             self.transform2.append(transform2)
 
             if self.config.with_labels:
                 if self.config.mode == "decoder":
                     transform3 = transform_only_padding(
-                        self.config.data[reg].input_size,
+                        self.config.data[idx_region].input_size,
                         self.config)
                 else:
                     transform3 = transform_nothing_done()
                     if not self.transform:
                         transform3 = transform_only_padding(
-                            self.config.data[reg].input_size,
+                            self.config.data[idx_region].input_size,
                             self.config)
                 self.transform3.append(transform3)
+
+        else:
+            # compute the transforms
+            for reg in range(len(filenames)):
+                if self.transform:
+                    # mix of branch clipping, cutout, cutin, and trimdepth
+                    if self.config.random_choice:
+                        transform1 = transform_random(
+                            sample_foldlabels[reg],
+                            self.config.percentage,
+                            sample_distbottoms[reg],
+                            input_size=self.config.data[reg].input_size,
+                            config=self.config)
+                        transform2 = transform_random(
+                            sample_foldlabels[reg],
+                            self.config.percentage,
+                            sample_distbottoms[reg],
+                            input_size=self.config.data[reg].input_size,
+                            config=self.config)
+                    elif self.config.mixed:
+                        transform1 = transform_mixed(
+                            sample_foldlabels[reg],
+                            self.config.percentage,
+                            sample_distbottoms[reg],
+                            input_size=self.config.data[reg].input_size,
+                            config=self.config)
+                        transform2 = transform_mixed(
+                            sample_foldlabels[reg],
+                            self.config.percentage,
+                            sample_distbottoms[reg],
+                            input_size=self.config.data[reg].input_size,
+                            config=self.config)
+                    # branch clipping
+                    elif self.config.foldlabel:
+                        transform1 = transform_foldlabel(
+                            sample_foldlabels[reg],
+                            self.config.percentage,
+                            self.config.data[reg].input_size,
+                            self.config)
+                        transform2 = transform_foldlabel(
+                            sample_foldlabels[reg],
+                            self.config.percentage,
+                            self.config.data[reg].input_size,
+                            self.config)
+                    # trimdepth
+                    elif self.config.trimdepth:
+                            transform1 = transform_trimdepth(
+                                sample_distbottoms[reg],
+                                sample_foldlabels[reg],
+                                self.config.data[reg].input_size,
+                                self.config)
+                            transform2 = transform_trimdepth(
+                                sample_distbottoms[reg],
+                                sample_foldlabels[reg],
+                                self.config.data[reg].input_size,
+                                self.config)
+                    # cutout with or without noise
+                    else:
+                        transform1 = transform_cutout(
+                            input_size=self.config.data[reg].input_size,
+                            config=self.config)
+                        transform2 = transform_cutin(
+                            input_size=self.config.data[reg].input_size,
+                            config=self.config)
+                        
+                else:
+                    transform1 = transform_only_padding(
+                        self.config.data[reg].input_size, self.config)
+                    transform2 = transform_only_padding(
+                        self.config.data[reg].input_size, self.config)
+                self.transform1.append(transform1)
+                self.transform2.append(transform2)
+
+                if self.config.with_labels:
+                    if self.config.mode == "decoder":
+                        transform3 = transform_only_padding(
+                            self.config.data[reg].input_size,
+                            self.config)
+                    else:
+                        transform3 = transform_nothing_done()
+                        if not self.transform:
+                            transform3 = transform_only_padding(
+                                self.config.data[reg].input_size,
+                                self.config)
+                    self.transform3.append(transform3)
 
         # Computes the views
         view1 = []

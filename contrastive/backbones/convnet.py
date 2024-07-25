@@ -89,7 +89,7 @@ class ConvNet(pl.LightningModule):
     """
 
     def __init__(self, in_channels=1, encoder_depth=3, block_depth=2,
-                 num_representation_features=256,
+                 num_representation_features=256, adaptive_pooling=None,
                  filters=[16,32,64], initial_kernel_size=3,
                  drop_rate=0.1, memory_efficient=False,
                  in_shape=None):
@@ -108,10 +108,14 @@ class ConvNet(pl.LightningModule):
         self.initial_kernel_size = initial_kernel_size
         assert len(self.filters) >= encoder_depth, "Incomplete filters list given."
 
-        # receptive field downsampled 2 times
-        self.z_dim_h = h//2**self.encoder_depth
-        self.z_dim_w = w//2**self.encoder_depth
-        self.z_dim_d = d//2**self.encoder_depth
+        if adaptive_pooling is None:
+            # receptive field downsampled
+            self.z_dim_h = h//2**self.encoder_depth
+            self.z_dim_w = w//2**self.encoder_depth
+            self.z_dim_d = d//2**self.encoder_depth
+            self.out_dim = self.z_dim_h*self.z_dim_w*self.z_dim_d
+        else:
+            self.out_dim = adaptive_pooling[0]*adaptive_pooling[1]*adaptive_pooling[2]
 
         modules_encoder = []
         layer_name = ['', 'a', 'b', 'c']
@@ -145,12 +149,15 @@ class ConvNet(pl.LightningModule):
             modules_encoder.append(
                 (f'DropOut{step}{name}', nn.Dropout3d(p=drop_rate)))
             self.num_features = out_channels
+        # adaptive pool to ensure a fixed size linear layer accross regions
+        if adaptive_pooling is not None:
+            modules_encoder.append(('AdaptiveMaxPool', nn.AdaptiveMaxPool3d(output_size=adaptive_pooling)))
         # flatten and reduce to the desired dimension
         modules_encoder.append(('Flatten', nn.Flatten()))
         modules_encoder.append(
             ('Linear',
              nn.Linear(
-                 self.num_features*self.z_dim_h*self.z_dim_w*self.z_dim_d,
+                 self.num_features*self.out_dim,
                  self.num_representation_features)
              ))
         self.encoder = nn.Sequential(OrderedDict(modules_encoder))

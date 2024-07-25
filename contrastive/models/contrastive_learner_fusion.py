@@ -105,6 +105,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     block_depth=config.block_depth,
                     initial_kernel_size=config.initial_kernel_size,
                     num_representation_features=config.backbone_output_size,
+                    adaptive_pooling=config.adaptive_pooling,
                     drop_rate=config.drop_rate,
                     in_shape=config.data[i].input_size))
         elif config.backbone_name == 'resnet':
@@ -122,12 +123,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     initial_kernel_size=config.initial_kernel_size,
                     initial_stride=config.initial_stride))
         # elif config.backbone_name == 'pointnet':
-        #     self.backbone = PointNetCls(
-        #         k=config.num_representation_features,
-        #         num_outputs=config.backbone_output_size,
-        #         projection_head_hidden_layers=config.projection_head_hidden_layers,
-        #         drop_rate=config.drop_rate,
-        #         feature_transform=False)
+        #     self.backbone = PointDataModule_LearningFalse)
         else:
             raise ValueError(f"No underlying backbone with backbone name {config.backbone_name}")
         

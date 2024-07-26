@@ -36,6 +36,9 @@
 Tools to create pytorch dataloaders
 """
 import torch
+import numpy as np
+import os
+import sparse
 
 from contrastive.utils.logs import set_file_logger
 
@@ -121,6 +124,18 @@ def check_equal_non_zero_voxels(sample1, sample2, name):
                  "of non-zero voxels. "
                  f"{torch.count_nonzero((b1!=b2) * b1)} voxels differ "
                  f"over {torch.count_nonzero(b1)} skeleton voxels")
+        
+def convert_sparse_to_numpy(data, coords, input_size, dtype):
+    """
+    Convert coords and associated values to numpy array
+    """
+    s = sparse.COO(coords, data, shape=input_size)
+    arr = s.todense()
+    arr = np.expand_dims(arr, axis=-1)
+    arr = arr.astype(dtype)
+
+    return arr
+
 
 class ContrastiveDatasetFusion():
     """Custom dataset that includes image file paths.
@@ -128,9 +143,11 @@ class ContrastiveDatasetFusion():
     Applies different transformations to data depending on the type of input.
     """
 
-    def __init__(self, arrays, filenames, config, apply_transform=True,
-                 labels=None, foldlabel_arrays=None,
-                 distbottom_arrays=None):
+    def __init__(self, filenames, config, apply_transform=True,
+                 labels=None, arrays=None, foldlabel_arrays=None,
+                 distbottom_arrays=None,
+                 coords_arrays_dirs=None, skeleton_arrays_dirs=None,
+                 foldlabel_arrays_dirs=None, distbottom_arrays_dirs=None):
         """
         Every data argument is a list over regions
 
@@ -147,6 +164,10 @@ class ContrastiveDatasetFusion():
         self.filenames = filenames
         self.config = config
         self.transform = apply_transform
+        self.coords_arrs_dirs = coords_arrays_dirs
+        self.skeleton_arrs_dirs = skeleton_arrays_dirs
+        self.foldlabel_arrs_dirs=foldlabel_arrays_dirs
+        self.distbottom_arrs_dirs=distbottom_arrays_dirs
 
         log.debug(f"nb_train = {self.nb_train}")
         log.debug(f"filenames[:5] = {filenames[:5]}")
@@ -158,7 +179,10 @@ class ContrastiveDatasetFusion():
 
     def __len__(self):
         if self.config.multiregion_single_encoder:
-            return (self.nb_train*len(self.arrs))
+            if self.arrs is not None:
+                return (self.nb_train*len(self.arrs))
+            else:
+                return (self.nb_train*len(self.coords_arrs_dirs))
         else:
             return (self.nb_train)
 
@@ -175,30 +199,36 @@ class ContrastiveDatasetFusion():
                 idx = idx.tolist()
             else:
                 idx = idx.tolist(self.nb_train)
+        if self.config.multiregion_single_encoder:
+            idx_region, idx = idx // self.nb_train, idx%self.nb_train
 
         # Gets data corresponding to idx
         log.debug(f"length = {self.nb_train}")
         log.debug(f"filenames = {self.filenames[0]}")
+        # get filenames
         if self.config.multiregion_single_encoder:
-            idx_region, idx = idx // self.nb_train, idx%self.nb_train
-            arr = self.arrs[idx_region]
-            samples = get_sample(arr, idx, 'float32')
-            samples = [padd_array(samples,
-                                  self.config.data[idx_region].input_size,
-                                  fill_value=0)]
             filename = self.filenames[idx_region]
             filenames = [get_filename(filename, idx)]
         else:
-            samples = [get_sample(arr, idx, 'float32')
-                       for arr in self.arrs]
-            samples = [padd_array(sample,
-                                  self.config.data[reg].input_size,
-                                  fill_value=0)
-                        for reg, sample in enumerate(samples)]
             filenames = [get_filename(filename, idx)
                         for filename in self.filenames]
+        # if arrays loaded
+        if self.arrs is not None and self.arrs[0] is not None:
+            if self.config.multiregion_single_encoder:
+                arr = self.arrs[idx_region]
+                samples = get_sample(arr, idx, 'float32')
+                samples = [padd_array(samples,
+                                    self.config.data[idx_region].input_size,
+                                    fill_value=0)]
+            else:
+                samples = [get_sample(arr, idx, 'float32')
+                        for arr in self.arrs]
+                samples = [padd_array(sample,
+                                    self.config.data[reg].input_size,
+                                    fill_value=0)
+                            for reg, sample in enumerate(samples)]
 
-        if self.foldlabel_arrs[0] is not None:
+        if self.foldlabel_arrs is not None and self.foldlabel_arrs[0] is not None:
             if self.config.multiregion_single_encoder:
                 foldlabel_arr = self.foldlabel_arrs[idx_region]
                 sample_foldlabels = get_sample(foldlabel_arr, idx, 'int32')
@@ -217,7 +247,7 @@ class ContrastiveDatasetFusion():
 
             
 
-        if isinstance(self.distbottom_arrs, list) and self.distbottom_arrs[0] is not None:
+        if self.distbottom_arrs is not None and self.distbottom_arrs[0] is not None:
             if self.config.multiregion_single_encoder:
                 distbottoms_arr = self.distbottom_arrs[idx_region]
                 sample_distbottoms = get_sample(distbottoms_arr, idx, 'int32')
@@ -233,6 +263,55 @@ class ContrastiveDatasetFusion():
                                     for reg, sample_distbottom in enumerate(sample_distbottoms)]
             for s, d in zip(samples, sample_distbottoms):
                 check_equal_non_zero_voxels(s, d, "distbottom")
+        
+        # if path given instead
+        if self.coords_arrs_dirs is not None and self.coords_arrs_dirs[0] is not None:
+            if self.config.multiregion_single_encoder:
+                coords_arr_dir = self.coords_arrs_dirs[idx_region][idx]
+                coords_arr = np.load(coords_arr_dir)
+            else:
+                pass
+        if self.skeleton_arrs_dirs is not None and self.skeleton_arrs_dirs[0] is not None:
+            if self.config.multiregion_single_encoder:
+                skeleton_arr_dir = self.skeleton_arrs_dirs[idx_region][idx]
+                skeleton_arr = np.load(skeleton_arr_dir)
+                samples = convert_sparse_to_numpy(skeleton_arr, coords_arr,
+                                                  self.config.data[idx_region].input_size[1:], 'float32')
+                samples = torch.from_numpy(samples)
+                samples = [padd_array(samples,
+                                    self.config.data[idx_region].input_size,
+                                    fill_value=0)]
+            else:
+                pass
+        if self.foldlabel_arrs_dirs is not None and self.foldlabel_arrs_dirs[0] is not None:
+            if self.config.multiregion_single_encoder:
+                foldlabel_arr_dir = self.foldlabel_arrs_dirs[idx_region][idx]
+                foldlabel_arr = np.load(foldlabel_arr_dir)
+                sample_foldlabels = convert_sparse_to_numpy(foldlabel_arr, coords_arr,
+                                                            self.config.data[idx_region].input_size[1:], 'int32')
+                sample_foldlabels = torch.from_numpy(sample_foldlabels)
+                sample_foldlabels = [padd_array(sample_foldlabels,
+                                    self.config.data[idx_region].input_size,
+                                    fill_value=0)]
+            else:
+                pass
+        if self.distbottom_arrs_dirs is not None and self.distbottom_arrs_dirs[0] is not None:
+            if self.config.multiregion_single_encoder:
+                distbottom_arr_dir = self.distbottom_arrs_dirs[idx_region][idx]
+                distbottom_arr = np.load(distbottom_arr_dir)
+                sample_distbottoms = convert_sparse_to_numpy(distbottom_arr, coords_arr,
+                                                             self.config.data[idx_region].input_size[1:], 'int32')
+                # sparse distbottoms had value 0 for out of skeleton voxels
+                # and -1 for bottoms, they need to be reformated
+                sample_distbottoms[sample_distbottoms==0]=32500
+                sample_distbottoms[sample_distbottoms==-1]=0
+                sample_distbottoms = torch.from_numpy(sample_distbottoms)
+                sample_distbottoms = [padd_array(sample_distbottoms,
+                                    self.config.data[idx_region].input_size,
+                                    fill_value=32500)]
+            else:
+                pass
+        
 
         if self.labels is not None:
             for reg in range(len(filenames)):

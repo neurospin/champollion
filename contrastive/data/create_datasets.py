@@ -38,6 +38,8 @@ Tools to create datasets
 
 import pandas as pd
 import numpy as np
+import os
+import copy
 
 # only if foldlabel == True
 try:
@@ -55,7 +57,8 @@ from .utils import \
     check_if_same_subjects, \
     check_distbottom_npy_consistency, check_foldlabel_npy_consistency, \
     check_if_same_shape, \
-    check_if_skeleton, extract_data_with_labels, read_labels
+    check_if_skeleton, extract_data_with_labels, read_labels, \
+    extract_train_and_val_subjects
 
 import logging
 
@@ -125,6 +128,91 @@ def sanity_checks_distbottoms_without_labels(config, skeleton_output, reg):
 
     return distbottom_output
 
+
+def create_sets_without_labels_without_load(config):
+    """
+    Create train / val / train-val / test sets when using individual directories
+    and sparse matrices.
+    Requires for coord_all in dataset config additionnaly to every modality.
+    """
+    ## TODO: make the behaviour consistent with other create_sets regarding test and test_intra sets.
+    ## be robust to absence of foldlabel or distbottom.
+    for reg in range(len(config.data)):
+        if 'coords_all' not in config.data[reg].keys():
+            raise ValueError("load_sparse requires coords_all in dataset config")
+        if not os.path.isdir(config.data[reg].coords_all) and os.path.isdir(config.data[reg].numpy_all) \
+            and os.path.isdir(config.data[reg].foldlabel_all) and os.path.isdir(config.data[reg].distbottom_all):
+            raise ValueError("load_sparse requires numpy directories to be folders, not files")
+        
+    sub_dirs = {'filenames': [],
+                'coords_dirs': [],
+                'skeleton_dirs': [],
+                'foldlabel_dirs': [],
+                'distbottom_dirs': []}
+        
+    dirs = {'train': copy.deepcopy(sub_dirs),
+            'val': copy.deepcopy(sub_dirs),
+            'train_val': copy.deepcopy(sub_dirs),
+            'test': copy.deepcopy(sub_dirs)}
+
+    for reg in range(len(config.data)):
+        subjects_all = pd.read_csv(config.data[reg].subjects_all)
+        # split subjects in train/val/train-val/test
+        if 'train_csv_file' in config.data[reg].keys() and 'val_csv_file' in config.data[reg].keys():
+            train_subjects = pd.read_csv(config.data[reg]['train_csv_file'], names=['Subject'])
+            val_subjects = pd.read_csv(config.data[reg]['val_csv_file'], names=['Subject'])
+            train_val_subjects = pd.concat((train_subjects, val_subjects), ignore_index=True)
+        elif 'train_val_csv_file' in config.data[reg].keys():
+            train_val_subjects = pd.read_csv(config.data[reg]['train_val_csv_file'], names=['Subject'])
+            train_subjects, val_subjects = \
+                extract_train_and_val_subjects(
+                    train_val_subjects, config.partition, config.seed)
+        if 'test_csv_file' in config.data[reg].keys():
+            test_subjects = pd.read_csv(config.data[reg]['test_csv_file'], names=['Subject'])
+        else:
+            test_subjects = subjects_all.sample(1) # need not to be empty
+
+        dirs['train']['filenames'].append(train_subjects.reset_index(drop=True))
+        dirs['val']['filenames'].append(val_subjects.reset_index(drop=True))
+        dirs['train_val']['filenames'].append(train_val_subjects.reset_index(drop=True))
+        dirs['test']['filenames'].append(test_subjects.reset_index(drop=True))
+        
+        for subset in dirs.keys():
+            # coords
+            coords_dir = config.data[reg].coords_all
+            coords_dirs = np.array([os.path.join(coords_dir,f'{sub}_coords.npy') for sub in dirs[subset]['filenames'][reg].Subject])
+            #coords_dirs = np.expand_dims(coords_dirs, axis=-1)
+            dirs[subset]['coords_dirs'].append(coords_dirs)
+            # skels
+            skels_dir = config.data[reg].numpy_all
+            skeleton_dirs = np.array([os.path.join(skels_dir,f'{sub}_skeleton_values.npy') for sub in dirs[subset]['filenames'][reg].Subject])
+            #skeleton_dirs = np.expand_dims(skeleton_dirs, axis=-1)
+            dirs[subset]['skeleton_dirs'].append(skeleton_dirs)
+            # foldlabels
+            foldlabel_dir = config.data[reg].foldlabel_all
+            foldlabel_dirs = np.array([os.path.join(foldlabel_dir,f'{sub}_foldlabel_values.npy') for sub in dirs[subset]['filenames'][reg].Subject])
+            #foldlabel_dirs = np.expand_dims(foldlabel_dirs, axis=-1)
+            dirs[subset]['foldlabel_dirs'].append(foldlabel_dirs)
+            # distbottoms
+            distbottom_dir = config.data[reg].distbottom_all
+            distbottom_dirs = np.array([os.path.join(distbottom_dir,f'{sub}_distbottom_values.npy') for sub in dirs[subset]['filenames'][reg].Subject])
+            #distbottom_dirs = np.expand_dims(distbottom_dirs, axis=-1)
+            dirs[subset]['distbottom_dirs'].append(distbottom_dirs)
+
+    datasets = {}
+
+    for subset_name in dirs.keys():
+
+        datasets[subset_name] = ContrastiveDatasetFusion(
+            filenames=dirs[subset_name]['filenames'], # quelle forme pd ?
+            coords_arrays_dirs=dirs[subset_name]['coords_dirs'],
+            skeleton_arrays_dirs=dirs[subset_name]['skeleton_dirs'],
+            foldlabel_arrays_dirs=dirs[subset_name]['foldlabel_dirs'],
+            distbottom_arrays_dirs=dirs[subset_name]['distbottom_dirs'],
+            config=config,
+            apply_transform=config.apply_augmentations)
+        
+    return datasets
 
 def create_sets_without_labels(config):
     """Creates train, validation and test sets

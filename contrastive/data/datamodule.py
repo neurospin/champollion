@@ -41,6 +41,7 @@ import random
 
 from .create_datasets import create_sets_with_labels
 from .create_datasets import create_sets_without_labels
+from .create_datasets import create_sets_without_labels_without_load
 
 
 
@@ -63,8 +64,14 @@ class CustomSampler(Sampler):
     def __iter__(self):
         # implement logic of sampling here
 
-        nb_subjects = len(self.data_source.arrs[0])
-        nb_regions = len(self.data_source.arrs)
+        if self.data_source.arrs is not None:
+            nb_subjects = len(self.data_source.arrs[0])
+            nb_regions = len(self.data_source.arrs)
+        elif self.data_source.coords_arrs_dirs is not None:
+            nb_subjects = len(self.data_source.coords_arrs_dirs[0])
+            nb_regions = len(self.data_source.coords_arrs_dirs)
+        else:
+            raise ValueError('Neither the array nor the directories are provided.')
 
         # drop random idxs to get n*batch_size idxs per region
         idx_subjects = [i for i in range(nb_subjects)]
@@ -108,7 +115,10 @@ class DataModule(pl.LightningDataModule):
         if self.config.with_labels:
             datasets = create_sets_with_labels(self.config)
         else:
-            datasets = create_sets_without_labels(self.config)
+            if self.config.load_sparse:
+                datasets = create_sets_without_labels_without_load(self.config)
+            else:
+                datasets = create_sets_without_labels(self.config)
 
         self.dataset_train = datasets['train']
         self.dataset_val = datasets['val']

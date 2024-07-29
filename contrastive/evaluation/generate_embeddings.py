@@ -115,7 +115,26 @@ def compute_embeddings(config, subsets=None):
     else:
         checkpoint = torch.load(
             ckpt_path, map_location=torch.device(config.device))
-        model.load_state_dict(checkpoint['state_dict'])
+        # remove keys not matching (when multiple projection heads, select one).
+        if 'idx_region_evaluation' in config.keys():
+            model_dict = model.state_dict()
+            state_dict = {k: v for k, v in checkpoint['state_dict'].items() if 'projection_head' not in k or f'projection_head.{config.idx_region_evaluation}' in k}
+            # rename projection head keys : remove projection head idx
+            new_keys_list = []
+            old_keys_list = []
+            for k, v in state_dict.items():
+                if 'projection_head' in k:
+                    old_keys_list.append(k)
+                    l = k.split('.')
+                    l[1]=str(0)
+                    k = '.'.join(l)
+                    new_keys_list.append(k)
+            for newk, oldk in zip(new_keys_list, old_keys_list):
+                state_dict[newk] = state_dict.pop(oldk)
+            model_dict.update(state_dict) 
+            model.load_state_dict(state_dict)
+        else:
+            model.load_state_dict(checkpoint['state_dict'])
 
         model.eval()
 

@@ -270,7 +270,8 @@ class ContrastiveDatasetFusion():
                 coords_arr_dir = self.coords_arrs_dirs[idx_region][idx]
                 coords_arr = np.load(coords_arr_dir)
             else:
-                pass
+                coords_arr_dir = [arr[idx] for arr in self.coords_arrs_dirs]
+                coords_arrs = [np.load(coords_dir) for coords_dir in coords_arr_dir]
         if self.skeleton_arrs_dirs is not None and self.skeleton_arrs_dirs[0] is not None:
             if self.config.multiregion_single_encoder:
                 skeleton_arr_dir = self.skeleton_arrs_dirs[idx_region][idx]
@@ -282,7 +283,17 @@ class ContrastiveDatasetFusion():
                                     self.config.data[idx_region].input_size,
                                     fill_value=0)]
             else:
-                pass
+                skeleton_arr_dir = [arr[idx] for arr in self.skeleton_arrs_dirs]
+                skeleton_arrs = [np.load(skeleton_dir) for skeleton_dir in skeleton_arr_dir]
+                samples = [convert_sparse_to_numpy(skeleton_arr, coords_arr,
+                                                  self.config.data[reg].input_size[1:], 'float32')
+                                                  for reg, (skeleton_arr, coords_arr)
+                                                  in enumerate(zip(skeleton_arrs, coords_arrs))]
+                samples = [torch.from_numpy(sample) for sample in samples]
+                samples = [padd_array(sample,
+                                    self.config.data[reg].input_size,
+                                    fill_value=0)
+                           for reg, sample in enumerate(samples)]
         if self.foldlabel_arrs_dirs is not None and self.foldlabel_arrs_dirs[0] is not None:
             if self.config.multiregion_single_encoder:
                 foldlabel_arr_dir = self.foldlabel_arrs_dirs[idx_region][idx]
@@ -294,7 +305,17 @@ class ContrastiveDatasetFusion():
                                     self.config.data[idx_region].input_size,
                                     fill_value=0)]
             else:
-                pass
+                foldlabel_arr_dir = [arr[idx] for arr in self.foldlabel_arrs_dirs]
+                foldlabel_arrs = [np.load(foldlabel_dir) for foldlabel_dir in foldlabel_arr_dir]
+                sample_foldlabels = [convert_sparse_to_numpy(foldlabel_arr, coords_arr,
+                                                  self.config.data[reg].input_size[1:], 'int32')
+                                                  for reg, (foldlabel_arr, coords_arr)
+                                                  in enumerate(zip(foldlabel_arrs, coords_arrs))]
+                sample_foldlabels = [torch.from_numpy(sample_foldlabel) for sample_foldlabel in sample_foldlabels]
+                sample_foldlabels = [padd_array(sample_foldlabel,
+                                    self.config.data[reg].input_size,
+                                    fill_value=0)
+                           for reg, sample_foldlabel in enumerate(sample_foldlabels)]
         if self.distbottom_arrs_dirs is not None and self.distbottom_arrs_dirs[0] is not None:
             if self.config.multiregion_single_encoder:
                 distbottom_arr_dir = self.distbottom_arrs_dirs[idx_region][idx]
@@ -310,7 +331,23 @@ class ContrastiveDatasetFusion():
                                     self.config.data[idx_region].input_size,
                                     fill_value=32500)]
             else:
-                pass
+                distbottom_arr_dir = [arr[idx] for arr in self.distbottom_arrs_dirs]
+                distbottom_arrs = [np.load(distbottom_dir) for distbottom_dir in distbottom_arr_dir]
+                sample_distbottoms = [convert_sparse_to_numpy(distbottom_arr, coords_arr,
+                                                  self.config.data[reg].input_size[1:], 'int32')
+                                                  for reg, (distbottom_arr, coords_arr)
+                                                  in enumerate(zip(distbottom_arrs, coords_arrs))]
+                # sparse distbottoms had value 0 for out of skeleton voxels
+                # and -1 for bottoms, they need to be reformated
+                for reg, sample_distbottom in enumerate(sample_distbottoms):
+                    sample_distbottom[sample_distbottom==0]=32500
+                    sample_distbottom[sample_distbottom==-1]=0
+                    sample_distbottoms[reg]=sample_distbottom
+                sample_distbottoms = [torch.from_numpy(sample_distbottom) for sample_distbottom in sample_distbottoms]
+                sample_distbottoms = [padd_array(sample_distbottom,
+                                    self.config.data[reg].input_size,
+                                    fill_value=32500)
+                           for reg, sample_distbottom in enumerate(sample_distbottoms)]
         
 
         if self.labels is not None:
@@ -507,6 +544,9 @@ class ContrastiveDatasetFusion():
                 views = torch.stack((view1, view2, view3), dim=0)
                 if self.config.with_labels:
                     tuple_with_path = ((views, filenames[reg], labels),)
+                elif self.config.multiregion_single_encoder and \
+                    self.config.multiple_projection_heads:
+                    tuple_with_path = ((views, filenames[reg], idx_region),) # does it make sens for decoder ?
                 else:
                     tuple_with_path = ((views, filenames[reg]),)
             else:
@@ -515,6 +555,9 @@ class ContrastiveDatasetFusion():
                     view3 = self.transform3[reg](samples[reg])
                     tuple_with_path = (
                         (views, filenames[reg], labels[reg], view3),)
+                elif self.config.multiregion_single_encoder and \
+                    self.config.multiple_projection_heads:
+                    tuple_with_path = ((views, filenames[reg], idx_region),)
                 else:
                     tuple_with_path = ((views, filenames[reg]),)
             concatenated_tuple += tuple_with_path

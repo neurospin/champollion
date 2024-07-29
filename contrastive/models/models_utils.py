@@ -82,7 +82,7 @@ def get_projection_head_shape(config, num_representation_features):
             output_shape = 1
         else:
             raise ValueError(f"Mode {config.mode} doesn't exist.")
-        layers_shapes = [num_representation_features] * (config.length_projection_head - 1) + [output_shape]
+        layers_shapes = [num_representation_features] * (config.length_projection_head) + [output_shape]
     
     return layers_shapes
 

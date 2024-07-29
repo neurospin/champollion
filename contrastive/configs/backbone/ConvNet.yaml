@@ -6,5 +6,6 @@ filters: [32,64,128]
 initial_kernel_size: 7
 block_depth: 4
 backbone_output_size: 256
-adaptive_pooling: [3,3,3]
+#adaptive_pooling: [3,3,3]
+adaptive_pooling: !!null
 projection_head_hidden_layers:

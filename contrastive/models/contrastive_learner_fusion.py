@@ -105,6 +105,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     block_depth=config.block_depth,
                     initial_kernel_size=config.initial_kernel_size,
                     num_representation_features=config.backbone_output_size,
+                    no_linear = config.multiple_projection_heads,
                     adaptive_pooling=config.adaptive_pooling,
                     drop_rate=config.drop_rate,
                     in_shape=config.data[i].input_size))
@@ -148,11 +149,30 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         # set projection head activation
         activation = config.projection_head_name
         log.debug(f"activation = {activation}")
-        self.projection_head = ProjectionHead(
-            num_representation_features=num_representation_features,
-            layers_shapes=layers_shapes,
-            activation=activation,
-            drop_rate=config.ph_drop_rate)
+
+        if config.multiple_projection_heads:
+            # Evaluation: need to initialize the right number of projection heads for weight mapping
+            n_regions = len(config.data)
+            self.projection_head = nn.ModuleList()
+            for reg in range(n_regions):
+                # add a variable size linear layer to each projection head
+                layers_shapes_including_variable = layers_shapes.copy()
+                backbone_output_shape = [config.data[reg].input_size[1] // 2**config.encoder_depth,
+                                         config.data[reg].input_size[2] // 2**config.encoder_depth,
+                                         config.data[reg].input_size[3] // 2**config.encoder_depth]
+                backbone_output_shape = config.filters[-1]*np.prod(backbone_output_shape)
+                layers_shapes_including_variable = [backbone_output_shape] + layers_shapes_including_variable
+                self.projection_head.append(ProjectionHead(
+                    num_representation_features=num_representation_features,
+                    layers_shapes=layers_shapes_including_variable,
+                    activation=activation,
+                    drop_rate=config.ph_drop_rate))
+        else:
+            self.projection_head = ProjectionHead(
+                num_representation_features=num_representation_features,
+                layers_shapes=layers_shapes,
+                activation=activation,
+                drop_rate=config.ph_drop_rate)
 
         # set up class keywords
         self.config = config
@@ -178,7 +198,10 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         self.training_step_outputs = []
         self.validation_step_outputs = []
 
-    def forward(self, x):
+        # Output of intermediate layer of ProjectionHead
+        self.activation={}
+
+    def forward(self, x, idx_region=None):
         # log.info(f"x shape: {x.shape}")
         embeddings = []
         for i in range(self.n_datasets):
@@ -186,8 +209,22 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             embeddings.append(embedding)
         embeddings = torch.cat(embeddings, dim=1)
         embeddings = self.converter.forward(embeddings)
-        out = self.projection_head.forward(embeddings)
+        if idx_region is not None:
+            out = self.projection_head[idx_region].forward(embeddings)
+        else:
+            out = self.projection_head.forward(embeddings)
         return out
+    
+    def get_full_inputs_from_batch_with_region_idx(self, batch):
+        full_inputs = []
+        for (inputs, filenames, idx_region) in batch:  # loop over datasets
+            if self.config.backbone_name == 'pointnet':
+                inputs = torch.squeeze(inputs).to(torch.float)
+            full_inputs.append(inputs)
+        
+        inputs = full_inputs
+        idx_region = idx_region.detach().cpu().numpy()[0]
+        return (inputs, filenames, idx_region)
 
 
     def get_full_inputs_from_batch(self, batch):
@@ -419,14 +456,20 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         if self.config.with_labels:
             inputs, filenames, labels, view3 = \
                 self.get_full_inputs_from_batch_with_labels(train_batch)
+        elif self.config.multiple_projection_heads:
+            inputs, filenames, idx_region = self.get_full_inputs_from_batch_with_region_idx(train_batch)
         else:
             inputs, filenames = self.get_full_inputs_from_batch(train_batch)
 
         # print("TRAINING STEP", inputs.shape)
         input_i = [inputs[i][:, 0, ...] for i in range(self.n_datasets)]
         input_j = [inputs[i][:, 1, ...] for i in range(self.n_datasets)]
-        z_i = self.forward(input_i)
-        z_j = self.forward(input_j)
+        if self.config.multiple_projection_heads:
+            z_i = self.forward(input_i, idx_region=idx_region)
+            z_j = self.forward(input_j, idx_region=idx_region)
+        else:
+            z_i = self.forward(input_i)
+            z_j = self.forward(input_j)
 
         # compute the right loss depending on the learning mode
         if self.config.mode == "decoder":
@@ -511,6 +554,8 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                 if self.config.with_labels:
                     inputs, filenames, labels, _ = \
                         self.get_full_inputs_from_batch_with_labels(batch)
+                elif self.config.multiple_projection_heads:
+                    inputs, filenames, idx_region = self.get_full_inputs_from_batch_with_region_idx(batch)
                 else:
                     inputs, filenames = self.get_full_inputs_from_batch(batch)
                 
@@ -522,9 +567,13 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                 if self.config.backbone_name == 'pointnet':
                     input_i = transform(input_i.cpu()).cuda().to(torch.float)
                     input_j = transform(input_j.cpu()).cuda().to(torch.float)
-                X_i = self.forward(input_i)
-                # Second views of the whole batch
-                X_j = self.forward(input_j)
+                if self.config.multiple_projection_heads:
+                    X_i = self.forward(input_i, idx_region=idx_region)
+                    X_j = self.forward(input_j, idx_region=idx_region)
+                else:
+                    X_i = self.forward(input_i)
+                    # Second views of the whole batch
+                    X_j = self.forward(input_j)
 
                 # First views and second views are put side by side
                 X_reordered = torch.cat([X_i, X_j], dim=-1)
@@ -612,6 +661,8 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             for batch in loader:
                 if self.config.with_labels:
                     (inputs, filenames, _, _) = self.get_full_inputs_from_batch_with_labels(batch)
+                elif self.config.multiple_projection_heads:
+                    (inputs, filenames, _) = self.get_full_inputs_from_batch_with_region_idx(batch)
                 else:
                     (inputs, filenames) = self.get_full_inputs_from_batch(batch)
                 # First views of the whole batch
@@ -627,12 +678,20 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                 del inputs
 
         return X, filenames_list
+    
+
+    def get_activation(self, name):
+        def hook(model, input, output):
+            self.activation[name] = output.detach()
+        return hook
 
 
     def compute_representations(self, loader):
         """Computes representations for each crop.
 
-        Representation are before the projection head"""
+        Representation are before the projection head,
+        Or after the first projection head layer when
+        the linear layer is not in the backbone."""
 
         # Initialization
         X = torch.zeros(
@@ -672,6 +731,10 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     X_i.append(embedding)
                 X_i = torch.cat(X_i, dim=1)
                 X_i = self.converter.forward(X_i)
+                if self.config.multiple_projection_heads:
+                    self.projection_head[0].layers.Linear0.register_forward_hook(self.get_activation('Linear0'))
+                    self.projection_head[0].forward(X_i)
+                    X_i = self.activation['Linear0']
 
                 # Second views of the whole batch
                 X_j = []
@@ -680,6 +743,10 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     X_j.append(embedding)
                 X_j = torch.cat(X_j, dim=1)
                 X_j = self.converter.forward(X_j)
+                if self.config.multiple_projection_heads:
+                    self.projection_head[0].layers.Linear0.register_forward_hook(self.get_activation('Linear0'))
+                    self.projection_head[0].forward(X_j)
+                    X_j = self.activation['Linear0']
 
                 # First views and second views are put side by side
                 X_reordered = torch.cat([X_i, X_j], dim=-1)
@@ -952,13 +1019,19 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         if self.config.with_labels:
             (inputs, _, labels, _) = \
                 self.get_full_inputs_from_batch_with_labels(val_batch)
+        elif self.config.multiple_projection_heads:
+            (inputs, _, idx_region) = self.get_full_inputs_from_batch_with_region_idx(val_batch)
         else:
             inputs, _ = self.get_full_inputs_from_batch(val_batch)
         
         input_i = [inputs[i][:, 0, ...] for i in range(self.n_datasets)]
         input_j = [inputs[i][:, 1, ...] for i in range(self.n_datasets)]
-        z_i = self.forward(input_i)
-        z_j = self.forward(input_j)
+        if self.config.multiple_projection_heads:
+            z_i = self.forward(input_i, idx_region=idx_region)
+            z_j = self.forward(input_j, idx_region=idx_region)
+        else:
+            z_i = self.forward(input_i)
+            z_j = self.forward(input_j)
 
         # compute the right loss depending on the learning mode
         if self.config.mode == "decoder":

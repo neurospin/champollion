@@ -15,9 +15,9 @@ class ProjectionHead(pl.LightningModule):
 
         # define layers
         layers = []
-        input_size = self.num_representation_features
+        input_size = layers_shapes[0]
 
-        for i, dim_i in enumerate(layers_shapes):
+        for i, dim_i in enumerate(layers_shapes[1:]):
             output_size = dim_i
             layers.append(
                 ('Linear%s' % i, nn.Linear(input_size, output_size)))

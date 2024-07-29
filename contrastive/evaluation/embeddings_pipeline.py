@@ -14,7 +14,8 @@ from sklearn.exceptions import ConvergenceWarning
 
 # Auxilary function used to process the config linked to the model.
 # For instance, change the embeddings save path to being next to the model.
-def preprocess_config(sub_dir, dataset_localization, datasets, label, folder_name, classifier_name='svm',
+def preprocess_config(sub_dir, dataset_localization, datasets, idx_region_evaluation,
+                      label, folder_name, classifier_name='svm',
                       epoch=None, split=None, cv=5, splits_basedir=None, verbose=False):
     """Loads the associated config of the given model and changes what has to be done,
     mainly the datasets, the classifier type and a few other keywords.
@@ -69,6 +70,10 @@ def preprocess_config(sub_dir, dataset_localization, datasets, label, folder_nam
     elif split=='random':
         cfg.cv=cv
 
+    # in multi head case
+    if idx_region_evaluation is not None:
+        cfg.idx_region_evaluation=idx_region_evaluation
+
 
     return cfg
 
@@ -76,8 +81,8 @@ def preprocess_config(sub_dir, dataset_localization, datasets, label, folder_nam
 # main function
 # creates embeddings and train classifiers for all models contained in folder
 @ignore_warnings(category=ConvergenceWarning)
-def embeddings_pipeline(dir_path, dataset_localization, datasets, labels,
-                        short_name=None, classifier_name='svm',
+def embeddings_pipeline(dir_path, dataset_localization, datasets, idx_region_evaluation,
+                        labels, short_name=None, classifier_name='svm',
                         overwrite=False, embeddings=True, embeddings_only=False,
                         use_best_model=False, subsets=['full'],
                         epochs=None, split='random', cv=5, splits_basedir=None, verbose=False):
@@ -146,6 +151,7 @@ def embeddings_pipeline(dir_path, dataset_localization, datasets, labels,
                             cfg = preprocess_config(sub_dir,
                                                     dataset_localization=dataset_localization,
                                                     datasets=datasets,
+                                                    idx_region_evaluation=idx_region_evaluation,
                                                     label=label,
                                                     folder_name=f_name,
                                                     classifier_name=classifier_name,
@@ -197,6 +203,7 @@ def embeddings_pipeline(dir_path, dataset_localization, datasets, labels,
                 embeddings_pipeline(sub_dir,
                                     dataset_localization,
                                     datasets=datasets,
+                                    idx_region_evaluation=idx_region_evaluation,
                                     labels=labels,
                                     short_name=short_name,
                                     classifier_name=classifier_name,
@@ -237,9 +244,11 @@ if __name__ == "__main__":
                         verbose=False)
     """ 
     
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/sparse_multiregion_test",
+    """
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/ORBITAL_12-layer_k7/",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
+                        idx_region_evaluation = None,
                         labels=['Left_OFC'],
                         classifier_name='logistic',
                         short_name='troiani', overwrite=True, embeddings=True,
@@ -249,28 +258,37 @@ if __name__ == "__main__":
                         verbose=False)
     
     """
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/sparse_multiregion_test",
+    
+    
+    """
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/2024-07-27",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
+                        idx_region_evaluation = 1,
                         labels=['Right_FIP'],
                         classifier_name='logistic',
                         short_name='FIP', overwrite=True, embeddings=True,
                         embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='custom', cv=3,
+                        subsets=['full'], epochs=range(0,90,10), split='custom', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
                         verbose=False)
     """
+    
 
-    """
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/sparse_multiregion_test",
+    
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/2024-07-29",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_hcp_custom"],
+        idx_region_evaluation=None,
         labels=[f'Isomap_central_left_dim{k}' for k in range(1,7)],
+        #labels = ['Isomap_central_left_dim3'],
         short_name='troiani', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['full'], epochs=[None], split='custom', cv=3,
+        subsets=['full'], epochs=[10], split='custom', cv=3,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
         verbose=False)
-    """
+    
+    
+    
 
     
 
@@ -336,8 +354,6 @@ if __name__ == "__main__":
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
         verbose=False)
 """
-
-#Isomap Central (hcp)
 
 """STS Preterm
         datasets=["local_julien/1-5mm/STs_babies_dHCP_374_subjects_right_1-5mm"],

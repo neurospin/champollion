@@ -105,7 +105,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     block_depth=config.block_depth,
                     initial_kernel_size=config.initial_kernel_size,
                     num_representation_features=config.backbone_output_size,
-                    no_linear = config.multiple_projection_heads,
+                    linear = config.linear_in_backbone,
                     adaptive_pooling=config.adaptive_pooling,
                     drop_rate=config.drop_rate,
                     in_shape=config.data[i].input_size))
@@ -155,18 +155,25 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             n_regions = len(config.data)
             self.projection_head = nn.ModuleList()
             for reg in range(n_regions):
-                # add a variable size linear layer to each projection head
-                layers_shapes_including_variable = layers_shapes.copy()
-                backbone_output_shape = [config.data[reg].input_size[1] // 2**config.encoder_depth,
-                                         config.data[reg].input_size[2] // 2**config.encoder_depth,
-                                         config.data[reg].input_size[3] // 2**config.encoder_depth]
-                backbone_output_shape = config.filters[-1]*np.prod(backbone_output_shape)
-                layers_shapes_including_variable = [backbone_output_shape] + layers_shapes_including_variable
-                self.projection_head.append(ProjectionHead(
+                if config.linear_in_backbone:
+                    self.projection_head.append(ProjectionHead(
                     num_representation_features=num_representation_features,
-                    layers_shapes=layers_shapes_including_variable,
+                    layers_shapes=layers_shapes,
                     activation=activation,
                     drop_rate=config.ph_drop_rate))
+                else:
+                    # add a variable size linear layer to each projection head
+                    layers_shapes_including_variable = layers_shapes.copy()
+                    backbone_output_shape = [config.data[reg].input_size[1] // 2**config.encoder_depth,
+                                            config.data[reg].input_size[2] // 2**config.encoder_depth,
+                                            config.data[reg].input_size[3] // 2**config.encoder_depth]
+                    backbone_output_shape = config.filters[-1]*np.prod(backbone_output_shape)
+                    layers_shapes_including_variable = [backbone_output_shape] + layers_shapes_including_variable
+                    self.projection_head.append(ProjectionHead(
+                        num_representation_features=num_representation_features,
+                        layers_shapes=layers_shapes_including_variable,
+                        activation=activation,
+                        drop_rate=config.ph_drop_rate))
         else:
             self.projection_head = ProjectionHead(
                 num_representation_features=num_representation_features,
@@ -731,7 +738,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     X_i.append(embedding)
                 X_i = torch.cat(X_i, dim=1)
                 X_i = self.converter.forward(X_i)
-                if self.config.multiple_projection_heads:
+                if self.config.multiple_projection_heads and not self.config.linear_in_backbone:
                     self.projection_head[0].layers.Linear0.register_forward_hook(self.get_activation('Linear0'))
                     self.projection_head[0].forward(X_i)
                     X_i = self.activation['Linear0']
@@ -743,7 +750,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     X_j.append(embedding)
                 X_j = torch.cat(X_j, dim=1)
                 X_j = self.converter.forward(X_j)
-                if self.config.multiple_projection_heads:
+                if self.config.multiple_projection_heads and not self.config.linear_in_backbone:
                     self.projection_head[0].layers.Linear0.register_forward_hook(self.get_activation('Linear0'))
                     self.projection_head[0].forward(X_j)
                     X_j = self.activation['Linear0']

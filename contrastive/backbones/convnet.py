@@ -89,7 +89,7 @@ class ConvNet(pl.LightningModule):
     """
 
     def __init__(self, in_channels=1, encoder_depth=3, block_depth=2,
-                 num_representation_features=256, no_linear=False,
+                 num_representation_features=256, linear=True,
                  adaptive_pooling=None, filters=[16,32,64], initial_kernel_size=3,
                  drop_rate=0.1, memory_efficient=False,
                  in_shape=None):
@@ -154,7 +154,7 @@ class ConvNet(pl.LightningModule):
             modules_encoder.append(('AdaptiveMaxPool', nn.AdaptiveMaxPool3d(output_size=adaptive_pooling)))
         # flatten and reduce to the desired dimension
         modules_encoder.append(('Flatten', nn.Flatten()))
-        if not no_linear:
+        if linear:
             modules_encoder.append(
                 ('Linear',
                 nn.Linear(

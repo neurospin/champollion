@@ -244,8 +244,8 @@ if __name__ == "__main__":
                         verbose=False)
     """ 
     
-    """
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/ORBITAL_12-layer_k7/",
+    
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/2024-07-30/",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
                         idx_region_evaluation = None,
@@ -257,35 +257,36 @@ if __name__ == "__main__":
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
                         verbose=False)
     
-    """
     
     
+    
     """
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/2024-07-27",
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/multiregion_single_encoder_test",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
-                        idx_region_evaluation = 1,
+                        idx_region_evaluation = None,
                         labels=['Right_FIP'],
                         classifier_name='logistic',
                         short_name='FIP', overwrite=True, embeddings=True,
                         embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=range(0,90,10), split='custom', cv=3,
+                        subsets=['full'], epochs=[0, 110, 10], split='custom', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
                         verbose=False)
     """
     
 
-    
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/2024-07-29",
+    """
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/Elastic_Isomap_Central",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_hcp_custom"],
         idx_region_evaluation=None,
         labels=[f'Isomap_central_left_dim{k}' for k in range(1,7)],
         #labels = ['Isomap_central_left_dim3'],
         short_name='troiani', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['full'], epochs=[10], split='custom', cv=3,
+        subsets=['full'], epochs=[None], split='custom', cv=3,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
         verbose=False)
+    """
     
     
     

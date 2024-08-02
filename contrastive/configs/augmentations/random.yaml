@@ -14,7 +14,7 @@ trimdepth_delta: 141
 max_translation: 1
 checkerboard_size: 4
 keep_extremity: 'bottom'
-percentage: 1
+percentage: 20
 variable_percentage: False
 sigma_noise: 0.  # set to positive to allow noise
 patch_size: 30
@@ -22,5 +22,6 @@ sigma_elastic: 2
 size_elastic: 3
 #distribution: [0.2, 0.4, 0.6, 0.8] #equiprobability
 #distribution: [0.1667, 0.3333, 0.5, 0.6667, 0.8333] # elastic
-distribution: [0.2, 0.4, 0.6, 0.8, 0.8] # no elastic
+distribution: [0.2, 0.4, 0.6, 0.8, 0.8] # no elastic, equiprobablity
+#distribution: [0.15, 0.4, 0.65, 0.9, 0.9] # no elastic, equiprobablity, reduced translation only ?
 #distribution: [0,0,0,0,0] # for translation only

@@ -3,10 +3,10 @@ model: SimCLR_fusion
 sigma_labels: 2.0
 sigma: 5
 drop_rate: 0.05
-#pretrained_model_path:
+pretrained_model_path:
 #pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Output/sparse_multiregion_multihead_test/14-33-26_58/logs/lightning_logs/version_0/checkpoints/epoch=80-step=95742.ckpt
 #pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Output/2024-07-15/18-35-41_0/logs/lightning_logs/version_0/checkpoints/epoch=80-step=47952.ckpt
-pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Output/2024-07-18/14-42-30_193/logs/lightning_logs/version_0/checkpoints/epoch=250-step=148341.ckpt
+#pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Output/2024-07-18/14-42-30_193/logs/lightning_logs/version_0/checkpoints/epoch=250-step=148341.ckpt
 #pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Output/2024-07-17/09-55-45_253/logs/lightning_logs/version_0/checkpoints/epoch=4-step=5920.ckpt
 #pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Output/2024-07-16/15-10-25_237/logs/lightning_logs/version_0/checkpoints/epoch=12-step=15392.ckpt
 #pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Program/Output/ORBITAL_12-layer_k7/20-56-02_0/logs/lightning_logs/version_0/checkpoints/epoch=70-step=42032.ckpt

@@ -122,7 +122,8 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     out_block=None,
                     prediction_bias=False,
                     initial_kernel_size=config.initial_kernel_size,
-                    initial_stride=config.initial_stride))
+                    initial_stride=config.initial_stride,
+                    adaptive_pooling=config.adaptive_pooling))
         # elif config.backbone_name == 'pointnet':
         #     self.backbone = PointDataModule_LearningFalse)
         else:

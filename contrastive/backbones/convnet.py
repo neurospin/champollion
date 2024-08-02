@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from torch import Tensor
+import numpy as np
 
 
 class _DropoutNd(nn.Module):
@@ -115,7 +116,7 @@ class ConvNet(pl.LightningModule):
             self.z_dim_d = d//2**self.encoder_depth
             self.out_dim = self.z_dim_h*self.z_dim_w*self.z_dim_d
         else:
-            self.out_dim = adaptive_pooling[0]*adaptive_pooling[1]*adaptive_pooling[2]
+            self.out_dim = np.prod(adaptive_pooling[1])
 
         modules_encoder = []
         layer_name = ['', 'a', 'b', 'c']
@@ -151,7 +152,12 @@ class ConvNet(pl.LightningModule):
             self.num_features = out_channels
         # adaptive pool to ensure a fixed size linear layer accross regions
         if adaptive_pooling is not None:
-            modules_encoder.append(('AdaptiveMaxPool', nn.AdaptiveMaxPool3d(output_size=adaptive_pooling)))
+            if adaptive_pooling[0]=='max':
+                    modules_encoder.append(('AdaptiveMaxPool', nn.AdaptiveMaxPool3d(output_size=adaptive_pooling[1])))
+            elif adaptive_pooling[0]=='average':
+                    modules_encoder.append(('AdaptiveAvgPool', nn.AdaptiveAvgPool3d(output_size=adaptive_pooling[1])))
+            else:
+                raise ValueError("Wrong pooling name argument")
         # flatten and reduce to the desired dimension
         modules_encoder.append(('Flatten', nn.Flatten()))
         if linear:

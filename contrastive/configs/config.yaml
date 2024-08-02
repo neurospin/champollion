@@ -1,7 +1,7 @@
 defaults:
   - _self_
   - augmentations: random
-  - backbone: ConvNet
+  - backbone: ResNet
   - classifier: svm
   #- dataset/julien/MICCAI_2024/training/FIP_right.yaml
   #- dataset/julien/multiple_regions/training/5000cingulate_5000orbital_UKB.yaml

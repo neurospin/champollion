@@ -7,4 +7,6 @@ channels: [64,128,256,512]
 zero_init_residual: True
 initial_kernel_size: 7
 initial_stride: 2
+#adaptive_pooling: ['max', [3,3,3]]
+adaptive_pooling: ['average', 1]
 projection_head_hidden_layers:

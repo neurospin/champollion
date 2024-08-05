@@ -555,7 +555,7 @@ class ContrastiveDatasetFusion():
                     view3 = self.transform3[reg](samples[reg])
                     tuple_with_path = (
                         (views, filenames[reg], labels[reg], view3),)
-                elif self.config.multiregion_single_encoder and \
+                elif self.config.multiregion_single_encoder or \
                     self.config.multiple_projection_heads:
                     tuple_with_path = ((views, filenames[reg], idx_region),)
                 else:

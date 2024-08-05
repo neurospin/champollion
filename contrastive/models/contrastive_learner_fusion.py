@@ -81,6 +81,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
 
         if config.multiregion_single_encoder:
             n_datasets = 1
+            n_regions = len(config.data)
             log.info("n_datasets 1 because a single encoder is used for multiple regions")
         else:
             n_datasets = len(config.data)
@@ -186,6 +187,8 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         self.config = config
         self.with_labels = with_labels
         self.n_datasets = n_datasets
+        if self.config.multiregion_single_encoder:
+            self.n_regions = n_regions
         self.sample_data = sample_data
         self.sample_i = np.array([])
         self.sample_j = np.array([])
@@ -204,7 +207,9 @@ class ContrastiveLearnerFusion(pl.LightningModule):
 
         # Keeps track of losses
         self.training_step_outputs = []
+        self.training_step_idxs_region = [] 
         self.validation_step_outputs = []
+        self.validation_step_idxs_region = [] 
 
         # Output of intermediate layer of ProjectionHead
         self.activation={}
@@ -464,7 +469,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         if self.config.with_labels:
             inputs, filenames, labels, view3 = \
                 self.get_full_inputs_from_batch_with_labels(train_batch)
-        elif self.config.multiple_projection_heads:
+        elif self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
             inputs, filenames, idx_region = self.get_full_inputs_from_batch_with_region_idx(train_batch)
         else:
             inputs, filenames = self.get_full_inputs_from_batch(train_batch)
@@ -525,6 +530,8 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         logs = {"train_loss": float(batch_loss)}
 
         self.training_step_outputs.append(batch_loss)
+        if self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
+            self.training_step_idxs_region.append(idx_region)
 
         batch_dictionary = {
             # REQUIRED: It is required for us to return "loss"
@@ -1002,6 +1009,18 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             "Loss/Train",
             avg_loss,
             self.current_epoch)
+        
+        # if multiregion, train loss for each region
+        if self.config.multiregion_single_encoder:
+            for region in range(self.n_regions):
+                regional_loss = [x for x, idx in zip(self.training_step_outputs, self.training_step_idxs_region)
+                                if idx==region]
+                if len(regional_loss) > 0:
+                    regional_loss = torch.stack(regional_loss).mean()
+                    self.loggers[0].experiment.add_scalar(
+                    f"LossRegion{region}/Train",
+                    regional_loss,
+                    self.current_epoch)
 
         if self.config.scheduler:
             self.loggers[0].experiment.add_scalar(
@@ -1027,7 +1046,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         if self.config.with_labels:
             (inputs, _, labels, _) = \
                 self.get_full_inputs_from_batch_with_labels(val_batch)
-        elif self.config.multiple_projection_heads:
+        elif self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
             (inputs, _, idx_region) = self.get_full_inputs_from_batch_with_region_idx(val_batch)
         else:
             inputs, _ = self.get_full_inputs_from_batch(val_batch)
@@ -1073,6 +1092,8 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             # optional for batch logging purposes
             "log": logs}
         self.validation_step_outputs.append(batch_loss)
+        if self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
+            self.validation_step_idxs_region.append(idx_region)
 
         if self.config.with_labels and self.config.mode == 'encoder' \
         and self.config.proportion_pure_contrastive != 1:
@@ -1173,6 +1194,19 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             "Loss/Val",
             avg_loss,
             self.current_epoch)
+        
+        # if multiregion, val loss for each region
+        if self.config.multiregion_single_encoder:
+            for region in range(self.n_regions):
+                regional_loss = [x for x, idx in zip(self.validation_step_outputs, self.validation_step_idxs_region)
+                                if idx==region]
+                if len(regional_loss) > 0:
+                    regional_loss = torch.stack(regional_loss).mean()
+                    self.loggers[0].experiment.add_scalar(
+                    f"LossRegion{region}/Val",
+                    regional_loss,
+                    self.current_epoch)
+
         # use wandb logger (if present)
         if self.config.wandb.grid_search:
             self.loggers[1].log_metrics({'Loss/Val': avg_loss},

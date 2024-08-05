@@ -1,7 +1,7 @@
 defaults:
   - _self_
   - augmentations: random
-  - backbone: ResNet
+  - backbone: ConvNet
   - classifier: svm
   #- dataset/julien/MICCAI_2024/training/FIP_right.yaml
   #- dataset/julien/multiple_regions/training/5000cingulate_5000orbital_UKB.yaml
@@ -11,11 +11,16 @@ defaults:
   #- dataset/julien/MICCAI_2024/training/orbital_right_UKB.yaml
   #- dataset/julien/hcp/FIP_right.yaml
   #- dataset/julien/hcp/SC-sylv_right.yaml
-  - dataset/julien/sparse_load/SOr_left_UKB_sparse_load.yaml
+  #- dataset/julien/sparse_load/SOr_left_UKB_sparse_load.yaml
   #- dataset/julien/sparse_load/FIP_right_UKB_sparse_load.yaml
   #- dataset/julien/sparse_load/SC-sylv_left_UKB_sparse_load.yaml
   #- dataset/julien/sparse_load/CINGULATE_right_UKB_sparse_load.yaml
   #- dataset/julien/sparse_load/SFmedian-SFpoltr-SFsup_right_UKB_sparse_load.yaml
+  - dataset/julien/sparse_load/5000_subjects/CINGULATE_right_UKB_sparse_load_5000.yaml
+  - dataset/julien/sparse_load/5000_subjects/SOr_left_UKB_sparse_load_5000.yaml
+  - dataset/julien/sparse_load/5000_subjects/FIP_right_UKB_sparse_load_5000.yaml
+  - dataset/julien/sparse_load/5000_subjects/SC-sylv_right_UKB_sparse_load_5000.yaml
+  - dataset/julien/sparse_load/5000_subjects/SFmedian-SFpoltr-SFsup_right_UKB_sparse_load_5000.yaml
   #- dataset/julien/MICCAI_2024/training/cingulate_right_UKB_1-5mm.yaml
   #- dataset/julien/cingulate_left_UKB_old.yaml
   #- dataset/local_julien/1-5mm/STs_babies_UKB_right_1-5mm

@@ -81,20 +81,22 @@ class CustomSampler(Sampler):
         if n_to_drop!=0:
             idx_subjects = idx_subjects[:-n_to_drop]
         
-        # gather all indexes in a single list
+        # for each region, partition the idxs
         len_idx_subjects = len(idx_subjects)
-        full_indexes = []
+        nb_batches_per_region = int(len_idx_subjects//self.batch_size)
+        partitions_regions_list = []
         for k in range(nb_regions):
             if self.shuffle:
                 random.shuffle(idx_subjects)
             rescaled_idx_subjects = [i+k*nb_subjects for i in idx_subjects]
-            full_indexes += rescaled_idx_subjects
-        # cut batches and shuffle before reassembling
-        nb_batches = int(len(full_indexes)//self.batch_size)
-        partition_full_indexes = [full_indexes[k*self.batch_size:(k+1)*self.batch_size]
-                                  for k in range(nb_batches)]
-        if self.shuffle:
-            random.shuffle(partition_full_indexes)
+            partitions_list = [rescaled_idx_subjects[k*self.batch_size:(k+1)*self.batch_size]
+                                for k in range(nb_batches_per_region)]
+            partitions_regions_list.append(partitions_list)
+        # reformat to a simple list
+        # regions are seen one after the other r1,...rn,r1,...rn,r1... and so on ...
+        partition_full_indexes = [partitions_regions_list[region][idx]
+                                  for idx in range(nb_batches_per_region)
+                                  for region in range(nb_regions)]
         full_indexes = [x for xs in partition_full_indexes for x in xs]
         
         return(iter(full_indexes))

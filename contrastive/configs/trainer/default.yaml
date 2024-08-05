@@ -28,7 +28,8 @@ scheduler: False
 step_size: 10
 gamma: 1.0
 class_weights: [1., 1.]
-multiregion_single_encoder: False
+accumulate_grad_batches: 1
+multiregion_single_encoder: True
 multiple_projection_heads: False
 linear_in_backbone: True
 load_sparse: True

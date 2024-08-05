@@ -181,6 +181,7 @@ def train(config):
         #flush_logs_every_n_steps=config.nb_steps_per_flush_logs,
         log_every_n_steps=config.log_every_n_steps,
         #auto_lr_find=True
+        accumulate_grad_batches=config.accumulate_grad_batches
         )
 
     # start training

@@ -145,6 +145,37 @@ class BarlowTwinsLoss(nn.Module):
         return loss
 
 
+class VicRegLoss(nn.Module):
+
+    def __init__(self, device=None, lmbd=5e-3, u=1, v=1, epsilon=1e-3):
+        super(VicRegLoss, self).__init__()
+        self.lmbd = lmbd
+        self.device = device
+        self.u = u
+        self.v = v
+        self.epsilon = epsilon
+
+    def forward(self, x, y):
+        
+        bs = x.size(0)
+        emb = x.size(1)
+
+        std_x = torch.sqrt(x.var(dim=0) + self.epsilon)
+        std_y = torch.sqrt(y.var(dim=0) + self.epsilon)
+        var_loss = torch.mean(func.relu(1 - std_x)) + torch.mean(func.relu(1 - std_y))
+
+        invar_loss = func.mse_loss(x, y)
+
+        xNorm = (x - x.mean(0)) / x.std(0)
+        yNorm = (y - y.mean(0)) / y.std(0)
+        crossCorMat = (xNorm.T@yNorm) / bs
+        cross_loss = (crossCorMat*self.lmbd - torch.eye(emb, device=torch.device('cuda'))*self.lmbd).pow(2).sum()
+        
+        loss = self.u*var_loss + self.v*invar_loss + cross_loss
+
+        return loss
+
+
 class NTXenLoss(nn.Module):
     """
     Normalized Temperature Cross-Entropy Loss for Constrastive Learning

@@ -521,6 +521,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         #     self.loggers[0].experiment.add_graph(self, [input_i])
 
         # Records sample for first batch of each epoch
+        ## OBSOLETE
         if batch_idx == 0:
             self.sample_i = change_list_device(input_i, 'cpu')
             self.sample_j = change_list_device(input_j, 'cpu')
@@ -558,6 +559,19 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             self.log('train_label_loss', float(batch_label_loss))
             logs['train_label_loss'] = float(batch_label_loss)
             batch_dictionary['label_loss'] = batch_label_loss
+
+        # if required, save views from first batch of first epoch (first dataset)
+        if self.config.save_views and self.current_epoch==0 and batch_idx==0:
+            sample_i = change_list_device(input_i, 'cpu')
+            sample_j = change_list_device(input_j, 'cpu')
+            sample_i = sample_i[0].numpy()
+            sample_j = sample_j[0].numpy()
+            print('saving augmented views')
+            dir_to_save = './logs/views/'
+            if not os.path.isdir(dir_to_save):
+                os.mkdir(dir_to_save)
+            np.save(os.path.join(dir_to_save, 'view1.npy'), sample_i)
+            np.save(os.path.join(dir_to_save, 'view2.npy'), sample_j)
 
         return batch_dictionary
 

@@ -210,8 +210,8 @@ def remove_bottom_branches(a, arr_skel):
     """Removes bottom branches from foldlabel.
 
     Bottom branches are numerated between 7000 and 7999"""
-    #return a*((a < 7000) | (a >= 8000)).astype(int)
-    return a*(arr_skel!=30)
+    return a*((a < 7000) | (a >= 8000)).astype(int)
+    #return a*(arr_skel!=30)
 
 def remove_top_branches(a):
     """Removes top branches from foldlabel.

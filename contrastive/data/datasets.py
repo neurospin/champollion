@@ -316,6 +316,8 @@ class ContrastiveDatasetFusion():
                                     self.config.data[reg].input_size,
                                     fill_value=0)
                            for reg, sample_foldlabel in enumerate(sample_foldlabels)]
+            for s, f in zip(samples, sample_foldlabels):
+                check_equal_non_zero_voxels(s, f, "foldlabel")
         if self.distbottom_arrs_dirs is not None and self.distbottom_arrs_dirs[0] is not None:
             if self.config.multiregion_single_encoder:
                 distbottom_arr_dir = self.distbottom_arrs_dirs[idx_region][idx]
@@ -348,6 +350,8 @@ class ContrastiveDatasetFusion():
                                     self.config.data[reg].input_size,
                                     fill_value=32500)
                            for reg, sample_distbottom in enumerate(sample_distbottoms)]
+            for s, d in zip(samples, sample_distbottoms):
+                check_equal_non_zero_voxels(s, d, "distbottom")
         
 
         if self.labels is not None:

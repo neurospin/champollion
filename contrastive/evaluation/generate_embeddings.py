@@ -113,6 +113,7 @@ def compute_embeddings(config, subsets=None):
     if not valid_path:
         pass
     else:
+        print(f"weights loaded from: {ckpt_path}")
         checkpoint = torch.load(
             ckpt_path, map_location=torch.device(config.device))
         # remove keys not matching (when multiple projection heads, select one).

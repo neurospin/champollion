@@ -426,10 +426,18 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         return return_dict
     
     def barlow_twins_loss(self, z_i, z_j):
-        "Loss function for contrastive (BarlowTwins)"
+        "Loss function for SSL (BarlowTwins)"
         loss = BarlowTwinsLoss(lambda_param=self.config.lambda_BT / float(self.config.backbone_output_size),
                                correlation=self.config.BT_correlation,
                                device=self.config.device)
+        return loss.forward(z_i, z_j)
+    
+    def vic_reg_loss(self, z_i, z_j):
+        "Loss function for SSL (VicReg)"
+        loss = VicRegLoss(device=self.config.device,
+                          lmbd=self.config.lambda_VR / float(self.config.backbone_output_size),
+                          u=1,v=1,
+                          epsilon=self.config.epsilon_VR)
         return loss.forward(z_i, z_j)
 
     def nt_xen_loss(self, z_i, z_j):
@@ -503,6 +511,8 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             batch_loss, sim_zij, sim_zii, sim_zjj = self.nt_xen_loss(z_i, z_j)
         elif self.config.contrastive_model=='BarlowTwins':
             batch_loss = self.barlow_twins_loss(z_i,z_j)
+        elif self.config.contrastive_model=='VicReg':
+            batch_loss = self.vic_reg_loss(z_i,z_j)
         #TODO: add error if None of these names
         #encoder peut être du contrastive supervisé !! gérer ce cas là...
 
@@ -1078,6 +1088,8 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             batch_loss, sim_zij, sim_zii, sim_zjj = self.nt_xen_loss(z_i, z_j)
         elif self.config.contrastive_model=='BarlowTwins':
             batch_loss = self.barlow_twins_loss(z_i,z_j)
+        elif self.config.contrastive_model=='VicReg':
+            batch_loss = self.vic_reg_loss(z_i,z_j)
         #TODO: add error if None of these names
         
         # values useful for early stoppings

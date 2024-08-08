@@ -916,26 +916,24 @@ class ElasticDeformTensor(object):
 
 class TrimEdgesTensor(object):
     """
-    Trim sides based on binary map of the folds edges (sample trimedges)
+    Trim the lateral edges of the folds based on sample_trimmed_edges.
     Parameters
     ----------
-    p: probability to trim each branch (ie proportion of trimmed branches)
-    trimvalue: value in sample_trimedges assigned to edge voxels (that can be trimmed)
+    p: probability to trim each branch (i.e. proportion of trimmed branches)
     """
 
-    def __init__(self, sample_trimedges, sample_foldlabel,
-                 input_size, p=0.5, trimvalue=2):
+    def __init__(self, sample_trimmed_edges, sample_foldlabel,
+                 input_size, p=0.5):
         self.input_size = input_size
         self.p = p
-        self.trimvalue = trimvalue
         self.sample_foldlabel = sample_foldlabel
-        self.sample_trimedges = sample_trimedges
+        self.sample_trimmed_edges = sample_trimmed_edges
     
     def __call__(self, tensor_skel):
         log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
         arr_skel = tensor_skel.numpy()
         arr_foldlabel = self.sample_foldlabel.numpy()
-        arr_trimedges = self.sample_trimedges.numpy()
+        arr_trimmed_edges = self.sample_trimmed_edges.numpy()
 
         # log.debug(f"arr_skel.shape = {arr_skel.shape}")
         # log.debug(f"arr_foldlabel.shape = {arr_foldlabel.shape}")
@@ -947,16 +945,15 @@ class TrimEdgesTensor(object):
                                     np.full(arr_foldlabel.shape, fill_value=1000))
                             )
         assert (len(indexes)>1), 'No branch in foldlabel'
-        # loop on each branch
+        # loop over branches
         for index in indexes[1:]:
-            arr_trimmed = arr_skel.copy()
             mask_branch = np.mod(arr_foldlabel,
                                 np.full(arr_foldlabel.shape, fill_value=1000))==index
             r = np.random.uniform()
             if r < self.p:
-                # trim branch
-                arr_trimmed[arr_trimedges==self.trimvalue]=0
-            arr_trimmed_branches += (arr_trimmed * mask_branch)
+                arr_trimmed_branches += (arr_trimmed_edges * mask_branch)
+            else:
+                arr_trimmed_branches += (arr_skel * mask_branch)
         arr_trimmed = arr_trimmed_branches.copy()
 
         

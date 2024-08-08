@@ -173,15 +173,14 @@ def transform_trimdepth(sample_distbottom, sample_foldlabel,
     return transforms.Compose(transforms_list)
 
 
-def transform_trimedges(sample_trimedges, sample_foldlabel,
+def transform_trimedges(sample_trimmed_edges, sample_foldlabel,
                         input_size, config):
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
-                       TrimEdgesTensor(sample_trimedges=sample_trimedges,
+                       TrimEdgesTensor(sample_trimmed_edges=sample_trimmed_edges,
                                        sample_foldlabel=sample_foldlabel,
-                                       p=config.proba_trimedges,
-                                       trimvalue=config.trimedge_value),
+                                       p=config.proba_trimedges),
                        BinarizeTensor(),
                        TranslateTensor(config.max_translation)]
     if config.backbone_name == 'pointnet':

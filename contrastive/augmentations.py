@@ -914,61 +914,50 @@ class ElasticDeformTensor(object):
         return torch.from_numpy(deformed_arr)
     
 
-class TrimSidesTensor(object):
+class TrimEdgesTensor(object):
     """
-    Trim sides
+    Trim sides based on binary map of the folds edges (sample trimedges)
+    Parameters
+    ----------
+    p: probability to trim each branch (ie proportion of trimmed branches)
+    trimvalue: value in sample_trimedges assigned to edge voxels (that can be trimmed)
     """
 
-    def __init__(self, sample_foldlabel,
-                 max_distance, input_size, uniform, binary):
-        self.max_distance = max_distance
+    def __init__(self, sample_trimedges, sample_foldlabel,
+                 input_size, p=0.5, trimvalue=2):
         self.input_size = input_size
+        self.p = p
+        self.trimvalue = trimvalue
         self.sample_foldlabel = sample_foldlabel
-        self.uniform=uniform
-        self.binary=binary
+        self.sample_trimedges = sample_trimedges
     
     def __call__(self, tensor_skel):
         log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
         arr_skel = tensor_skel.numpy()
         arr_foldlabel = self.sample_foldlabel.numpy()
+        arr_trimedges = self.sample_trimedges.numpy()
 
         # log.debug(f"arr_skel.shape = {arr_skel.shape}")
         # log.debug(f"arr_foldlabel.shape = {arr_foldlabel.shape}")
-        assert (self.max_distance >= -1)
+        assert (self.p >= 0)
 
-        if self.uniform:
+        arr_trimmed_branches = np.zeros(arr_skel.shape)
+        indexes =  np.unique(
+                            np.mod(arr_foldlabel,
+                                    np.full(arr_foldlabel.shape, fill_value=1000))
+                            )
+        assert (len(indexes)>1), 'No branch in foldlabel'
+        # loop on each branch
+        for index in indexes[1:]:
             arr_trimmed = arr_skel.copy()
-            # get random threshold
-            threshold = np.random.randint(-1, self.max_distance+1)
-            # mask skel with thresholded distbottom
-            arr_trimmed = arr_trimmed*binary_erosion(arr_trimmed.astype(bool))
-            #### arr_trimmed = arr_trimmed*erode(arr_skel_bin, threshold)
-        else:
-            # select a threshold for each branch
-            arr_trimmed_branches = np.zeros(arr_skel.shape)
-            indexes =  np.unique(
-                                np.mod(arr_foldlabel,
-                                        np.full(arr_foldlabel.shape, fill_value=1000))
-                                )
-            assert (len(indexes)>1), 'No branch in foldlabel'
-            for index in indexes[1:]:
-                arr_trimmed = arr_skel.copy()
-                mask_branch = np.mod(arr_foldlabel,
-                                    np.full(arr_foldlabel.shape, fill_value=1000))==index
-                if self.binary:
-                    r = np.random.randint(2)
-                    if r == 0:
-                        threshold = -1
-                    else:
-                        threshold = self.max_distance
-                else:
-                    threshold = np.random.randint(-1, self.max_distance+1)
-                #### arr_trimmed = arr_trimmed*erode(arr_skel_bin, threshold)
-                arr_trimmed_branches += (arr_trimmed * mask_branch)
-            arr_trimmed = arr_trimmed_branches.copy()
-        
-
-        #### arr_trimmed += mask top + mask bottom (pas binaire, garder les valeurs)
+            mask_branch = np.mod(arr_foldlabel,
+                                np.full(arr_foldlabel.shape, fill_value=1000))==index
+            r = np.random.uniform()
+            if r < self.p:
+                # trim branch
+                arr_trimmed[arr_trimedges==self.trimvalue]=0
+            arr_trimmed_branches += (arr_trimmed * mask_branch)
+        arr_trimmed = arr_trimmed_branches.copy()
 
         
         arr_trimmed = arr_trimmed.astype('float32')

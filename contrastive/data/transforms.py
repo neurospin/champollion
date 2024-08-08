@@ -173,10 +173,15 @@ def transform_trimdepth(sample_distbottom, sample_foldlabel,
     return transforms.Compose(transforms_list)
 
 
-def transform_translation(input_size, config):
+def transform_trimedges(sample_trimedges, sample_foldlabel,
+                        input_size, config):
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
+                       TrimEdgesTensor(sample_trimedges=sample_trimedges,
+                                       sample_foldlabel=sample_foldlabel,
+                                       p=config.proba_trimedges,
+                                       trimvalue=config.trimedge_value),
                        BinarizeTensor(),
                        TranslateTensor(config.max_translation)]
     if config.backbone_name == 'pointnet':
@@ -202,6 +207,19 @@ def transform_elastic(input_size, config):
 
     return transforms.Compose(transforms_list)
 
+
+def transform_translation(input_size, config):
+    transforms_list = [SimplifyTensor(),
+                       PaddingTensor(shape=input_size,
+                                     fill_value=config.fill_value),
+                       BinarizeTensor(),
+                       TranslateTensor(config.max_translation)]
+    if config.backbone_name == 'pointnet':
+        transforms_list.append(ToPointnetTensor(n_max=config.n_max))
+    if config.sigma_noise > 0:
+        transforms_list.append(GaussianNoiseTensor(sigma=config.sigma_noise))
+    
+    return transforms.Compose(transforms_list)
 
 
 def transform_random(sample_foldlabel, percentage,

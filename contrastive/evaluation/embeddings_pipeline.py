@@ -242,10 +242,10 @@ if __name__ == "__main__":
                         subsets=['train_val'], epochs=range(0,20,10), split='random', cv=5,
                         splits_basedir='',
                         verbose=False)
-    """
     
     
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/ChampollionV0_dev_branch_equal_orbital",
+    
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/2024-08-09",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
                         idx_region_evaluation = None,
@@ -256,9 +256,9 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='custom', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
                         verbose=False)
-    
     """
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/5_regions_5000_acc_grads",
+    
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/2024-08-09",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/cingulate_right_ACCpatterns_custom"],
         idx_region_evaluation = None,
@@ -268,10 +268,10 @@ if __name__ == "__main__":
         subsets=['test'], epochs=[None], split='custom', cv=3,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/ACCpatterns_subjects_train_split_',
         verbose=False)
-    """
     
+
     """
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/5_regions_5000_acc_grads",
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/2024-08-09",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
                         idx_region_evaluation = None,
@@ -285,7 +285,7 @@ if __name__ == "__main__":
     """
     
     """
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/5_regions_5000_acc_grads",
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/2024-08-09",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_hcp_custom"],
         idx_region_evaluation=None,

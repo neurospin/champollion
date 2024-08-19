@@ -35,7 +35,7 @@ from sklearn.metrics import r2_score
 from sklearn.exceptions import ConvergenceWarning
 
 
-_parallel = False
+_parallel = True
 
 log = set_file_logger(__file__)
 

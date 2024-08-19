@@ -222,15 +222,15 @@ if __name__ == "__main__":
     #                     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
     #                     verbose=False)
 
-    embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V0/SC-sylv_right",
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/2024-08-13",
                         dataset_localization="neurospin",
-                        datasets=["with_reskel_distbottom/2mm/UKB/SC-sylv_right"],
-                        labels=['isOld'],
+                        datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
+                        labels=['Right_FIP'],
                         classifier_name='logistic',
-                        short_name='ukb', overwrite=True, embeddings=False,
+                        short_name='FIP', overwrite=True, embeddings=True,
                         embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='random', cv=3,
-                        splits_basedir='',
+                        subsets=['full'], epochs=[None], split='custom', cv=3,
+                        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
                         verbose=False)
 
     # embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/ORBITAL_BT",

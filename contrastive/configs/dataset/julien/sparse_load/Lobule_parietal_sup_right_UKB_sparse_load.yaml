@@ -1,3 +1,4 @@
+# @package dataset.Lobule_parietal_sup_right_UKB_sparse_load
 dataset_name: Lobule_parietal_sup_right_UKB_sparse_load
 pickle_normal: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/Lobule_parietal_sup./mask/Rskeleton.pkl
 coords_all: /volatile/jl277509/data/UkBioBank/crops/2mm/Lobule_parietal_sup./mask/Rskeleton_sparse/coords

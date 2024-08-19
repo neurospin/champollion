@@ -1,3 +1,4 @@
+# @package dataset.SFint-SR_right_UKB_sparse_load
 dataset_name: SFint-SR_right_UKB_sparse_load
 pickle_normal: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/S.F.int.-S.R./mask/Rskeleton.pkl
 coords_all: /volatile/jl277509/data/UkBioBank/crops/2mm/S.F.int.-S.R./mask/Rskeleton_sparse/coords

@@ -1,3 +1,4 @@
+# @package dataset.STi-STs-STpol_right_UKB_sparse_load
 dataset_name: STi-STs-STpol_right_UKB_sparse_load
 pickle_normal: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/S.T.i.-S.T.s.-S.T.pol./mask/Rskeleton.pkl
 coords_all: /volatile/jl277509/data/UkBioBank/crops/2mm/S.T.i.-S.T.s.-S.T.pol./mask/Rskeleton_sparse/coords

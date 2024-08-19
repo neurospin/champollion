@@ -1,3 +1,4 @@
+# @package dataset.FCLp-subsc-FCLa-INSULA_right_UKB_sparse_load
 dataset_name: FCLp-subsc-FCLa-INSULA_right_UKB_sparse_load
 pickle_normal: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/F.C.L.p.-subsc.-F.C.L.a.-INSULA./mask/Rskeleton.pkl
 coords_all: /volatile/jl277509/data/UkBioBank/crops/2mm/F.C.L.p.-subsc.-F.C.L.a.-INSULA./mask/Rskeleton_sparse/coords

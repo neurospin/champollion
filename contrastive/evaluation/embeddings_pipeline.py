@@ -258,6 +258,7 @@ if __name__ == "__main__":
                         verbose=False)
     """
     
+    """
     embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/2024-08-09",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/cingulate_right_ACCpatterns_custom"],
@@ -268,10 +269,11 @@ if __name__ == "__main__":
         subsets=['test'], epochs=[None], split='custom', cv=3,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/ACCpatterns_subjects_train_split_',
         verbose=False)
+    """
     
 
-    """
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/2024-08-09",
+    
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/2024-08-13",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
                         idx_region_evaluation = None,
@@ -282,7 +284,7 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='custom', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
                         verbose=False)
-    """
+    
     
     """
     embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/2024-08-09",

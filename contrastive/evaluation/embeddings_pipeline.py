@@ -229,7 +229,7 @@ if __name__ == "__main__":
                         classifier_name='logistic',
                         short_name='hcp', overwrite=True, embeddings=True,
                         embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=range(0,121,10), split='custom', cv=5,
+                        subsets=['full'], epochs=[None], split='custom', cv=5,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
                         verbose=False)
 

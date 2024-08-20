@@ -33,13 +33,18 @@ for side in sides:
         trm = pd.read_csv(os.path.join(trm_dir, f'{side}/{side}transform_to_ICBM2009c_{sub}.trm'), sep=' ', header=None)
         trm = np.array(trm)
         scale = (trm[1,0]*trm[2,1]*trm[3,2])**(1/3)
+        print(f'scaling factor for tminss : {scale}')
         # get raw skeleton
-        skel = aims.read(os.path.join(ukb_raw_dir ,f'{side}/{side}skeleton_generated_{sub}.nii.gz'))
+        #skel = aims.read(os.path.join(ukb_raw_dir ,f'{side}/{side}skeleton_generated_{sub}.nii.gz'))
         ## TODO: WHAT SKELETON SHOULD BE USED ???
-        #skel = aims.read(os.path.join(ukb_graph_dir, sub, path_to_skel ,f'{side}skeleton_{sub}.nii.gz'))
+        skel = aims.read(os.path.join(ukb_graph_dir, sub, path_to_skel ,f'{side}skeleton_{sub}.nii.gz'))
+        skel.np[skel.np==11]=0 # remove topological value 11
+        print(f'Non zero voxels before trimming : {np.sum(skel.np!=0)}')
         # get graph
         graph = aims.read(os.path.join(ukb_graph_dir, sub, path_to_graph, f'{side}{sub}.arg'))
-        tminss = int(3 / scale)
+        tminss = 3 / scale
         ss, trimmed = trim_extremity.trim_extremities(skel, graph, tminss)
+        print(f'Non zero voxels after trimming : {np.sum(trimmed.np!=0)}')
+        print(f'Non zero voxels after trimming (ss) : {np.sum(ss.np!=0)}')
         aims.write(trimmed, os.path.join(save_dir, f'{side}/{side}skeleton_trimmed_edges_{sub}.nii.gz'))
         break

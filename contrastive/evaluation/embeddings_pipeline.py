@@ -223,14 +223,14 @@ if __name__ == "__main__":
     #                     verbose=False)
 
     embeddings_pipeline("/home_local/jc225751/Runs/70_self-supervised_two-regions/Output/FIP_left",
-                        dataset_localization="kraken_Run70",
-                        datasets=["with_reskel_distbottom/2mm/UKB/FIP_left"],
-                        labels=['isOld'],
+                        dataset_localization="neurospin",
+                        datasets=["with_reskel_distbottom/2mm/hcp/FIP_left"],
+                        labels=['Left_FIP'],
                         classifier_name='logistic',
-                        short_name='ukb', overwrite=False, embeddings=True,
+                        short_name='hcp', overwrite=True, embeddings=True,
                         embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=range(0,121,10), split='random', cv=3,
-                        splits_basedir='',
+                        subsets=['full'], epochs=range(0,121,10), split='custom', cv=5,
+                        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
                         verbose=False)
 
     # embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/ORBITAL_BT",

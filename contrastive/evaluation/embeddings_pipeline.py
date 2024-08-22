@@ -117,16 +117,7 @@ def embeddings_pipeline(dir_path, dataset_localization, datasets, labels,
                 # if already computed and don't want to overwrite, then pass
                 # else apply the normal process
                 folder_name = get_save_folder_name(datasets=datasets, short_name=short_name+'_'+split)
-                if (
-                    os.path.exists(sub_dir + f"/{folder_name}_embeddings")
-                    and (not overwrite)
-                ):
-                    print("Model already treated "
-                          "(existing folder with embeddings). "
-                          "Set overwrite to True if you still want "
-                          "to compute them.")
-
-                elif '#' in sub_dir:
+                if '#' in sub_dir:
                     print(
                         "Model with an incompatible structure "
                         "with the current one. Pass.")
@@ -141,28 +132,39 @@ def embeddings_pipeline(dir_path, dataset_localization, datasets, labels,
                                 f_name = folder_name + f'_epoch{epoch}'
                             else:
                                 f_name = folder_name
-                            cfg = preprocess_config(sub_dir,
-                                                    dataset_localization=dataset_localization,
-                                                    datasets=datasets,
-                                                    label=label,
-                                                    folder_name=f_name,
-                                                    classifier_name=classifier_name,
-                                                    epoch=epoch, split=split, cv=cv,
-                                                    splits_basedir=splits_basedir)
-                            if verbose:
-                                print("CONFIG FILE", type(cfg))
-                                print(json.dumps(omegaconf.OmegaConf.to_container(
-                                    cfg, resolve=True), indent=4, sort_keys=True))
-                            # save the modified config next to the real one
-                            with open(sub_dir+'/.hydra/config_classifiers.yaml', 'w') \
-                                    as file:
-                                yaml.dump(omegaconf.OmegaConf.to_yaml(cfg), file)
-
-                            # apply the functions
-                            if embeddings and idx==0:
-                                valid_path = compute_embeddings(cfg)
-                            elif not embeddings:
+                            if (
+                                os.path.exists(sub_dir + f"/{f_name}_embeddings")
+                                and (not overwrite)
+                            ):
+                                print(f"Model {f_name} already treated "
+                                    "(existing folder with embeddings). "
+                                    "Set overwrite to True if you still want "
+                                    "to compute them.")
                                 valid_path=True # assume that the embeddings exist
+                            else:
+                                cfg = preprocess_config(sub_dir,
+                                                        dataset_localization=dataset_localization,
+                                                        datasets=datasets,
+                                                        label=label,
+                                                        folder_name=f_name,
+                                                        classifier_name=classifier_name,
+                                                        epoch=epoch, split=split, cv=cv,
+                                                        splits_basedir=splits_basedir)
+                                if verbose:
+                                    print("CONFIG FILE", type(cfg))
+                                    print(json.dumps(omegaconf.OmegaConf.to_container(
+                                        cfg, resolve=True), indent=4, sort_keys=True))
+                                # save the modified config next to the real one
+                                with open(sub_dir+'/.hydra/config_classifiers.yaml', 'w') \
+                                        as file:
+                                    yaml.dump(omegaconf.OmegaConf.to_yaml(cfg), file)
+
+                                # apply the functions
+                                if embeddings and idx==0:
+                                    valid_path = compute_embeddings(cfg)
+                                elif not embeddings:
+                                    valid_path=True # assume that the embeddings exist  
+                            
                             # reload config for train_classifiers to work properly
                             cfg = omegaconf.OmegaConf.load(
                                 sub_dir+'/.hydra/config_classifiers.yaml')
@@ -249,7 +251,7 @@ if __name__ == "__main__":
                     datasets=["with_reskel_distbottom/2mm/hcp/FIP_right"],
                     labels=['isRightHanded'],
                     classifier_name='logistic',
-                    short_name='hcp', overwrite=True, embeddings=True,
+                    short_name='hcp', overwrite=False, embeddings=True,
                     embeddings_only=False, use_best_model=False,
                     subsets=['full'], epochs=[None], split='custom', cv=5,
                     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/Handedness/split_',

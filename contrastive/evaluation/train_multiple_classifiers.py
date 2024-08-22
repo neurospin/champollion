@@ -291,7 +291,7 @@ def train_one_classifier(config, inputs, subjects, i=0):
             df = subs_embeddings.merge(splits_subs_and_labels, on='ID')
             groups, X, Y = df['labels'], np.vstack(df['X'].values), df['Y']
             logo = LeaveOneGroupOut()
-            cv = logo.get_n_splits(groups=groups)
+            cv = logo.split(X, Y, groups)
     elif config.split=='train_test':
         pass
     else:

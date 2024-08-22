@@ -11,6 +11,8 @@ subjects_foldlabel_all: /neurospin/dico/data/deep_folding/current/datasets/UkBio
 distbottom_dir: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/S.Or./mask/Ldistbottom
 distbottom_all: /volatile/jl277509/data/UkBioBank/crops/2mm/S.Or./mask/Lskeleton_sparse/distbottom
 subjects_distbottom_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/S.Or./mask/Ldistbottom_subject.csv
+branch_dir: /volatile/jl277509/data/UkBioBank/crops/2mm/S.Or./mask/Lskeleton_sparse/branches
+nb_branches: 136589
 crop_file_suffix: _cropped_skeleton.nii.gz
 pickle_benchmark:
 train_val_csv_file: /volatile/jl277509/data/UkBioBank/L_subjects.csv

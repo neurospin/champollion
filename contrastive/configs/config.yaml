@@ -6,7 +6,7 @@ defaults:
   - dataset_localization: kraken_Run70
   # - dataset/with_reskel_distbottom/2mm/UKB/STs_left
   # - dataset/with_reskel_distbottom/2mm/UKB/SC-sylv_left
-  - dataset/with_reskel_distbottom/2mm/UKB/FIP_right
+  # - dataset/with_reskel_distbottom/2mm/UKB/FIP_right
   # - dataset/with_reskel_distbottom/2mm/UKB/SC-sylv_right
   # - dataset/with_reskel_distbottom/2mm/UKB/CINGULATE_right
   # - dataset/with_reskel_distbottom/2mm/UKB/STs-SGSM_left

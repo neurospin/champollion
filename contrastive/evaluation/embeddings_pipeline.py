@@ -222,17 +222,39 @@ if __name__ == "__main__":
     #                     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
     #                     verbose=False)
 
-    embeddings_pipeline("/home_local/jc225751/Runs/70_self-supervised_two-regions/Output/FIP_left",
-                        dataset_localization="neurospin",
-                        datasets=["with_reskel_distbottom/2mm/hcp/FIP_left"],
-                        labels=['Left_FIP'],
-                        classifier_name='logistic',
-                        short_name='hcp', overwrite=True, embeddings=True,
-                        embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='custom', cv=5,
-                        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
-                        verbose=False)
+    # embeddings_pipeline("/home_local/jc225751/Runs/70_self-supervised_two-regions/Output/FIP_right",
+    #                     dataset_localization="neurospin",
+    #                     datasets=["with_reskel_distbottom/2mm/hcp/FIP_right"],
+    #                     labels=['Right_FIP'],
+    #                     classifier_name='logistic',
+    #                     short_name='hcp', overwrite=True, embeddings=True,
+    #                     embeddings_only=False, use_best_model=False,
+    #                     subsets=['full'], epochs=range(0,121,10), split='custom', cv=5,
+    #                     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
+    #                     verbose=False)
+    
+    # embeddings_pipeline("/home_local/jc225751/Runs/70_self-supervised_two-regions/Output/FIP_right",
+    #                 dataset_localization="neurospin",
+    #                 datasets=["with_reskel_distbottom/2mm/UKB/FIP_right"],
+    #                 labels=['isOld'],
+    #                 classifier_name='logistic',
+    #                 short_name='ukb', overwrite=True, embeddings=True,
+    #                 embeddings_only=False, use_best_model=False,
+    #                 subsets=['full'], epochs=range(0,121,10), split='random', cv=5,
+    #                 splits_basedir='',
+    #                 verbose=False)
 
+    embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V0/FIP_right",
+                    dataset_localization="neurospin",
+                    datasets=["with_reskel_distbottom/2mm/hcp/FIP_right"],
+                    labels=['isRightHanded'],
+                    classifier_name='logistic',
+                    short_name='hcp', overwrite=True, embeddings=True,
+                    embeddings_only=False, use_best_model=False,
+                    subsets=['full'], epochs=[None], split='custom', cv=5,
+                    splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/Handedness/split_',
+                    verbose=False)
+    
     # embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/ORBITAL_BT",
     #                     dataset_localization="neurospin",
     #                     datasets=["with_reskel_distbottom/2mm/schiz_extended/ORBITAL_left"],

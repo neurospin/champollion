@@ -11,6 +11,6 @@ pickle_benchmark:
 train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/fake_train_val.csv
 test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/union_splits.csv
 # splits_basedir: /neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_
-subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/FIP_labels.csv
+subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/Handedness/handedness_labels.csv
 subject_column_name: 'Subject'
 input_size: (1, 40, 44, 42)

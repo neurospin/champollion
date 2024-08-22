@@ -47,6 +47,8 @@ from contrastive.data.transforms import \
     transform_nothing_done, transform_only_padding,\
     transform_trimdepth, transform_random, transform_mixed
 
+from contrastive.data.utils import convert_sparse_to_numpy
+
 from contrastive.augmentations import PaddingTensor
 
 log = set_file_logger(__file__)
@@ -124,17 +126,6 @@ def check_equal_non_zero_voxels(sample1, sample2, name):
                  "of non-zero voxels. "
                  f"{torch.count_nonzero((b1!=b2) * b1)} voxels differ "
                  f"over {torch.count_nonzero(b1)} skeleton voxels")
-        
-def convert_sparse_to_numpy(data, coords, input_size, dtype):
-    """
-    Convert coords and associated values to numpy array
-    """
-    s = sparse.COO(coords, data, shape=input_size)
-    arr = s.todense()
-    arr = np.expand_dims(arr, axis=-1)
-    arr = arr.astype(dtype)
-
-    return arr
 
 
 class ContrastiveDatasetFusion():

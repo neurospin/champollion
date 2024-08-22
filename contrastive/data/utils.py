@@ -39,6 +39,7 @@ import os
 
 import numpy as np
 import pandas as pd
+import sparse
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
@@ -72,6 +73,18 @@ def read_subject_csv(csv_file_path: str) -> pd.DataFrame:
     else:
         raise ValueError(f"Column name of csv file {csv_file_path} must be "
                          f"\'Subject\'. Instead it is {subjects.columns}")
+    
+
+def convert_sparse_to_numpy(data, coords, input_size, dtype):
+    """
+    Convert coords and associated values to numpy array
+    """
+    s = sparse.COO(coords, data, shape=input_size)
+    arr = s.todense()
+    arr = np.expand_dims(arr, axis=-1)
+    arr = arr.astype(dtype)
+
+    return arr
 
 
 def length_object(object):

@@ -207,6 +207,23 @@ def transform_elastic(input_size, config):
     return transforms.Compose(transforms_list)
 
 
+def transform_addbranch(input_size, config):
+    transforms_list = [SimplifyTensor(),
+                       PaddingTensor(shape=input_size,
+                                     fill_value=config.fill_value),
+                       AddBranchTensor(branch_directory=config.data[0].branch_dir,
+                                       nb_branches=config.data[0].nb_branches,
+                                       input_size=input_size),
+                       BinarizeTensor(),
+                       TranslateTensor(config.max_translation)]
+    if config.backbone_name == 'pointnet':
+        transforms_list.append(ToPointnetTensor(n_max=config.n_max))
+    if config.sigma_noise > 0:
+        transforms_list.append(GaussianNoiseTensor(sigma=config.sigma_noise))
+
+    return transforms.Compose(transforms_list)
+
+
 def transform_translation(input_size, config):
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
@@ -238,6 +255,8 @@ def transform_random(sample_foldlabel, percentage,
         return transform_cutin(input_size, config)
     elif alpha < config.distribution[4]:
         return transform_elastic(input_size, config)
+    elif alpha < config.distribution[5]:
+        return transform_addbranch(input_size, config)
     else:
         return transform_translation(input_size, config)
     

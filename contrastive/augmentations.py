@@ -35,6 +35,7 @@
 import numbers
 from collections import namedtuple
 
+import os
 import numpy as np
 import torch
 from scipy.ndimage import rotate, zoom, binary_erosion
@@ -43,7 +44,7 @@ import elasticdeform
 
 from contrastive.utils import logs
 from contrastive.utils.test_timeit import timeit
-from contrastive.data.utils import zero_padding, repeat_padding, pad
+from contrastive.data.utils import zero_padding, repeat_padding, pad, convert_sparse_to_numpy
 
 log = logs.set_file_logger(__file__)
 
@@ -961,3 +962,29 @@ class TrimEdgesTensor(object):
 
         return torch.from_numpy(arr_trimmed)
     
+
+class AddBranchTensor(object):
+
+    """
+    Add one random branch to the skeleton, from a pool of plausible branches.
+    """
+
+    def __init__(self, branch_directory, nb_branches, input_size):
+        self.branch_directory = branch_directory
+        self.nb_branches = int(nb_branches)
+        self.input_size = input_size
+    
+    def __call__(self, tensor):
+        arr = tensor.numpy()
+        np.random.seed()
+        idx = np.random.randint(0, self.nb_branches)
+        coords_branch = np.load(os.path.join(self.branch_directory, f'branch_{idx}.npy'))
+        nb_coords = coords_branch.shape[1]
+        data = np.ones(nb_coords)
+        branch = convert_sparse_to_numpy(data, coords_branch, self.input_size[1:], 'float32')
+        arr = arr + branch
+
+        arr = arr.astype('float32')
+
+        return torch.from_numpy(arr)
+

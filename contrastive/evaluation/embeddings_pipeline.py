@@ -2,6 +2,7 @@ import os
 import yaml
 import json
 import omegaconf
+import inspect
 
 from generate_embeddings import compute_embeddings
 from train_multiple_classifiers import train_classifiers
@@ -14,8 +15,11 @@ from sklearn.exceptions import ConvergenceWarning
 
 # Auxilary function used to process the config linked to the model.
 # For instance, change the embeddings save path to being next to the model.
-def preprocess_config(sub_dir, dataset_localization, datasets, label, folder_name, classifier_name='svm',
-                      epoch=None, split=None, cv=5, splits_basedir=None, verbose=False):
+def preprocess_config(sub_dir, dataset_localization,
+                      datasets_root, datasets,
+                      label, folder_name, classifier_name='svm',
+                      epoch=None, split=None, cv=5,
+                      splits_basedir=None, verbose=False):
     """Loads the associated config of the given model and changes what has to be done,
     mainly the datasets, the classifier type and a few other keywords.
     
@@ -37,7 +41,7 @@ def preprocess_config(sub_dir, dataset_localization, datasets, label, folder_nam
     cfg = omegaconf.OmegaConf.load(sub_dir+'/.hydra/config.yaml')
 
     # replace the datasets
-    change_config_datasets(cfg, datasets)
+    change_config_datasets(cfg, datasets, datasets_root)
     # replace the label
     change_config_label(cfg, label)
     # replace the dataset localizatyion
@@ -66,7 +70,6 @@ def preprocess_config(sub_dir, dataset_localization, datasets, label, folder_nam
         cfg.splits_basedir=splits_basedir
     elif split=='random':
         cfg.cv=cv
-
 
     return cfg
 
@@ -99,10 +102,72 @@ def is_folder_accepted_model(sub_dir):
         return True
 
 
+def get_model_folder_name(epoch, folder_name):
+    if epoch is not None:
+        f_name = folder_name + f'_epoch{epoch}'
+    else:
+        f_name = folder_name
+    return f_name
+
+
+def print_config(cfg, verbose):
+    if verbose:
+        print("CONFIG FILE", type(cfg))
+        print(json.dumps(omegaconf.OmegaConf.to_container(
+            cfg, resolve=True), indent=4, sort_keys=True))
+
+
+def save_classifier_config(cfg, sub_dir):
+    # save the modified classifier config next to the real one
+    with open(sub_dir+'/.hydra/config_classifiers.yaml', 'w') \
+            as file:
+        yaml.dump(omegaconf.OmegaConf.to_yaml(cfg), file)
+
+
+def reload_classifier_config(sub_dir):
+    # reload config for train_classifiers to work properly
+    cfg = omegaconf.OmegaConf.load(
+        sub_dir+'/.hydra/config_classifiers.yaml')
+    return cfg
+
+
+def check_if_compute_embedding(sub_dir, f_name, overwrite, embeddings, idx):
+    if (
+        os.path.exists(sub_dir + f"/{f_name}_embeddings")
+        and (not overwrite)
+    ):
+        print(f"Model {f_name} already treated "
+            "(existing folder with embeddings). "
+            "Set overwrite to True if you still want "
+            "to compute them.")
+        do_we_compute_embeddings = False
+        valid_path=True # assume that the embeddings exist
+    else:
+        # apply the functions
+        if embeddings and idx==0:
+            do_we_compute_embeddings = True
+            valid_path = False # will be set during embedding computation
+        elif not embeddings:
+            do_we_compute_embeddings = False
+            valid_path=True # assume that the embeddings exist 
+    return do_we_compute_embeddings, valid_path
+
+
+def do_we_classify(valid_path, embeddings_only):
+    if valid_path and not embeddings_only:
+        return True
+    elif not valid_path:
+        print('Invalid epoch number, skipped')
+        return False
+    else:
+        return False 
+
+
 # main function
 # creates embeddings and train classifiers for all models contained in folder
 @ignore_warnings(category=ConvergenceWarning)
-def embeddings_pipeline(dir_path, dataset_localization, datasets, labels,
+def embeddings_pipeline(dir_path, dataset_localization,
+                        datasets_root, datasets, labels,
                         short_name=None, classifier_name='svm',
                         overwrite=False, embeddings=True, embeddings_only=False,
                         use_best_model=False, subsets=['full'],
@@ -132,6 +197,12 @@ def embeddings_pipeline(dir_path, dataset_localization, datasets, labels,
     """
 
     print("/!\\ Convergence warnings are disabled")
+
+    # Gets function parameters to call it recursively with same parameters
+    frame = inspect.currentframe()
+    args, _, _, values = inspect.getargvalues(frame)
+    args_function = {i: values[i] for i in args}     
+
     # walks recursively through the subfolders
     for name in os.listdir(dir_path):
         sub_dir = dir_path + '/' + name
@@ -139,66 +210,61 @@ def embeddings_pipeline(dir_path, dataset_localization, datasets, labels,
         if is_it_a_file(sub_dir):
             pass
         elif not is_folder_a_model(sub_dir):
-            embeddings_pipeline(**locals())
+            args_function["dir_path"] = sub_dir
+            embeddings_pipeline(**args_function)
         elif not is_folder_accepted_model(sub_dir):
             pass
         else:
             print("\nTreating", sub_dir)
 
-            folder_name = get_save_folder_name(datasets=datasets, short_name=short_name+'_'+split)
+            folder_name = get_save_folder_name(datasets=datasets,
+                                               short_name=short_name+'_'+split)
 
-            print("Start post processing")
-            # get the config and correct it to suit
-            # what is needed for classifiers
+            print("Start computing")
+
+            # Loops over labels
             for idx, label in enumerate(labels):
+
+                # Loops over epochs if requested
                 for epoch in epochs:
-                    if epoch is not None:
-                        f_name = folder_name + f'_epoch{epoch}'
-                    else:
-                        f_name = folder_name
+                    f_name = get_model_folder_name(epoch, folder_name)
 
-                    cfg = preprocess_config(sub_dir,
-                                            dataset_localization=dataset_localization,
-                                            datasets=datasets,
-                                            label=label,
-                                            folder_name=f_name,
-                                            classifier_name=classifier_name,
-                                            epoch=epoch, split=split, cv=cv,
-                                            splits_basedir=splits_basedir)
-                    if verbose:
-                        print("CONFIG FILE", type(cfg))
-                        print(json.dumps(omegaconf.OmegaConf.to_container(
-                            cfg, resolve=True), indent=4, sort_keys=True))
-                    # save the modified config next to the real one
-                    with open(sub_dir+'/.hydra/config_classifiers.yaml', 'w') \
-                            as file:
-                        yaml.dump(omegaconf.OmegaConf.to_yaml(cfg), file)
-
-                    if (
-                        os.path.exists(sub_dir + f"/{f_name}_embeddings")
-                        and (not overwrite)
-                    ):
-                        print(f"Model {f_name} already treated "
-                            "(existing folder with embeddings). "
-                            "Set overwrite to True if you still want "
-                            "to compute them.")
-                        valid_path=True # assume that the embeddings exist
-                    else:
-                        # apply the functions
-                        if embeddings and idx==0:
-                            valid_path = compute_embeddings(cfg)
-                        elif not embeddings:
-                            valid_path=True # assume that the embeddings exist  
+                    # Takes the model configuration
+                    # And updates it with input parameters
+                    cfg = preprocess_config(
+                        sub_dir,
+                        dataset_localization=dataset_localization,
+                        datasets_root=datasets_root,
+                        datasets=datasets,
+                        label=label,
+                        folder_name=f_name,
+                        classifier_name=classifier_name,
+                        epoch=epoch, split=split, cv=cv,
+                        splits_basedir=splits_basedir)
                     
-                    # reload config for train_classifiers to work properly
-                    cfg = omegaconf.OmegaConf.load(
-                        sub_dir+'/.hydra/config_classifiers.yaml')
-                    if valid_path and not embeddings_only:
-                        train_classifiers(cfg, subsets=subsets)
-                    elif not valid_path:
-                        print('Invalid epoch number, skipped')
+                    print_config(cfg, verbose)
+                    save_classifier_config(cfg, sub_dir)
 
-                    # compute embeddings for the best model if saved
+                    ####################
+                    # Compute embeddings
+                    ####################
+                    do_we_compute_embeddings, valid_path =\
+                        check_if_compute_embedding(sub_dir, f_name, overwrite,
+                                                   embeddings, idx)
+                    if do_we_compute_embeddings == True:
+                        valid_path = compute_embeddings(cfg)
+                    
+                    ####################
+                    # Compute Classifier
+                    ####################
+                    cfg = reload_classifier_config(sub_dir)
+                    if do_we_classify(valid_path, embeddings_only):
+                        train_classifiers(cfg, subsets=subsets)
+
+
+                    #######################################
+                    # compute embeddings for the best model
+                    #######################################
                     if (use_best_model and os.path.exists(sub_dir+'/logs/best_model_weights.pt')):
                         print("\nCOMPUTE AGAIN WITH THE BEST MODEL\n")
                         # apply the functions
@@ -229,27 +295,28 @@ if __name__ == "__main__":
     #                     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
     #                     verbose=False)
 
-    # embeddings_pipeline("/home_local/jc225751/Runs/70_self-supervised_two-regions/Output/FIP_right",
-    #                     dataset_localization="neurospin",
-    #                     datasets=["with_reskel_distbottom/2mm/hcp/FIP_right"],
-    #                     labels=['Right_FIP'],
-    #                     classifier_name='logistic',
-    #                     short_name='hcp', overwrite=True, embeddings=True,
-    #                     embeddings_only=False, use_best_model=False,
-    #                     subsets=['full'], epochs=range(0,121,10), split='custom', cv=5,
-    #                     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
-    #                     verbose=False)
+    embeddings_pipeline("/home_local/jc225751/Runs/70_self-supervised_two-regions/Output/Champollion_V0",
+                        dataset_localization="kraken_Run70",
+                        datasets_root="with_reskel_distbottom/2mm/UKB",
+                        datasets=["toto"],
+                        labels=['isRightHanded'],
+                        classifier_name='logistic',
+                        short_name='ukb', overwrite=False, embeddings=True,
+                        embeddings_only=True, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='random', cv=5,
+                        splits_basedir='',
+                        verbose=False)
     
-    embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V0/FIP_right",
-                    dataset_localization="neurospin",
-                    datasets=["with_reskel_distbottom/2mm/UKB/FIP_right"],
-                    labels=['isBigBrain'],
-                    classifier_name='logistic',
-                    short_name='ukb', overwrite=False, embeddings=False,
-                    embeddings_only=False, use_best_model=False,
-                    subsets=['full'], epochs=[None], split='random', cv=5,
-                    splits_basedir='',
-                    verbose=False)
+    # embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V0/FIP_right",
+    #                 dataset_localization="neurospin",
+    #                 datasets=["with_reskel_distbottom/2mm/UKB/FIP_right"],
+    #                 labels=['isBigBrain'],
+    #                 classifier_name='logistic',
+    #                 short_name='ukb', overwrite=False, embeddings=False,
+    #                 embeddings_only=False, use_best_model=False,
+    #                 subsets=['full'], epochs=[None], split='random', cv=5,
+    #                 splits_basedir='',
+    #                 verbose=False)
 
     # embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V0/FIP_right",
     #                 dataset_localization="neurospin",

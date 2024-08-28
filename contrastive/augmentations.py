@@ -860,15 +860,13 @@ class TrimDepthTensor(object):
         else:
             # select a threshold for each branch
             arr_trimmed_branches = np.zeros(arr_skel.shape)
-            indexes =  np.unique(
-                                np.mod(arr_foldlabel,
-                                        np.full(arr_foldlabel.shape, fill_value=1000))
-                                )
+            indexed_branches = np.mod(arr_foldlabel,
+                                      np.full(arr_foldlabel.shape, fill_value=1000))
+            indexes =  np.unique(indexed_branches)
             assert (len(indexes)>1), 'No branch in foldlabel'
             for index in indexes[1:]:
                 arr_trimmed = arr_skel.copy()
-                mask_branch = np.mod(arr_foldlabel,
-                                    np.full(arr_foldlabel.shape, fill_value=1000))==index
+                mask_branch = indexed_branches==index
                 if self.binary:
                     #r = np.random.randint(2) # 50% of branches affected
                     r = np.random.uniform()
@@ -921,11 +919,15 @@ class TrimEdgesTensor(object):
     Parameters
     ----------
     p: probability to trim each branch (i.e. proportion of trimmed branches)
+    protective structure: object such as morphology.ball(n). The object
+    shape must be odd (so it has an int center).
+    arr_trimmed_edges : binary mask of the untrimmed skeleton voxels.
     """
 
     def __init__(self, sample_trimmed_edges, sample_foldlabel,
-                 input_size, p=0.5):
+                 input_size, protective_structure, p=0.5):
         self.input_size = input_size
+        self.protective_structure = protective_structure
         self.p = p
         self.sample_foldlabel = sample_foldlabel
         self.sample_trimmed_edges = sample_trimmed_edges
@@ -941,26 +943,47 @@ class TrimEdgesTensor(object):
         assert (self.p >= 0)
 
         arr_trimmed_branches = np.zeros(arr_skel.shape)
-        indexes =  np.unique(
-                            np.mod(arr_foldlabel,
-                                    np.full(arr_foldlabel.shape, fill_value=1000))
-                            )
+        indexed_branches = np.mod(arr_foldlabel,
+                                np.full(arr_foldlabel.shape, fill_value=1000))
+        indexes =  np.unique(indexed_branches)
         assert (len(indexes)>1), 'No branch in foldlabel'
         # loop over branches
         for index in indexes[1:]:
-            mask_branch = np.mod(arr_foldlabel,
-                                np.full(arr_foldlabel.shape, fill_value=1000))==index
+            mask_branch = indexed_branches==index
+            branch = arr_skel * mask_branch
             r = np.random.uniform()
             if r < self.p:
-                arr_trimmed_branches += (arr_trimmed_edges * mask_branch)
+                trimmed_branch = arr_trimmed_edges * branch
+                if branch!=0 == trimmed_branch!=0: # nothing to trim
+                    pass
+                else:
+                    # find mass center
+                    coords = np.nonzero(branch)
+                    center = [np.mean(coords[i]) for i in range(len(coords))]
+                    center = (np.round(center)).astype(int)
+                    # branch center is protected using given structure
+                    mask_protection = np.zeros(branch.shape)
+                    slc = [slice(c-s//2,c+s//2 +1) for c,s in zip(center, self.protective_structure.shape)]
+                    mask_protection[tuple(slc)]=self.protective_structure
+                    trimmed_branch = branch * np.logical_or(mask_protection, arr_trimmed_edges)
+
+                arr_trimmed_branches += trimmed_branch
             else:
-                arr_trimmed_branches += (arr_skel * mask_branch)
+                arr_trimmed_branches += branch
         arr_trimmed = arr_trimmed_branches.copy()
 
         
         arr_trimmed = arr_trimmed.astype('float32')
 
         return torch.from_numpy(arr_trimmed)
+    
+
+class MultiCutoutTensor(object):
+
+    """
+    Performs multiple small cutouts centered on non empty voxels to mimic inpainting.
+    """
+    pass
     
 
 class AddBranchTensor(object):

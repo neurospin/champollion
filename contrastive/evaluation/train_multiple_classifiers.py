@@ -292,7 +292,7 @@ def train_one_classifier(config, inputs, subjects, i=0):
             df = subs_embeddings.merge(splits_subs_and_labels, on='ID')
             groups, X, Y = df['labels'], np.vstack(df['X'].values), df['Y']
             logo = LeaveOneGroupOut()
-            cv = logo.get_n_splits(groups=groups)
+            cv = logo.split(X, Y, groups=groups)
     elif config.split=='train_test':
         pass
     else:
@@ -362,9 +362,9 @@ def train_one_classifier(config, inputs, subjects, i=0):
             labels_proba = model.predict_proba(X_test)
             X,Y = X_test, Y_test
         else:
+            labels_proba = cross_val_predict(model, X, Y, cv=cv, method='predict_proba')
             #scores = cross_validate(model, X, Y, cv=cv, scoring='roc_auc')
             #print(scores['test_score']) # TO GET THE INTER SPLIT VARIABILITY
-            labels_proba = cross_val_predict(model, X, Y, cv=cv, method='predict_proba')
 
         if 'label_type' in config.keys() and config['label_type']=='multiclass':
             roc_aucs, accuracies = compute_multiclass_indicators(Y, labels_proba)

@@ -37,6 +37,7 @@ Transforms used in dataset
 """
 
 import torchvision.transforms as transforms
+from skimage.morphology import ball
 import numpy as np
 
 from contrastive.augmentations import *
@@ -173,13 +174,14 @@ def transform_trimdepth(sample_distbottom, sample_foldlabel,
     return transforms.Compose(transforms_list)
 
 
-def transform_trimedges(sample_trimmed_edges, sample_foldlabel,
+def transform_trimedges(sample_extremities, sample_foldlabel,
                         input_size, config):
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
-                       TrimEdgesTensor(sample_trimmed_edges=sample_trimmed_edges,
+                       TrimEdgesTensor(sample_extremities=sample_extremities,
                                        sample_foldlabel=sample_foldlabel,
+                                       protective_structure=np.expand_dims(ball(config.ball_radius), axis=-1),
                                        p=config.proba_trimedges),
                        BinarizeTensor(),
                        TranslateTensor(config.max_translation)]

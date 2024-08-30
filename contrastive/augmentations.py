@@ -915,28 +915,28 @@ class ElasticDeformTensor(object):
 
 class TrimEdgesTensor(object):
     """
-    Trim the lateral edges of the folds based on sample_trimmed_edges.
+    Trim the lateral edges of the folds based on sample_extremities.
     Parameters
     ----------
     p: probability to trim each branch (i.e. proportion of trimmed branches)
     protective structure: object such as morphology.ball(n). The object
     shape must be odd (so it has an int center).
-    arr_trimmed_edges : binary mask of the untrimmed skeleton voxels.
+    arr_extremities : binary mask of the trimmed skeleton voxels.
     """
 
-    def __init__(self, sample_trimmed_edges, sample_foldlabel,
+    def __init__(self, sample_extremities, sample_foldlabel,
                  input_size, protective_structure, p=0.5):
         self.input_size = input_size
         self.protective_structure = protective_structure
         self.p = p
         self.sample_foldlabel = sample_foldlabel
-        self.sample_trimmed_edges = sample_trimmed_edges
+        self.sample_extremities = sample_extremities
     
     def __call__(self, tensor_skel):
         log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
         arr_skel = tensor_skel.numpy()
         arr_foldlabel = self.sample_foldlabel.numpy()
-        arr_trimmed_edges = self.sample_trimmed_edges.numpy()
+        arr_extremities = self.sample_extremities.numpy()
 
         # log.debug(f"arr_skel.shape = {arr_skel.shape}")
         # log.debug(f"arr_foldlabel.shape = {arr_foldlabel.shape}")
@@ -953,8 +953,8 @@ class TrimEdgesTensor(object):
             branch = arr_skel * mask_branch
             r = np.random.uniform()
             if r < self.p:
-                trimmed_branch = arr_trimmed_edges * branch
-                if branch!=0 == trimmed_branch!=0: # nothing to trim
+                trimmed_branch = (1-arr_extremities) * branch
+                if np.array_equal(branch!=0, trimmed_branch!=0): # nothing to trim
                     pass
                 else:
                     # find mass center
@@ -964,8 +964,9 @@ class TrimEdgesTensor(object):
                     # branch center is protected using given structure
                     mask_protection = np.zeros(branch.shape)
                     slc = [slice(c-s//2,c+s//2 +1) for c,s in zip(center, self.protective_structure.shape)]
+                    slc.append(slice(1))
                     mask_protection[tuple(slc)]=self.protective_structure
-                    trimmed_branch = branch * np.logical_or(mask_protection, arr_trimmed_edges)
+                    trimmed_branch = branch * np.logical_or(mask_protection, 1-arr_extremities)
 
                 arr_trimmed_branches += trimmed_branch
             else:

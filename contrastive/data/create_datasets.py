@@ -677,7 +677,7 @@ def create_sets_with_labels(config):
         for extremity_output in extremity_all:
             # select the augmentation method
             if config.apply_augmentations:
-                if config.random_choice or config.mixed or config.trimdepth:  # trimdepth
+                if config.random_choice or config.mixed:  # trimdepth
                     extremity_array = extremity_output[subset_name][1]
                 else:  # cutout
                     extremity_array = None  # no need of fold labels

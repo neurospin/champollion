@@ -141,6 +141,14 @@ def check_distbottom_npy_consistency(file_path_arr_crops, file_path_arr_distbott
             f"Npy files (skel, distbottom) are {diff*100:.2f}% different:\n"
             f"This is greater than tolerance {tolerance*100:.2f}% threshold set.\n")
     
+def check_extremity_npy_consistency(file_path_arr_crops, file_path_arr_extremity):
+    arr_crops = np.load(file_path_arr_crops)
+    arr_extremity = np.load(file_path_arr_extremity)
+    arr_crops = arr_crops != 0
+    arr_extremity = arr_extremity !=0
+    if not np.array_equal(np.logical_and(arr_crops, arr_extremity), arr_extremity):
+        raise ValueError('Npy extremity is not included in npy crops')
+    
 
 def check_if_skeleton(a: np.array, key: str):
     """Checks if values are compatible with skeletons"""

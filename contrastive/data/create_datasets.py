@@ -56,7 +56,7 @@ from .utils import \
     check_subject_consistency, extract_data, \
     check_if_same_subjects, \
     check_distbottom_npy_consistency, check_foldlabel_npy_consistency, \
-    check_if_same_shape, \
+    check_extremity_npy_consistency, check_if_same_shape, \
     check_if_skeleton, extract_data_with_labels, read_labels, \
     extract_train_and_val_subjects
 
@@ -129,6 +129,38 @@ def sanity_checks_distbottoms_without_labels(config, skeleton_output, reg):
     return distbottom_output
 
 
+def sanity_checks_extremities_without_labels(config, skeleton_output, reg):
+    # Loads and separates in train_val/test set extremities if requested
+    check_subject_consistency(config.data[reg].subjects_all,
+                              config.data[reg].subjects_extremity_all,
+                              name='extremity')
+    check_extremity_npy_consistency(config.data[reg].numpy_all,
+                                    config.data[reg].extremity_all)
+    # in order to avoid logging twice the same information
+    if root.level == 20:  # root logger in INFO mode
+        set_root_logger_level(0)
+    # add all the other created objects in the next line
+    extremity_output = extract_data(config.data[reg].extremity_all,
+                                    config.data[reg].crop_dir,
+                                    config, reg)
+    if root.level == 10:  # root logger in WARNING mode
+        set_root_logger_level(1)
+    log.info("extremity data loaded")
+
+    # Makes some sanity checks
+    for subset_name in extremity_output.keys():
+        log.debug("skeleton", skeleton_output[subset_name][1].shape)
+        log.debug("extremity", extremity_output[subset_name][1].shape)
+        check_if_same_subjects(skeleton_output[subset_name][0],
+                               extremity_output[subset_name][0],
+                               subset_name)
+        check_if_same_shape(skeleton_output[subset_name][1],
+                            extremity_output[subset_name][1],
+                            subset_name)
+
+    return extremity_output
+
+
 def create_sets_without_labels_without_load(config):
     """
     Create train / val / train-val / test sets when using individual directories
@@ -140,15 +172,19 @@ def create_sets_without_labels_without_load(config):
     for reg in range(len(config.data)):
         if 'coords_all' not in config.data[reg].keys():
             raise ValueError("load_sparse requires coords_all in dataset config")
-        if not os.path.isdir(config.data[reg].coords_all) and os.path.isdir(config.data[reg].numpy_all) \
-            and os.path.isdir(config.data[reg].foldlabel_all) and os.path.isdir(config.data[reg].distbottom_all):
+        if not (
+            os.path.isdir(config.data[reg].coords_all) and os.path.isdir(config.data[reg].numpy_all) \
+            and os.path.isdir(config.data[reg].foldlabel_all) and os.path.isdir(config.data[reg].distbottom_all) \
+            and os.path.isdir(config.data[reg].extremity_all)
+            ):
             raise ValueError("load_sparse requires numpy directories to be folders, not files")
         
     sub_dirs = {'filenames': [],
                 'coords_dirs': [],
                 'skeleton_dirs': [],
                 'foldlabel_dirs': [],
-                'distbottom_dirs': []}
+                'distbottom_dirs': [],
+                'extremity_dirs': []}
         
     dirs = {'train': copy.deepcopy(sub_dirs),
             'val': copy.deepcopy(sub_dirs),
@@ -198,6 +234,11 @@ def create_sets_without_labels_without_load(config):
             distbottom_dirs = np.array([os.path.join(distbottom_dir,f'{sub}_distbottom_values.npy') for sub in dirs[subset]['filenames'][reg].Subject])
             #distbottom_dirs = np.expand_dims(distbottom_dirs, axis=-1)
             dirs[subset]['distbottom_dirs'].append(distbottom_dirs)
+            # extremities
+            extremity_dir = config.data[reg].extremity_all
+            extremity_dirs = np.array([os.path.join(extremity_dir,f'{sub}_extremity_values.npy') for sub in dirs[subset]['filenames'][reg].Subject])
+            #extremity_dirs = np.expand_dims(extremity_dirs, axis=-1)
+            dirs[subset]['extremity_dirs'].append(extremity_dirs)
 
     datasets = {}
 
@@ -209,6 +250,7 @@ def create_sets_without_labels_without_load(config):
             skeleton_arrays_dirs=dirs[subset_name]['skeleton_dirs'],
             foldlabel_arrays_dirs=dirs[subset_name]['foldlabel_dirs'],
             distbottom_arrays_dirs=dirs[subset_name]['distbottom_dirs'],
+            extremity_arrays_dirs=dirs[subset_name]['extremity_dirs'],
             config=config,
             apply_transform=config.apply_augmentations)
         
@@ -226,6 +268,7 @@ def create_sets_without_labels(config):
     skeleton_all = []
     foldlabel_all = []
     distbottom_all = []
+    extremity_all = []
     
     # checks consistency among regions
     if len(config.data) > 1:
@@ -252,6 +295,10 @@ def create_sets_without_labels(config):
                 check_if_numpy_same_length(config.data[0].distbottom_all,
                                            config.data[reg+1].distbottom_all,
                                            "distbottom_all")
+            if config.random_choice or config.mixed:
+                check_if_numpy_same_length(config.data[0].extremity_all,
+                                           config.data[reg+1].extremity_all,
+                                           "extremity_all")
 
     for reg in range(len(config.data)):
         # Loads and separates in train_val/test skeleton crops
@@ -282,6 +329,17 @@ def create_sets_without_labels(config):
             log.info("distbottom data NOT requested. Distbottom data NOT loaded")
         
         distbottom_all.append(distbottom_output)
+
+        # same with extremity # TODO: reduce to single sanity check function
+        if config.apply_augmentations and (config.random_choice or config.mixed):
+            extremity_output = sanity_checks_extremities_without_labels(config,
+                                                            skeleton_output,
+                                                            reg)
+        else:
+            extremity_output = None
+            log.info("extremity data NOT requested. extremity data NOT loaded")
+        
+        extremity_all.append(extremity_output)
             
 
     # Creates the dataset from these data by doing some preprocessing
@@ -295,6 +353,7 @@ def create_sets_without_labels(config):
         arrays = [skeleton_output[subset_name][1]
                   for skeleton_output in skeleton_all]
 
+        # TODO: avoid copy/paste
         # Concatenates foldabel arrays
         foldlabel_arrays = []
         for foldlabel_output in foldlabel_all:
@@ -321,6 +380,19 @@ def create_sets_without_labels(config):
                 distbottom_array = None
             distbottom_arrays.append(distbottom_array)
 
+        # Concatenates extremity arrays
+        extremity_arrays = []
+        for extremity_output in extremity_all:
+            # select the augmentation method
+            if config.apply_augmentations:
+                if config.random_choice or config.mixed:
+                    extremity_array = extremity_output[subset_name][1]
+                else:  # cutout
+                    extremity_array = None  # no need of fold labels
+            else:  # no augmentation
+                extremity_array = None
+            extremity_arrays.append(extremity_array)
+
         # Checks if equality of filenames and labels
         check_if_list_of_equal_dataframes(
             filenames,
@@ -331,6 +403,7 @@ def create_sets_without_labels(config):
             arrays=arrays,
             foldlabel_arrays=foldlabel_arrays,
             distbottom_arrays=distbottom_arrays,
+            extremity_arrays=extremity_arrays,
             config=config,
             apply_transform=config.apply_augmentations)
 
@@ -361,6 +434,7 @@ def sanity_checks_with_labels(config, skeleton_output, subject_labels, reg):
                                f"{subset_name} labels")
 
     # Loads and separates in train_val/test set foldlabels if requested
+    # TODO: add distbottom and extremity to check
     if (
         ('foldlabel' in config.keys())
         and (config.foldlabel)
@@ -467,6 +541,7 @@ def create_sets_with_labels(config):
     skeleton_all = []
     foldlabel_all = []
     distbottom_all = []
+    extremity_all = []
     
     # checks consistency among regions
     if len(config.data) > 1:
@@ -496,6 +571,10 @@ def create_sets_with_labels(config):
                 check_if_numpy_same_length(config.data[0].distbottom_all,
                                            config.data[1].distbottom_all,
                                            "distbottom_all")
+            if config.random_choice or config.mixed:
+                check_if_numpy_same_length(config.data[0].extremity_all,
+                                           config.data[1].extremity_all,
+                                           "extremity_all")
 
     for reg in range(len(config.data)):
         # Gets labels for all subjects
@@ -539,11 +618,21 @@ def create_sets_with_labels(config):
         else:
             distbottom_output = None
             log.info("distbottom data NOT requested. Distbottom data NOT loaded")
-        
-        distbottom_all.append(distbottom_output)
 
+        # same with extremity
+        if config.apply_augmentations and (config.trimdepth or config.random_choice or config.mixed):
+            extremity_output = sanity_checks_extremities_without_labels(config,
+                                                            skeleton_output,
+                                                            reg)
+        else:
+            extremity_output = None
+            log.info("extremity data NOT requested. extremity data NOT loaded")
+        
         skeleton_all.append(skeleton_output)
         foldlabel_all.append(foldlabel_output)
+        distbottom_all.append(distbottom_output)
+        extremity_all.append(extremity_output)
+
 
     # Creates the dataset from these data by doing some preprocessing
     datasets = {}
@@ -556,6 +645,7 @@ def create_sets_with_labels(config):
         arrays = [skeleton_output[subset_name][1]
                   for skeleton_output in skeleton_all]
 
+        # TODO: avoid copy/paste
         # Concatenates foldabel arrays
         foldlabel_arrays = []
         for foldlabel_output in foldlabel_all:
@@ -582,6 +672,19 @@ def create_sets_with_labels(config):
                 distbottom_array = None
             distbottom_arrays.append(distbottom_array)
 
+        # Concatenates extremity arrays
+        extremity_arrays = []
+        for extremity_output in extremity_all:
+            # select the augmentation method
+            if config.apply_augmentations:
+                if config.random_choice or config.mixed or config.trimdepth:  # trimdepth
+                    extremity_array = extremity_output[subset_name][1]
+                else:  # cutout
+                    extremity_array = None  # no need of fold labels
+            else:  # no augmentation
+                extremity_array = None
+            extremity_arrays.append(extremity_array)
+
         # Concatenates labels
         labels = [skeleton_output[subset_name][2]
                   for skeleton_output in skeleton_all]
@@ -605,6 +708,7 @@ def create_sets_with_labels(config):
             arrays=arrays,
             foldlabel_arrays=foldlabel_arrays,
             distbottom_arrays=distbottom_arrays,
+            extremity_arrays=extremity_arrays,
             labels=labels,
             config=config,
             apply_transform=config.apply_augmentations)

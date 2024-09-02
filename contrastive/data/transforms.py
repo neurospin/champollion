@@ -269,51 +269,52 @@ def transform_random(sample_foldlabel, percentage,
         return transform_translation(input_size, config)
     
 
-def transform_mixed(sample_foldlabel, percentage,
-                    sample_distbottom, input_size, config):
+def transform_mixed(sample_foldlabel, percentage, sample_distbottom,
+                    sample_extremities, input_size, config):
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value)]
-    if 'trimdepth' in config.mixed_list: # REMOVE THIS ARG LIST ...
-        r = np.random.uniform()
-        if r < 0.50:
-            transforms_list.append(TrimDepthTensor(
-                                    sample_distbottom=sample_distbottom,
-                                    sample_foldlabel=sample_foldlabel,
-                                    max_distance=config.max_distance,
-                                    delta=config.trimdepth_delta,
-                                    input_size=input_size,
-                                    keep_extremity=config.keep_extremity,
-                                    uniform=config.uniform_trim,
-                                    binary=config.binary_trim,
-                                    binary_proba=config.binary_proba_trim))
+    np.random.seed()
     r = np.random.uniform()
-    if r < 0.60:
-        if 'foldlabel' in config.mixed_list:
+    if r < config.offset_proba_translation_only:
+        pass
+    else:
+        r = np.random.uniform()
+        if r < config.proba_augmentation:
+            transforms_list.append(
+                TrimExtremitiesTensor(sample_extremities=sample_extremities,
+                                      sample_foldlabel=sample_foldlabel,
+                                      input_size=input_size,
+                                      protective_structure=np.expand_dims(ball(config.ball_radius), axis=-1),
+                                      p=config.proba_trimedges)
+            )
+        r = np.random.uniform()
+        if r < config.proba_augmentation:
+            transforms_list.append(
+                TrimDepthTensor(sample_distbottom=sample_distbottom,
+                                sample_foldlabel=sample_foldlabel,
+                                max_distance=config.max_distance,
+                                delta=config.trimdepth_delta,
+                                input_size=input_size,
+                                keep_extremity=config.keep_extremity,
+                                uniform=config.uniform_trim,
+                                binary=config.binary_trim,
+                                binary_proba=config.binary_proba_trim)
+            )
+        r = np.random.uniform()
+        if r < config.proba_augmentation:
             r = np.random.uniform()
-            if r < 1/3:
-                transforms_list.append(RemoveRandomBranchTensor(
-                                    sample_foldlabel=sample_foldlabel,
-                                    percentage=percentage,
-                                    variable_percentage=config.variable_percentage,
-                                    input_size=input_size,
-                                    keep_extremity=config.keep_extremity))
+            if r < 0.5:
+                from_skeleton=True
             else:
-                if 'cutout' in config.mixed_list:
-                    if r < 2/3:
-                        from_skeleton=True
-                    else:
-                        from_skeleton=False
-                    transforms_list.append(PartialCutOutTensor_Roll(
-                                            from_skeleton=from_skeleton,
-                                            input_size=input_size,
-                                            keep_extremity=config.keep_extremity,
-                                            patch_size=config.patch_size))
-    # BEWARE: the bottom kept using foldlabel and cutout are not protected
-    # by trimdepth. Add keep_extremity to trimdepth config to preserve.
-    # Likewise, keep top is the same argument for each augmentation.
-    # for now, stick to foldlabel + cutout.
-    # ADD PROBA FOR EACH AUGM
+                from_skeleton=False
+            transforms_list.append(
+                PartialCutOutTensor_Roll(from_skeleton=from_skeleton,
+                            input_size=input_size,
+                            keep_bottom=config.keep_bottom,
+                            patch_size=config.patch_size),
+            )
+            
     transforms_list.append(BinarizeTensor())
     transforms_list.append(TranslateTensor(config.max_translation))
     if config.backbone_name == 'pointnet':

@@ -805,10 +805,9 @@ class TranslateTensor(object):
         sign_translation = np.random.randint(2, size=3)
         slc = [slice(None) if (translation==0) else slice(translation, None) if sign else slice(-translation)
                for sign, translation in zip(sign_translation, absolute_translation_xyz)]
+        translated_arr = translated_arr[tuple(slc)]
         pad_width = [(0, translation) if sign else (translation, 0) for sign, translation in zip(sign_translation, absolute_translation_xyz)] + [(0,0)]
-        translated_arr = translated_arr[slc[0], slc[1], slc[2]]
         translated_arr = np.pad(translated_arr, pad_width, mode='constant', constant_values=0)
-
         translated_arr = np.expand_dims(translated_arr[..., 0], axis=0)
 
         return torch.from_numpy(translated_arr)

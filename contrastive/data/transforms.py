@@ -310,9 +310,9 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                 from_skeleton=False
             transforms_list.append(
                 PartialCutOutTensor_Roll(from_skeleton=from_skeleton,
-                            input_size=input_size,
-                            keep_bottom=config.keep_bottom,
-                            patch_size=config.patch_size),
+                                         input_size=input_size,
+                                         keep_extremity=config.keep_extremity,
+                                         patch_size=config.patch_size)
             )
             
     transforms_list.append(BinarizeTensor())

@@ -136,9 +136,10 @@ class ContrastiveDatasetFusion():
 
     def __init__(self, filenames, config, apply_transform=True,
                  labels=None, arrays=None, foldlabel_arrays=None,
-                 distbottom_arrays=None,
+                 distbottom_arrays=None, extremity_arrays=None,
                  coords_arrays_dirs=None, skeleton_arrays_dirs=None,
-                 foldlabel_arrays_dirs=None, distbottom_arrays_dirs=None):
+                 foldlabel_arrays_dirs=None, distbottom_arrays_dirs=None,
+                 extremity_arrays_dirs=None):
         """
         Every data argument is a list over regions
 
@@ -147,18 +148,20 @@ class ContrastiveDatasetFusion():
             filenames (list of strings): list of subjects' IDs
             config (Omegaconf dict): contains configuration information
         """
-        self.arrs = arrays
-        self.foldlabel_arrs = foldlabel_arrays
-        self.distbottom_arrs = distbottom_arrays
-        self.labels = labels
-        self.nb_train = len(filenames[0])
-        self.filenames = filenames
-        self.config = config
-        self.transform = apply_transform
-        self.coords_arrs_dirs = coords_arrays_dirs
-        self.skeleton_arrs_dirs = skeleton_arrays_dirs
+        self.labels=labels
+        self.arrs=arrays
+        self.foldlabel_arrs=foldlabel_arrays
+        self.distbottom_arrs=distbottom_arrays
+        self.extremity_arrs=extremity_arrays
+        self.nb_train=len(filenames[0])
+        self.filenames=filenames
+        self.config=config
+        self.transform=apply_transform
+        self.coords_arrs_dirs=coords_arrays_dirs
+        self.skeleton_arrs_dirs=skeleton_arrays_dirs
         self.foldlabel_arrs_dirs=foldlabel_arrays_dirs
         self.distbottom_arrs_dirs=distbottom_arrays_dirs
+        self.extremity_arrs_dirs=extremity_arrays_dirs
 
         log.debug(f"nb_train = {self.nb_train}")
         log.debug(f"filenames[:5] = {filenames[:5]}")
@@ -236,8 +239,6 @@ class ContrastiveDatasetFusion():
             for s, f in zip(samples, sample_foldlabels):
                 check_equal_non_zero_voxels(s, f, "foldlabel")
 
-            
-
         if self.distbottom_arrs is not None and self.distbottom_arrs[0] is not None:
             if self.config.multiregion_single_encoder:
                 distbottoms_arr = self.distbottom_arrs[idx_region]
@@ -254,6 +255,24 @@ class ContrastiveDatasetFusion():
                                     for reg, sample_distbottom in enumerate(sample_distbottoms)]
             for s, d in zip(samples, sample_distbottoms):
                 check_equal_non_zero_voxels(s, d, "distbottom")
+        
+        if self.extremity_arrs is not None and self.extremity_arrs[0] is not None:
+            if self.config.multiregion_single_encoder:
+                extremity_arr = self.extremity_arrs[idx_region]
+                sample_extremities = get_sample(extremity_arr, idx, 'int32')
+                sample_extremities = [padd_array(sample_extremities,
+                                                self.config.data[idx_region].input_size,
+                                                fill_value=0)]
+            else:
+                sample_extremities = [get_sample(extremity_arr, idx, 'int32')
+                                    for extremity_arr in self.extremity_arrs]
+                sample_extremities = [padd_array(sample_extremity,
+                                                self.config.data[reg].input_size,
+                                                fill_value=0)
+                                    for reg, sample_extremity in enumerate(sample_extremities)]
+            #for s, f in zip(samples, sample_extremities):
+            #    check_equal_non_zero_voxels(s, f, "extremity") # TODO: check inclusion only ?
+
         
         # if path given instead
         if self.coords_arrs_dirs is not None and self.coords_arrs_dirs[0] is not None:
@@ -342,7 +361,31 @@ class ContrastiveDatasetFusion():
                                     fill_value=32500)
                            for reg, sample_distbottom in enumerate(sample_distbottoms)]
             for s, d in zip(samples, sample_distbottoms):
-                check_equal_non_zero_voxels(s, d, "distbottom")
+                check_equal_non_zero_voxels(s, d, "distbottom")  
+        if self.extremity_arrs_dirs is not None and self.extremity_arrs_dirs[0] is not None:
+            if self.config.multiregion_single_encoder:
+                extremity_arr_dir = self.extremity_arrs_dirs[idx_region][idx]
+                extremity_arr = np.load(extremity_arr_dir)
+                sample_extremities = convert_sparse_to_numpy(extremity_arr, coords_arr,
+                                                            self.config.data[idx_region].input_size[1:], 'int32')
+                sample_extremities = torch.from_numpy(sample_extremities)
+                sample_extremities = [padd_array(sample_extremities,
+                                    self.config.data[idx_region].input_size,
+                                    fill_value=0)]
+            else:
+                extremity_arr_dir = [arr[idx] for arr in self.extremity_arrs_dirs]
+                extremity_arrs = [np.load(extremity_dir) for extremity_dir in extremity_arr_dir]
+                sample_extremities = [convert_sparse_to_numpy(extremity_arr, coords_arr,
+                                                  self.config.data[reg].input_size[1:], 'int32')
+                                                  for reg, (extremity_arr, coords_arr)
+                                                  in enumerate(zip(extremity_arrs, coords_arrs))]
+                sample_extremities = [torch.from_numpy(sample_extremity) for sample_extremity in sample_extremities]
+                sample_extremities = [padd_array(sample_extremity,
+                                    self.config.data[reg].input_size,
+                                    fill_value=0)
+                           for reg, sample_extremity in enumerate(sample_extremities)]
+            #for s, f in zip(samples, sample_extremities):
+            #    check_equal_non_zero_voxels(s, f, "extremity") TODO: check inclusion only ?
         
 
         if self.labels is not None:
@@ -363,12 +406,14 @@ class ContrastiveDatasetFusion():
                         sample_foldlabels[0],
                         self.config.percentage,
                         sample_distbottoms[0],
+                        sample_extremities[0],
                         input_size=self.config.data[idx_region].input_size,
                         config=self.config)
                     transform2 = transform_random(
                         sample_foldlabels[0],
                         self.config.percentage,
                         sample_distbottoms[0],
+                        sample_extremities[0],
                         input_size=self.config.data[idx_region].input_size,
                         config=self.config)
                 elif self.config.mixed:
@@ -442,18 +487,20 @@ class ContrastiveDatasetFusion():
             # compute the transforms
             for reg in range(len(filenames)):
                 if self.transform:
-                    # mix of branch clipping, cutout, cutin, and trimdepth
+                    # mix of branch clipping, cutout, cutin, trimdepth, and trimextremities
                     if self.config.random_choice:
                         transform1 = transform_random(
                             sample_foldlabels[reg],
                             self.config.percentage,
                             sample_distbottoms[reg],
+                            sample_extremities[reg],
                             input_size=self.config.data[reg].input_size,
                             config=self.config)
                         transform2 = transform_random(
                             sample_foldlabels[reg],
                             self.config.percentage,
                             sample_distbottoms[reg],
+                            sample_extremities[reg],
                             input_size=self.config.data[reg].input_size,
                             config=self.config)
                     elif self.config.mixed:

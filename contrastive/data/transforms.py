@@ -174,15 +174,16 @@ def transform_trimdepth(sample_distbottom, sample_foldlabel,
     return transforms.Compose(transforms_list)
 
 
-def transform_trimedges(sample_extremities, sample_foldlabel,
+def transform_trimextremities(sample_extremities, sample_foldlabel,
                         input_size, config):
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
-                       TrimEdgesTensor(sample_extremities=sample_extremities,
-                                       sample_foldlabel=sample_foldlabel,
-                                       protective_structure=np.expand_dims(ball(config.ball_radius), axis=-1),
-                                       p=config.proba_trimedges),
+                       TrimExtremitiesTensor(sample_extremities=sample_extremities,
+                                             sample_foldlabel=sample_foldlabel,
+                                             input_size=input_size,
+                                             protective_structure=np.expand_dims(ball(config.ball_radius), axis=-1),
+                                             p=config.proba_trimedges),
                        BinarizeTensor(),
                        TranslateTensor(config.max_translation)]
     if config.backbone_name == 'pointnet':
@@ -241,7 +242,8 @@ def transform_translation(input_size, config):
 
 
 def transform_random(sample_foldlabel, percentage,
-                     sample_distbottom, input_size, config):
+                     sample_distbottom, sample_extremities,
+                     input_size, config):
     np.random.seed()
     alpha = np.random.uniform()
     if alpha < config.distribution[0]:
@@ -256,8 +258,12 @@ def transform_random(sample_foldlabel, percentage,
     elif alpha < config.distribution[3]:
         return transform_cutin(input_size, config)
     elif alpha < config.distribution[4]:
-        return transform_elastic(input_size, config)
+        return transform_trimextremities(sample_extremities,
+                                         sample_foldlabel,
+                                         input_size, config)
     elif alpha < config.distribution[5]:
+        return transform_elastic(input_size, config)
+    elif alpha < config.distribution[6]:
         return transform_addbranch(input_size, config)
     else:
         return transform_translation(input_size, config)

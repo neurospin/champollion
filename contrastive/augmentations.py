@@ -58,6 +58,11 @@ def checkerboard(shape, tile_size):
     return (np.indices(shape) // tile_size).sum(axis=0) % 2
 
 
+def mask_array_with_skeleton(array, skeleton, cval):
+    array[skeleton==0]=cval
+    return array
+
+
 class PaddingTensor(object):
     """A class to pad a tensor"""
 
@@ -339,7 +344,7 @@ class RemoveRandomBranchTensor(object):
                   f"{arr_skel_without_branches.shape}")
 
         # mask foldlabel with skeleton, as other augmentations might have shrunk skeleton
-        arr_foldlabel = arr_foldlabel * (arr_skel!=0)
+        arr_foldlabel = mask_array_with_skeleton(arr_foldlabel, arr_skel, cval=0)
 
         # Checks if it is only one image or a batch of images
         if len(arr_skel.shape) == len(self.input_size)+1:
@@ -843,10 +848,12 @@ class TrimDepthTensor(object):
         arr_distbottom = self.sample_distbottom.numpy()
         arr_foldlabel = self.sample_foldlabel.numpy()
 
-        # log.debug(f"arr_skel.shape = {arr_skel.shape}")
-        # log.debug(f"arr_foldlabel.shape = {arr_foldlabel.shape}")
-        assert (arr_skel.shape == arr_distbottom.shape)
         assert (self.max_distance >= -1)
+
+        # mask foldlabel and distbottom with skeleton
+        # in case another augmentation was applied before
+        arr_foldlabel = mask_array_with_skeleton(arr_foldlabel, arr_skel, cval=0)
+        arr_distbottom = mask_array_with_skeleton(arr_distbottom, arr_skel, cval=32501)
 
         if self.uniform: # OBSOLETE, need to rewrite bottom values
             arr_trimmed = arr_skel.copy()
@@ -864,11 +871,10 @@ class TrimDepthTensor(object):
                                       np.full(arr_foldlabel.shape, fill_value=1000))
             indexes =  np.unique(indexed_branches)
             assert (len(indexes)>1), 'No branch in foldlabel'
-            for index in indexes[1:]:
+            for index in indexes[1:]: # TODO: suboptimal. The whole array is masked every iteration.
                 arr_trimmed = arr_skel.copy()
                 mask_branch = indexed_branches==index
                 if self.binary:
-                    #r = np.random.randint(2) # 50% of branches affected
                     r = np.random.uniform()
                     if r > self.binary_proba:
                         threshold = -1
@@ -938,9 +944,10 @@ class TrimExtremitiesTensor(object):
         arr_foldlabel = self.sample_foldlabel.numpy()
         arr_extremities = self.sample_extremities.numpy()
 
-        # log.debug(f"arr_skel.shape = {arr_skel.shape}")
-        # log.debug(f"arr_foldlabel.shape = {arr_foldlabel.shape}")
         assert (self.p >= 0)
+
+        arr_foldlabel = mask_array_with_skeleton(arr_foldlabel, arr_skel, cval=0)
+        arr_extremities = mask_array_with_skeleton(arr_extremities, arr_skel, cval=0)
 
         arr_trimmed_branches = np.zeros(arr_skel.shape)
         indexed_branches = np.mod(arr_foldlabel,

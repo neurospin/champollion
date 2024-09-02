@@ -913,7 +913,7 @@ class ElasticDeformTensor(object):
         return torch.from_numpy(deformed_arr)
     
 
-class TrimEdgesTensor(object):
+class TrimExtremitiesTensor(object):
     """
     Trim the lateral edges of the folds based on sample_extremities.
     Parameters
@@ -959,13 +959,28 @@ class TrimEdgesTensor(object):
                 else:
                     # find mass center
                     coords = np.nonzero(branch)
-                    center = [np.mean(coords[i]) for i in range(len(coords))]
+                    center = [np.mean(coords[i]) for i in range(len(coords)-1)]
                     center = (np.round(center)).astype(int)
                     # branch center is protected using given structure
                     mask_protection = np.zeros(branch.shape)
-                    slc = [slice(c-s//2,c+s//2 +1) for c,s in zip(center, self.protective_structure.shape)]
+                    slc = [slice(max(0, c-s//2),
+                                 min(arr_skel.shape[i], c+s//2 +1))
+                           for i,(c,s) in enumerate(zip(center, self.protective_structure.shape))]
                     slc.append(slice(1))
-                    mask_protection[tuple(slc)]=self.protective_structure
+                    # need to slice the protective structure if it reaches an edge
+                    # the slice depends on which edge is reached
+                    # the mass center and the protective structure center must remain aligned
+                    slc_struct = []
+                    for i,(c,s) in enumerate(zip(center, self.protective_structure.shape)):
+                        if c-s//2 < 0:
+                            sl = slice(-(c-s//2), None)
+                        elif c+s//2+1 > arr_skel.shape[i]:
+                            sl = slice(None, -(c+s//2+1 - arr_skel.shape[i]))
+                        else:
+                            sl = slice(None)
+                        slc_struct.append(sl)
+                    slc_struct.append(slice(1))
+                    mask_protection[tuple(slc)]=self.protective_structure[tuple(slc_struct)]
                     trimmed_branch = branch * np.logical_or(mask_protection, 1-arr_extremities)
 
                 arr_trimmed_branches += trimmed_branch
@@ -980,11 +995,52 @@ class TrimEdgesTensor(object):
     
 
 class MultiCutoutTensor(object):
+    """Apply a cutout on the images
+    cf. Improved Regularization of Convolutional Neural Networks with Cutout,
+    arXiv, 2017
+    We assume that the cube to be cut is inside the image.
+    Performed multiple times (meant to erase multiple small areas).
+    NB: the bottoms are not kept.
+    """
 
-    """
-    Performs multiple small cutouts centered on non empty voxels to mimic inpainting.
-    """
-    pass
+    def __init__(self, patch_size, input_size, number_patches=1,
+                 value=0, random_size=False, inplace=False):
+        self.patch_size = patch_size
+        self.number_patches = number_patches
+        self.input_size = input_size
+        self.value = value
+        self.random_size = random_size
+        self.inplace = inplace
+
+    def __call__(self, tensor):
+
+        arr = tensor.numpy()
+        img_shape = np.array(arr.shape)
+        if isinstance(self.patch_size, int): # percentage of input size
+            proportion = (1/100*self.patch_size)**(1/(len(img_shape)-1))
+            size = rotate_list(self.input_size)
+            size = proportion*np.array(size)
+            size = np.round(size).astype(int)
+            size[-1]=1
+        else:
+            size = np.copy(self.patch_size)
+        assert len(size) == len(img_shape), "Incorrect patch dimension."
+
+        # apply masks in a loop
+        for _ in range(self.number_patches):
+            indexes = []
+            for ndim in range(len(img_shape)):
+                if size[ndim] > img_shape[ndim] or size[ndim] < 0:
+                    size[ndim] = img_shape[ndim]
+                if self.random_size:
+                    size[ndim] = np.random.randint(0, size[ndim])
+                delta_before = np.random.randint(
+                    0, img_shape[ndim] - size[ndim] + 1)
+                indexes.append(slice(int(delta_before),
+                                    int(delta_before + size[ndim])))
+            arr[tuple(indexes)] = self.value
+        
+        return torch.from_numpy(arr)
     
 
 class AddBranchTensor(object):

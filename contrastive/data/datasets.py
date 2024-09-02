@@ -421,12 +421,14 @@ class ContrastiveDatasetFusion():
                         sample_foldlabels[0],
                         self.config.percentage,
                         sample_distbottoms[0],
+                        sample_extremities[0],
                         input_size=self.config.data[idx_region].input_size,
                         config=self.config)
                     transform2 = transform_mixed(
                         sample_foldlabels[0],
                         self.config.percentage,
                         sample_distbottoms[0],
+                        sample_extremities[0],
                         input_size=self.config.data[idx_region].input_size,
                         config=self.config)
                 # branch clipping
@@ -508,12 +510,14 @@ class ContrastiveDatasetFusion():
                             sample_foldlabels[reg],
                             self.config.percentage,
                             sample_distbottoms[reg],
+                            sample_extremities[reg],
                             input_size=self.config.data[reg].input_size,
                             config=self.config)
                         transform2 = transform_mixed(
                             sample_foldlabels[reg],
                             self.config.percentage,
                             sample_distbottoms[reg],
+                            sample_extremities[reg],
                             input_size=self.config.data[reg].input_size,
                             config=self.config)
                     # branch clipping

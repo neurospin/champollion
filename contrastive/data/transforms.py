@@ -73,13 +73,13 @@ def transform_only_padding(input_size, config):
             ])
 
 
-def transform_foldlabel(sample_foldlabel, percentage, input_size, config):
+def transform_foldlabel(sample_foldlabel, input_size, config):
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
                        RemoveRandomBranchTensor(
                             sample_foldlabel=sample_foldlabel,
-                            percentage=percentage,
+                            percentage=config.percentage,
                             variable_percentage=config.variable_percentage,
                             input_size=input_size,
                             keep_extremity=config.keep_extremity),
@@ -241,13 +241,13 @@ def transform_translation(input_size, config):
     return transforms.Compose(transforms_list)
 
 
-def transform_random(sample_foldlabel, percentage,
+def transform_random(sample_foldlabel,
                      sample_distbottom, sample_extremities,
                      input_size, config):
     np.random.seed()
     alpha = np.random.uniform()
     if alpha < config.distribution[0]:
-        return transform_foldlabel(sample_foldlabel, percentage,
+        return transform_foldlabel(sample_foldlabel, config.percentage,
                                    input_size, config)
     elif alpha < config.distribution[1]:
         return transform_trimdepth(sample_distbottom,
@@ -269,7 +269,7 @@ def transform_random(sample_foldlabel, percentage,
         return transform_translation(input_size, config)
     
 
-def transform_mixed(sample_foldlabel, percentage, sample_distbottom,
+def transform_mixed(sample_foldlabel, sample_distbottom,
                     sample_extremities, input_size, config):
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
@@ -326,7 +326,7 @@ def transform_mixed(sample_foldlabel, percentage, sample_distbottom,
 
 
 # DEPRECATED
-def transform_both(sample_foldlabel, percentage, from_skeleton,
+def transform_both(sample_foldlabel, from_skeleton,
                    input_size, config):
     if config.backbone_name != 'pointnet':
         return \
@@ -336,7 +336,7 @@ def transform_both(sample_foldlabel, percentage, from_skeleton,
                               fill_value=config.fill_value),
                 RemoveRandomBranchTensor(
                     sample_foldlabel=sample_foldlabel,
-                    percentage=percentage,
+                    percentage=config.percentage,
                     variable_percentage=config.variable_percentage,
                     input_size=input_size,
                     keep_bottom=config.keep_bottom),
@@ -355,7 +355,7 @@ def transform_both(sample_foldlabel, percentage, from_skeleton,
                               fill_value=config.fill_value),
                 RemoveRandomBranchTensor(
                     sample_foldlabel=sample_foldlabel,
-                    percentage=percentage,
+                    percentage=config.percentage,
                     variable_percentage=config.variable_percentage,
                     input_size=input_size,
                     keep_bottom=config.keep_bottom),
@@ -369,7 +369,7 @@ def transform_both(sample_foldlabel, percentage, from_skeleton,
             ])
 
 
-def transform_foldlabel_resize(sample_foldlabel, percentage,
+def transform_foldlabel_resize(sample_foldlabel,
                                resize_ratio, input_size, config):
     if config.backbone_name != 'pointnet':
         return \
@@ -377,7 +377,7 @@ def transform_foldlabel_resize(sample_foldlabel, percentage,
                 SimplifyTensor(),
                 RemoveRandomBranchTensor(
                     sample_foldlabel=sample_foldlabel,
-                    percentage=percentage,
+                    percentage=config.percentage,
                     variable_percentage=config.variable_percentage,
                     input_size=input_size,
                     keep_bottom=config.keep_bottom),
@@ -391,7 +391,7 @@ def transform_foldlabel_resize(sample_foldlabel, percentage,
                 SimplifyTensor(),
                 RemoveRandomBranchTensor(
                     sample_foldlabel=sample_foldlabel,
-                    percentage=percentage,
+                    percentage=config.percentage,
                     variable_percentage=config.variable_percentage,
                     input_size=input_size,
                     keep_bottom=config.keep_bottom),

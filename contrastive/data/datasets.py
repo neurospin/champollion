@@ -404,14 +404,12 @@ class ContrastiveDatasetFusion():
                 if self.config.random_choice:
                     transform1 = transform_random(
                         sample_foldlabels[0],
-                        self.config.percentage,
                         sample_distbottoms[0],
                         sample_extremities[0],
                         input_size=self.config.data[idx_region].input_size,
                         config=self.config)
                     transform2 = transform_random(
                         sample_foldlabels[0],
-                        self.config.percentage,
                         sample_distbottoms[0],
                         sample_extremities[0],
                         input_size=self.config.data[idx_region].input_size,
@@ -419,14 +417,12 @@ class ContrastiveDatasetFusion():
                 elif self.config.mixed:
                     transform1 = transform_mixed(
                         sample_foldlabels[0],
-                        self.config.percentage,
                         sample_distbottoms[0],
                         sample_extremities[0],
                         input_size=self.config.data[idx_region].input_size,
                         config=self.config)
                     transform2 = transform_mixed(
                         sample_foldlabels[0],
-                        self.config.percentage,
                         sample_distbottoms[0],
                         sample_extremities[0],
                         input_size=self.config.data[idx_region].input_size,
@@ -435,12 +431,10 @@ class ContrastiveDatasetFusion():
                 elif self.config.foldlabel:
                     transform1 = transform_foldlabel(
                         sample_foldlabels[0],
-                        self.config.percentage,
                         self.config.data[idx_region].input_size,
                         self.config)
                     transform2 = transform_foldlabel(
                         sample_foldlabels[0],
-                        self.config.percentage,
                         self.config.data[idx_region].input_size,
                         self.config)
                 # trimdepth
@@ -493,14 +487,12 @@ class ContrastiveDatasetFusion():
                     if self.config.random_choice:
                         transform1 = transform_random(
                             sample_foldlabels[reg],
-                            self.config.percentage,
                             sample_distbottoms[reg],
                             sample_extremities[reg],
                             input_size=self.config.data[reg].input_size,
                             config=self.config)
                         transform2 = transform_random(
                             sample_foldlabels[reg],
-                            self.config.percentage,
                             sample_distbottoms[reg],
                             sample_extremities[reg],
                             input_size=self.config.data[reg].input_size,
@@ -508,14 +500,12 @@ class ContrastiveDatasetFusion():
                     elif self.config.mixed:
                         transform1 = transform_mixed(
                             sample_foldlabels[reg],
-                            self.config.percentage,
                             sample_distbottoms[reg],
                             sample_extremities[reg],
                             input_size=self.config.data[reg].input_size,
                             config=self.config)
                         transform2 = transform_mixed(
                             sample_foldlabels[reg],
-                            self.config.percentage,
                             sample_distbottoms[reg],
                             sample_extremities[reg],
                             input_size=self.config.data[reg].input_size,
@@ -524,12 +514,10 @@ class ContrastiveDatasetFusion():
                     elif self.config.foldlabel:
                         transform1 = transform_foldlabel(
                             sample_foldlabels[reg],
-                            self.config.percentage,
                             self.config.data[reg].input_size,
                             self.config)
                         transform2 = transform_foldlabel(
                             sample_foldlabels[reg],
-                            self.config.percentage,
                             self.config.data[reg].input_size,
                             self.config)
                     # trimdepth

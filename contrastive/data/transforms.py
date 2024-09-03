@@ -247,7 +247,7 @@ def transform_random(sample_foldlabel,
     np.random.seed()
     alpha = np.random.uniform()
     if alpha < config.distribution[0]:
-        return transform_foldlabel(sample_foldlabel, config.percentage,
+        return transform_foldlabel(sample_foldlabel,
                                    input_size, config)
     elif alpha < config.distribution[1]:
         return transform_trimdepth(sample_distbottom,

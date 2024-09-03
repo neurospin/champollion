@@ -15,4 +15,4 @@ pickle_benchmark:
 train_val_csv_file: ${dataset_folder}/UkBioBank/subjects_full.csv
 subject_labels_file: ${dataset_folder}/UkBioBank/participants.csv
 subject_column_name: 'participant_id'
-input_size: (1, 38, 49, 56)
+input_size: (1, 37, 44, 51)

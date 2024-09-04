@@ -209,12 +209,16 @@ class ContrastiveDatasetFusion():
         # if arrays loaded
         if self.arrs is not None and self.arrs[0] is not None:
             if self.config.multiregion_single_encoder:
+                # TODO: use same code as single region, but add condition in for loop ?
+                # arr = [self.arrs[idx_region]] # 1 element list
+                # apply a function which loops on the list
                 arr = self.arrs[idx_region]
                 samples = get_sample(arr, idx, 'float32')
                 samples = [padd_array(samples,
                                     self.config.data[idx_region].input_size,
                                     fill_value=0)]
             else:
+                # TODO: create a build sample function
                 samples = [get_sample(arr, idx, 'float32')
                         for arr in self.arrs]
                 samples = [padd_array(sample,
@@ -283,6 +287,8 @@ class ContrastiveDatasetFusion():
                 coords_arr_dir = [arr[idx] for arr in self.coords_arrs_dirs]
                 coords_arrs = [np.load(coords_dir) for coords_dir in coords_arr_dir]
         if self.skeleton_arrs_dirs is not None and self.skeleton_arrs_dirs[0] is not None:
+            # TODO: build_sample_from_path ## nb: or from sparse ?
+            # and copy the architecture from above.
             if self.config.multiregion_single_encoder:
                 skeleton_arr_dir = self.skeleton_arrs_dirs[idx_region][idx]
                 skeleton_arr = np.load(skeleton_arr_dir)
@@ -368,6 +374,7 @@ class ContrastiveDatasetFusion():
                 extremity_arr = np.load(extremity_arr_dir)
                 sample_extremities = convert_sparse_to_numpy(extremity_arr, coords_arr,
                                                             self.config.data[idx_region].input_size[1:], 'int32')
+                sample_extremities[sample_extremities==-1]=0
                 sample_extremities = torch.from_numpy(sample_extremities)
                 sample_extremities = [padd_array(sample_extremities,
                                     self.config.data[idx_region].input_size,
@@ -379,6 +386,8 @@ class ContrastiveDatasetFusion():
                                                   self.config.data[reg].input_size[1:], 'int32')
                                                   for reg, (extremity_arr, coords_arr)
                                                   in enumerate(zip(extremity_arrs, coords_arrs))]
+                for reg, sample_extremities in enumerate(sample_extremities):
+                    sample_extremities[sample_extremities==-1]=0
                 sample_extremities = [torch.from_numpy(sample_extremity) for sample_extremity in sample_extremities]
                 sample_extremities = [padd_array(sample_extremity,
                                     self.config.data[reg].input_size,

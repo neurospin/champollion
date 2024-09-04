@@ -1001,23 +1001,18 @@ class TrimExtremitiesTensor(object):
     
 
 class MultiCutoutTensor(object):
-    """Apply a cutout on the images
-    cf. Improved Regularization of Convolutional Neural Networks with Cutout,
-    arXiv, 2017
-    We assume that the cube to be cut is inside the image.
-    Performed multiple times (meant to erase multiple small areas).
+    """
+    Cutout performed multiple times (meant to erase multiple small areas).
+    Since the areas cut are small, center the crops on non-zero voxels.
     NB: the bottoms are not kept.
     """
 
-    def __init__(self, patch_size, input_size, number_patches=1,
-                 value=0, random_size=False, inplace=False):
+    def __init__(self, patch_size, input_size, number_patches=1, value=0):
         self.patch_size = patch_size
         self.number_patches = number_patches
         self.input_size = input_size
         self.value = value
-        self.random_size = random_size
-        self.inplace = inplace
-
+        
     def __call__(self, tensor):
 
         arr = tensor.numpy()
@@ -1032,18 +1027,18 @@ class MultiCutoutTensor(object):
             size = np.copy(self.patch_size)
         assert len(size) == len(img_shape), "Incorrect patch dimension."
 
+        # get the non zero coordinates
+        coords_x, coords_y, coords_z = np.nonzero(arr[:,:,:,0])
+
         # apply masks in a loop
         for _ in range(self.number_patches):
+            # pick random center coordinates among coords
+            rd_idx = np.random.randint(0, len(coords_x))
+            center = [coords_x[rd_idx], coords_y[rd_idx], coords_z[rd_idx]]
             indexes = []
-            for ndim in range(len(img_shape)):
-                if size[ndim] > img_shape[ndim] or size[ndim] < 0:
-                    size[ndim] = img_shape[ndim]
-                if self.random_size:
-                    size[ndim] = np.random.randint(0, size[ndim])
-                delta_before = np.random.randint(
-                    0, img_shape[ndim] - size[ndim] + 1)
-                indexes.append(slice(int(delta_before),
-                                    int(delta_before + size[ndim])))
+            for dim, (center_dim, size_dim) in enumerate(zip(center, size)):
+                slc = slice(max(0, center_dim - int(size_dim//2)), min(img_shape[dim], center_dim + int(size_dim//2)+ size_dim%2))
+                indexes.append(slc)
             arr[tuple(indexes)] = self.value
         
         return torch.from_numpy(arr)

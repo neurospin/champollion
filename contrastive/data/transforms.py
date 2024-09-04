@@ -150,6 +150,23 @@ def transform_cutin(input_size, config):
     return transforms.Compose(transforms_list)
 
 
+def transform_multicutout(input_size, config):
+    transforms_list = [SimplifyTensor(),
+                       PaddingTensor(shape=input_size,
+                                     fill_value=config.fill_value),
+                       MultiCutoutTensor(patch_size=config.small_patch_size,
+                                         input_size=input_size,
+                                         number_patches=config.nb_patches),
+                       BinarizeTensor(),
+                       TranslateTensor(config.max_translation)]
+    if config.backbone_name == 'pointnet':
+        transforms_list.append(ToPointnetTensor(n_max=config.n_max))
+    if config.sigma_noise > 0:
+        transforms_list.append(GaussianNoiseTensor(sigma=config.sigma_noise))
+    
+    return transforms.Compose(transforms_list)
+
+
 def transform_trimdepth(sample_distbottom, sample_foldlabel,
                         input_size, config):
     transforms_list = [SimplifyTensor(),
@@ -258,12 +275,14 @@ def transform_random(sample_foldlabel,
     elif alpha < config.distribution[3]:
         return transform_cutin(input_size, config)
     elif alpha < config.distribution[4]:
+        return transform_multicutout(input_size, config)
+    elif alpha < config.distribution[5]:
         return transform_trimextremities(sample_extremities,
                                          sample_foldlabel,
                                          input_size, config)
-    elif alpha < config.distribution[5]:
-        return transform_elastic(input_size, config)
     elif alpha < config.distribution[6]:
+        return transform_elastic(input_size, config)
+    elif alpha < config.distribution[7]:
         return transform_addbranch(input_size, config)
     else:
         return transform_translation(input_size, config)

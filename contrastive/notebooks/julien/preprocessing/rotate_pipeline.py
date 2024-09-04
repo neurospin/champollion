@@ -8,7 +8,8 @@ from scipy.ndimage import rotate, affine_transform
 import matplotlib.pyplot as plt
 import random
 from scipy.ndimage import map_coordinates
-from deep_folding.brainvisa.utils.resample import resample
+import multiprocessing as mp
+from functools import partial
 
 
 # remove zeros function
@@ -20,14 +21,42 @@ def trim_zeros(arr):
     return arr[slices], slices
 
 
+def process_element(arr, trm, output_shape, pad_width, cval, slices):
+
+    arr = arr[:,:,:,0]
+    # pad arr the same way as mask
+    arr = np.pad(arr, pad_width, constant_values=cval)
+    rot_arr = affine_transform(arr, trm, output_shape=output_shape, order=0, mode='constant', cval=cval)
+    rot_arr = rot_arr[slices]
+    return(rot_arr)
+
+
+# Function to process the list using multiprocessing with n CPUs and additional arguments
+def process_list(elements, n_cpus, trm, output_shape, pad_width, cval, slices):
+    # Create a partial function with y and z fixed
+    partial_func = partial(process_element, trm=trm,
+                           output_shape=output_shape,
+                           pad_width=pad_width, cval=cval, slices=slices)
+    
+    # Create a pool of workers with n_cpus
+    with mp.Pool(processes=n_cpus) as pool:
+        # Map the partial function to the elements list
+        results = list(tqdm(pool.imap(partial_func, elements), total=len(elements)))
+    return results
+
+
+
 ########
+n_cpus=30
 dataset = 'UkBioBank'
 #dataset = 'ACCpatterns'
 #dataset = 'hcp'
-modalities = ['skeleton', 'label', 'distbottom']
-#modalities = ['label', 'distbottom']
+## NB: skeleton must be first in list to compute the axes order
+#modalities = ['skeleton']
+#modalities = ['skeleton', 'label', 'distbottom']
+modalities = ['skeleton', 'label', 'distbottom', 'extremities']
 #modalities = ['skeleton', 'label']
-#modalities = ['distbottom']
+
 
 """
 sulcus_list = ['F.Coll.-S.Rh.', 'S.F.median-S.F.pol.tr.-S.F.sup.', 'S.F.inf.-BROCA-S.Pe.C.inf.', \
@@ -40,8 +69,7 @@ sulcus_list = ['F.Coll.-S.Rh.', 'S.F.median-S.F.pol.tr.-S.F.sup.', 'S.F.inf.-BRO
 
 sides = ['L', 'R']
 """
-
-sulcus_list = ['S.C.-sylv.']
+sulcus_list = ['S.Or.']
 sides = ['L']
 ########
 
@@ -141,15 +169,8 @@ for sulcus in sulcus_list:
                     cval=32501
                 else:
                     cval=0
-                arr_list = []
-                for arr in tqdm(arrs):
-                    arr = arr[:,:,:,0]
-                    # pad arr the same way as mask
-                    arr = np.pad(arr, pad_width, constant_values=cval)
-                    rot_arr = affine_transform(arr, trm, output_shape=output_shape, order=0, mode='constant', cval=cval)
-                    rot_arr = rot_arr[slices]
-                    arr_list.append(rot_arr)
-
+                list_arrs = [arrs[i] for i in range(len(arrs))]
+                arr_list = process_list(list_arrs, n_cpus, trm, output_shape, pad_width, cval, slices)
                 rot_arrs = np.stack(arr_list)
                 rot_arrs = np.expand_dims(rot_arrs, axis=-1)
                 print(f'Non zero voxels ratio after rotation : {np.sum(rot_arrs!=cval) / np.sum(arrs!=cval)}')
@@ -157,15 +178,48 @@ for sulcus in sulcus_list:
             else: # do not apply rotation
                 rot_arrs = arrs
             
-            # set smaller dim on first axis
-            #smaller_dim = np.argmin(rot_arrs.shape[1:4])
-            #if smaller_dim==1:
-            #    rot_arrs = np.transpose(rot_arrs, (0,2,3,1,4))
-            #elif smaller_dim==2:
-            #    rot_arrs = np.transpose(rot_arrs, (0,3,1,2,4))
-            #save rot_arrs
-            #print(f'Final dimensions: {rot_arrs.shape}')
-            np.save(os.path.join(save_dir, f'{side}{key}_rotated.npy'), rot_arrs)
+            # set depth on last axis
+            if key=='skeleton':
+                nb_samples = 100
+                list_directions = []
+                for skel in rot_arrs[np.random.choice(rot_arrs.shape[0], nb_samples, replace=False),:,:,:,0]:
+                    # find the average direction between bottom and top
+                    coords_bottom = np.stack(np.nonzero(skel==30)).T
+                    coords_top = np.stack(np.nonzero(skel==35)).T
+                    list_closest_coords_bottom = []
+                    for coord_top in coords_top:
+                        idx_closest_bottom = np.argmin(np.sum(np.square(coords_bottom - coord_top),axis=1))
+                        coord_bottom = coords_bottom[idx_closest_bottom]
+                        list_closest_coords_bottom.append(coord_bottom)
+                    closest_coords_bottom = np.stack(list_closest_coords_bottom)
+                    direction = np.mean(coords_top - closest_coords_bottom, axis=0)
+                    list_directions.append(direction)
+                global_direction = np.mean(np.stack(list_directions), axis=0)
+                print(f'Average vector between tops and bottoms (vx) : {global_direction}')
+                depth_axis = np.argmax(np.abs(global_direction))
+                depth_sign = int(np.sign(global_direction[depth_axis]))
+                print(f'Depth axis : {depth_axis}, orientation : {depth_sign}')
+                print(f'Corr strength with selected dimension : {np.abs(global_direction[depth_axis]) / np.linalg.norm(global_direction)}')
+                # put the depth on last dim, and put the largest between the other two in first dimension
+                dims = rot_arrs.shape[1:4]
+                order_axes = [0, 1, 2]
+                order_axes[2], order_axes[depth_axis] = order_axes[depth_axis], order_axes[2]
+                if dims[order_axes[1]] > dims[order_axes[0]]:
+                    order_axes[0], order_axes[1] = order_axes[1], order_axes[0]
+                # rescale to apply to whole array
+                order_axes = [ax + 1 for ax in order_axes]
+                order_axes = [0] + order_axes + [4]
+            
+            # use the axis order computed with skeleton
+            rot_arrs_ordered_dims = np.transpose(rot_arrs, axes=order_axes)
+            # if orientation is negative, flip on this dimension 
+            if depth_sign == -1:
+                rot_arrs_ordered_dims = rot_arrs_ordered_dims[:,:,:,::-1,:]
+
+            # save
+            print(f'Final shape: {rot_arrs_ordered_dims.shape}')
+            np.save(os.path.join(save_dir, f'{side}{key}_rotated.npy'), rot_arrs_ordered_dims)
+
 
 
 print(f'Total voxels before: {total_size_before}')

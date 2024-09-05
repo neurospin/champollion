@@ -321,7 +321,7 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                                 binary_proba=config.binary_proba_trim)
             )
         r = np.random.uniform()
-        if r < config.proba_augmentation:
+        if r < 2*config.proba_augmentation:
             r = np.random.uniform()
             if r < 0.5:
                 from_skeleton=True

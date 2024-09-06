@@ -236,7 +236,7 @@ def create_sets_without_labels_without_load(config):
             dirs[subset]['distbottom_dirs'].append(distbottom_dirs)
             # extremities
             extremity_dir = config.data[reg].extremity_all
-            extremity_dirs = np.array([os.path.join(extremity_dir,f'{sub}_extremity_values.npy') for sub in dirs[subset]['filenames'][reg].Subject])
+            extremity_dirs = np.array([os.path.join(extremity_dir,f'{sub}_extremities_values.npy') for sub in dirs[subset]['filenames'][reg].Subject])
             #extremity_dirs = np.expand_dims(extremity_dirs, axis=-1)
             dirs[subset]['extremity_dirs'].append(extremity_dirs)
 

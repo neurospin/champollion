@@ -18,8 +18,8 @@ percentage: 1
 variable_percentage: False
 sigma_noise: 0.  # set to positive to allow noise
 patch_size: 30
-offset_proba_translation_only: 0.05 # offset to maintain a value if proba_augmentation is high.
-proba_augmentation: 0.5
+offset_proba_translation_only: 0. # offset to maintain a value if proba_augmentation is high.
+proba_augmentation: 0.3
 #mixed_list: ['foldlabel', 'cutout', 'trimdepth'] # give list of augmentations. Applies in following order: foldlabel, cutout, trimdepth
 #mixed_list: ['trimdepth']
 # reduce complexity to cutout, trimdepth, trimextremities

@@ -3,7 +3,7 @@ model: SimCLR_fusion
 sigma_labels: 2.0
 sigma: 5
 drop_rate: 0.05
-pretrained_model_path: 
+pretrained_model_path:
 #pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Output/ChampollionV0_orbital_dev_branch/15-21-20_3/logs/lightning_logs/version_0/checkpoints/epoch=30-step=18321.ckpt
 #pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Output/sparse_multiregion_multihead_test/14-33-26_58/logs/lightning_logs/version_0/checkpoints/epoch=80-step=95742.ckpt
 #pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Output/2024-07-15/18-35-41_0/logs/lightning_logs/version_0/checkpoints/epoch=80-step=47952.ckpt

@@ -84,6 +84,8 @@ def transform_foldlabel(sample_foldlabel, input_size, config):
                             input_size=input_size,
                             keep_extremity=config.keep_extremity),
                        BinarizeTensor(),
+                       TrimCropEdges(max_n_voxel=config.vx_crop_edges,
+                                     ignore_axis=config.ignore_axis_trim),
                        TranslateTensor(config.max_translation)]
                        #RotateTensor(max_angle=config.max_angle)]
     
@@ -105,6 +107,8 @@ def transform_no_foldlabel(from_skeleton, input_size, config):
                                                 keep_extremity=config.keep_extremity,
                                                 patch_size=config.patch_size),
                        BinarizeTensor(),
+                       TrimCropEdges(max_n_voxel=config.vx_crop_edges,
+                                     ignore_axis=config.ignore_axis_trim),
                        TranslateTensor(config.max_translation)]
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))
@@ -141,6 +145,8 @@ def transform_cutin(input_size, config):
                                                 keep_extremity=config.keep_extremity,
                                                 patch_size=config.patch_size),
                        BinarizeTensor(),
+                       TrimCropEdges(max_n_voxel=config.vx_crop_edges,
+                                     ignore_axis=config.ignore_axis_trim),
                        TranslateTensor(config.max_translation)]
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))
@@ -158,6 +164,8 @@ def transform_multicutout(input_size, config):
                                          input_size=input_size,
                                          number_patches=config.nb_patches),
                        BinarizeTensor(),
+                       TrimCropEdges(max_n_voxel=config.vx_crop_edges,
+                                     ignore_axis=config.ignore_axis_trim),
                        TranslateTensor(config.max_translation)]
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))
@@ -182,6 +190,8 @@ def transform_trimdepth(sample_distbottom, sample_foldlabel,
                                        binary=config.binary_trim,
                                        binary_proba=config.binary_proba_trim),
                        BinarizeTensor(),
+                       TrimCropEdges(max_n_voxel=config.vx_crop_edges,
+                                     ignore_axis=config.ignore_axis_trim),
                        TranslateTensor(config.max_translation)]
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))
@@ -202,6 +212,8 @@ def transform_trimextremities(sample_extremities, sample_foldlabel,
                                              protective_structure=np.expand_dims(ball(config.ball_radius), axis=-1),
                                              p=config.proba_trimedges),
                        BinarizeTensor(),
+                       TrimCropEdges(max_n_voxel=config.vx_crop_edges,
+                                     ignore_axis=config.ignore_axis_trim),
                        TranslateTensor(config.max_translation)]
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))
@@ -218,6 +230,8 @@ def transform_elastic(input_size, config):
                        BinarizeTensor(),
                        ElasticDeformTensor(sigma=config.sigma_elastic,
                                            points=config.size_elastic),
+                       TrimCropEdges(max_n_voxel=config.vx_crop_edges,
+                                     ignore_axis=config.ignore_axis_trim),
                        TranslateTensor(config.max_translation)]
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))
@@ -235,6 +249,8 @@ def transform_addbranch(input_size, config):
                                        nb_branches=config.data[0].nb_branches,
                                        input_size=input_size),
                        BinarizeTensor(),
+                       TrimCropEdges(max_n_voxel=config.vx_crop_edges,
+                                     ignore_axis=config.ignore_axis_trim),
                        TranslateTensor(config.max_translation)]
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))
@@ -249,6 +265,8 @@ def transform_translation(input_size, config):
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
                        BinarizeTensor(),
+                       TrimCropEdges(max_n_voxel=config.vx_crop_edges,
+                                     ignore_axis=config.ignore_axis_trim),
                        TranslateTensor(config.max_translation)]
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))
@@ -335,6 +353,8 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
             )
             
     transforms_list.append(BinarizeTensor())
+    transforms_list.append(TrimCropEdges(max_n_voxel=config.vx_crop_edges,
+                                         ignore_axis=config.ignore_axis_trim)),
     transforms_list.append(TranslateTensor(config.max_translation))
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))

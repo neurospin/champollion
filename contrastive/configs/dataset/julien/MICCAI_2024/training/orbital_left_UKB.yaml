@@ -10,6 +10,9 @@ subjects_foldlabel_all: /neurospin/dico/data/deep_folding/current/datasets/UkBio
 distbottom_dir: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Ldistbottom
 distbottom_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Ldistbottom.npy
 subjects_distbottom_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Ldistbottom_subject.csv
+extremity_dir: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Lextremities
+extremity_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Lextremities.npy
+subjects_extremity_all: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/ORBITAL/mask/Lextremities_subject.csv
 crop_file_suffix: _cropped_skeleton.nii.gz
 pickle_benchmark:
 train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/subjects_full.csv

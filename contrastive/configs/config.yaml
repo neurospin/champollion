@@ -7,15 +7,15 @@ defaults:
   #- dataset/julien/multiple_regions/training/5000cingulate_5000orbital_UKB.yaml
   #- dataset/julien/multiple_regions/training/multiple_regions_UKB.yaml
   #- dataset/julien/MICCAI_2024/training/cingulate_right_UKB.yaml
-  #- dataset/julien/MICCAI_2024/training/orbital_left_UKB.yaml
+  - dataset/julien/MICCAI_2024/training/orbital_left_UKB.yaml
   #- dataset/julien/MICCAI_2024/training/orbital_right_UKB.yaml
   #- dataset/julien/hcp/FIP_right.yaml
   #- dataset/julien/hcp/SC-sylv_right.yaml
-  - dataset/julien/sparse_load/SOr_left_UKB_sparse_load.yaml
-  - dataset/julien/sparse_load/FIP_right_UKB_sparse_load.yaml
-  - dataset/julien/sparse_load/SC-sylv_left_UKB_sparse_load.yaml
-  - dataset/julien/sparse_load/CINGULATE_right_UKB_sparse_load.yaml
-  - dataset/julien/sparse_load/STs_right_UKB_sparse_load.yaml
+  #- dataset/julien/sparse_load/SOr_left_UKB_sparse_load.yaml
+  #- dataset/julien/sparse_load/FIP_right_UKB_sparse_load.yaml
+  #- dataset/julien/sparse_load/SC-sylv_left_UKB_sparse_load.yaml
+  #- dataset/julien/sparse_load/CINGULATE_right_UKB_sparse_load.yaml
+  #- dataset/julien/sparse_load/STs_right_UKB_sparse_load.yaml
   #- dataset/julien/sparse_load/SFmedian-SFpoltr-SFsup_right_UKB_sparse_load.yaml
   #- dataset/julien/sparse_load/5000_subjects/CINGULATE_right_UKB_sparse_load_5000.yaml
   #- dataset/julien/sparse_load/5000_subjects/SOr_left_UKB_sparse_load_5000.yaml
@@ -30,7 +30,7 @@ defaults:
   #- dataset/julien/MICCAI_2024/training/orbital_left_UKB_1-5mm.yaml
   #- dataset/julien/merged_ukb/cingulate_all_UKB.yaml
   #- dataset/julien/merged_ukb/orbital_all_UKB.yaml
-  #- dataset/julien/MICCAI_2024/training/SC-sylv_left_UKB
+  #- dataset/julien/MICCAI_2024/training/SC-sylv_left_UKB_rot
   #- dataset/julien/MICCAI_2024/training/cingulate_left_UKB
   #- dataset/julien/MICCAI_2024/supervised/orbital_left_hcp_supervised
   #- dataset/julien/MICCAI_2024/supervised/cingulate_right_ACCpatterns_supervised

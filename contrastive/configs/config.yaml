@@ -7,7 +7,8 @@ defaults:
   #- dataset/julien/multiple_regions/training/5000cingulate_5000orbital_UKB.yaml
   #- dataset/julien/multiple_regions/training/multiple_regions_UKB.yaml
   #- dataset/julien/MICCAI_2024/training/cingulate_right_UKB.yaml
-  - dataset/julien/MICCAI_2024/training/orbital_left_UKB.yaml
+  #- dataset/julien/MICCAI_2024/training/orbital_left_UKB.yaml
+  #- dataset/julien/sparse_load/_rotated/SOr_left_UKB_rotated_sparse_load.yaml
   #- dataset/julien/MICCAI_2024/training/orbital_right_UKB.yaml
   #- dataset/julien/hcp/FIP_right.yaml
   #- dataset/julien/hcp/SC-sylv_right.yaml

@@ -246,7 +246,7 @@ if __name__ == "__main__":
     """
     
     
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/2024-09-06",
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/SOr_rotated_sparse",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
                         idx_region_evaluation = None,

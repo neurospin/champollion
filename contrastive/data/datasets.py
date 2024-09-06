@@ -386,8 +386,9 @@ class ContrastiveDatasetFusion():
                                                   self.config.data[reg].input_size[1:], 'int32')
                                                   for reg, (extremity_arr, coords_arr)
                                                   in enumerate(zip(extremity_arrs, coords_arrs))]
-                for reg, sample_extremities in enumerate(sample_extremities):
-                    sample_extremities[sample_extremities==-1]=0
+                for reg, sample_extremity in enumerate(sample_extremities):
+                    sample_extremity[sample_extremity==-1]=0
+                    sample_extremities[reg]=sample_extremity
                 sample_extremities = [torch.from_numpy(sample_extremity) for sample_extremity in sample_extremities]
                 sample_extremities = [padd_array(sample_extremity,
                                     self.config.data[reg].input_size,

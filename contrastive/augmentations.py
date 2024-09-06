@@ -1012,8 +1012,9 @@ class TrimCropEdges(object):
         self.value = value
     
     def __call__(self, tensor):
+
         arr = tensor.numpy()
-        trimmed_arr = np.full(arr.shape, fill_value=self.value)
+        arr_trimmed = np.full(arr.shape, fill_value=self.value)
 
         vx_to_trim_left = np.random.randint(self.max_n_voxel+1, size=3)
         vx_to_trim_right = np.random.randint(self.max_n_voxel+1, size=3)
@@ -1023,11 +1024,11 @@ class TrimCropEdges(object):
         else:
             slc = [slice(vx_l, n-vx_r) for n, vx_l, vx_r in zip(arr.shape, vx_to_trim_left, vx_to_trim_right)]
         slc.append(slice(1))
-        trimmed_arr[tuple(slc)]=arr[tuple(slc)]
+        arr_trimmed[tuple(slc)]=arr[tuple(slc)]
 
-        return torch.from_numpy(trimmed_arr)
+        arr_trimmed = arr_trimmed.astype('float32')
 
-
+        return torch.from_numpy(arr_trimmed)
     
 
 class MultiCutoutTensor(object):

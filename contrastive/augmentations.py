@@ -1016,6 +1016,8 @@ class TrimCropEdges(object):
         arr = tensor.numpy()
         arr_trimmed = np.full(arr.shape, fill_value=self.value)
 
+        # TODO: take min(max_n_voxel, 15% of dim) for each dim
+
         vx_to_trim_left = np.random.randint(self.max_n_voxel+1, size=3)
         vx_to_trim_right = np.random.randint(self.max_n_voxel+1, size=3)
         if self.ignore_axis is not None:

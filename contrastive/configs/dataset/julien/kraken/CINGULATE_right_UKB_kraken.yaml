@@ -15,8 +15,8 @@ extremity_all: /home_local/jl277509/data/datasets/UkBioBank/crops/2mm/CINGULATE/
 subjects_extremity_all: /home_local/jl277509/data/datasets/UkBioBank/crops/2mm/CINGULATE/mask/Rskeleton_subject.csv
 crop_file_suffix: _cropped_skeleton.nii.gz
 pickle_benchmark:
-train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/subjects_full.csv
-subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/participants_labels.csv
+train_val_csv_file: /home_local/jl277509/data/datasets/UkBioBank/subjects_full.csv
+subject_labels_file: /home_local/jl277509/data/datasets/UkBioBank/participants_labels.csv
 subject_column_name: 'Subject'
 #input_size: (1, 43, 22, 16) # rotated
 input_size: (1, 16, 37, 37)

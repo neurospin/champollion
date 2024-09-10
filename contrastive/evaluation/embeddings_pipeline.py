@@ -246,7 +246,7 @@ if __name__ == "__main__":
     """
     
     
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/SOr_rotated_sparse",
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/HighlightExtremities",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
                         idx_region_evaluation = None,
@@ -257,10 +257,10 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='custom', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
                         verbose=False)
-    
+
     
     """
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/2024-09-02",
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/cingulate_rotated",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/cingulate_right_ACCpatterns_custom"],
         idx_region_evaluation = None,
@@ -275,9 +275,11 @@ if __name__ == "__main__":
     
     
     
+    
+    
 
     """
-    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/FIP_trimextremities",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/2024-09-06",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
                         idx_region_evaluation = None,
@@ -285,7 +287,7 @@ if __name__ == "__main__":
                         classifier_name='logistic',
                         short_name='FIP', overwrite=True, embeddings=True,
                         embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='custom', cv=3,
+                        subsets=['full'], epochs=range(0,130,10), split='custom', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
                         verbose=False)
     """

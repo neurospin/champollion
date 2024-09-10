@@ -48,13 +48,13 @@ def process_list(elements, n_cpus, trm, output_shape, pad_width, cval, slices):
 
 ########
 n_cpus=30
-dataset = 'UkBioBank'
+dataset = 'hcp'
 #dataset = 'ACCpatterns'
 #dataset = 'hcp'
 ## NB: skeleton must be first in list to compute the axes order
-#modalities = ['skeleton']
+modalities = ['skeleton', 'foldlabel']
 #modalities = ['skeleton', 'label', 'distbottom']
-modalities = ['skeleton', 'label', 'distbottom', 'extremities']
+#modalities = ['skeleton', 'label', 'distbottom', 'extremities']
 #modalities = ['skeleton', 'label']
 
 

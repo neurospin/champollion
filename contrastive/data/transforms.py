@@ -127,6 +127,8 @@ def transform_cutout(input_size, config):
                                                 keep_extremity=config.keep_extremity,
                                                 patch_size=config.patch_size),
                        BinarizeTensor(),
+                       TrimCropEdges(max_n_voxel=config.vx_crop_edges,
+                                     ignore_axis=config.ignore_axis_trim),
                        TranslateTensor(config.max_translation)]
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))
@@ -212,6 +214,27 @@ def transform_trimextremities(sample_extremities, sample_foldlabel,
                                              protective_structure=np.expand_dims(ball(config.ball_radius), axis=-1),
                                              p=config.proba_trimedges),
                        BinarizeTensor(),
+                       TrimCropEdges(max_n_voxel=config.vx_crop_edges,
+                                     ignore_axis=config.ignore_axis_trim),
+                       TranslateTensor(config.max_translation)]
+    if config.backbone_name == 'pointnet':
+        transforms_list.append(ToPointnetTensor(n_max=config.n_max))
+    if config.sigma_noise > 0:
+        transforms_list.append(GaussianNoiseTensor(sigma=config.sigma_noise))
+    
+    return transforms.Compose(transforms_list)
+
+## no binarize tensor !! to keep the value 2.
+def transform_highlightextremities(sample_extremities, sample_foldlabel,
+                                   input_size, config):
+    transforms_list = [SimplifyTensor(),
+                       PaddingTensor(shape=input_size,
+                                     fill_value=config.fill_value),
+                       HighlightExtremitiesTensor(sample_extremities=sample_extremities,
+                                             sample_foldlabel=sample_foldlabel,
+                                             input_size=input_size,
+                                             protective_structure=np.expand_dims(ball(config.ball_radius), axis=-1),
+                                             p=config.proba_trimedges),
                        TrimCropEdges(max_n_voxel=config.vx_crop_edges,
                                      ignore_axis=config.ignore_axis_trim),
                        TranslateTensor(config.max_translation)]

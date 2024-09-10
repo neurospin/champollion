@@ -998,6 +998,92 @@ class TrimExtremitiesTensor(object):
         arr_trimmed = arr_trimmed.astype('float32')
 
         return torch.from_numpy(arr_trimmed)
+    
+
+class HighlightExtremitiesTensor(object):
+    """
+    Highlight the lateral edges of the folds based on sample_extremities
+    with a specific topological value.
+    Parameters
+    ----------
+    p: probability to trim each branch (i.e. proportion of trimmed branches)
+    protective structure: object such as morphology.ball(n). The object
+    shape must be odd (so it has an int center).
+    arr_extremities : binary mask of the trimmed skeleton voxels.
+    """
+
+    def __init__(self, sample_extremities, sample_foldlabel,
+                 input_size, protective_structure, p=0.5):
+        self.input_size = input_size
+        self.protective_structure = protective_structure
+        self.p = p
+        self.sample_foldlabel = sample_foldlabel
+        self.sample_extremities = sample_extremities
+    
+    def __call__(self, tensor_skel):
+        log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
+        arr_skel = tensor_skel.numpy()
+        arr_foldlabel = self.sample_foldlabel.numpy()
+        arr_extremities = self.sample_extremities.numpy()
+
+        assert (self.p >= 0)
+
+        arr_foldlabel = mask_array_with_skeleton(arr_foldlabel, arr_skel, cval=0)
+        arr_extremities = mask_array_with_skeleton(arr_extremities, arr_skel, cval=0)
+
+        arr_trimmed_branches = np.zeros(arr_skel.shape)
+        indexed_branches = np.mod(arr_foldlabel,
+                                np.full(arr_foldlabel.shape, fill_value=1000))
+        indexes =  np.unique(indexed_branches)
+        assert (len(indexes)>1), 'No branch in foldlabel'
+        # loop over branches
+        for index in indexes[1:]:
+            mask_branch = indexed_branches==index
+            branch = arr_skel * mask_branch
+            r = np.random.uniform()
+            if r < self.p:
+                trimmed_branch = (1-arr_extremities) * branch
+                if np.array_equal(branch!=0, trimmed_branch!=0): # nothing to trim
+                    pass
+                else:
+                    # find mass center
+                    coords = np.nonzero(branch)
+                    center = [np.mean(coords[i]) for i in range(len(coords)-1)]
+                    center = (np.round(center)).astype(int)
+                    # branch center is protected using given structure
+                    mask_protection = np.zeros(branch.shape)
+                    slc = [slice(max(0, c-s//2),
+                                 min(arr_skel.shape[i], c+s//2 +1))
+                           for i,(c,s) in enumerate(zip(center, self.protective_structure.shape))]
+                    slc.append(slice(1))
+                    # need to slice the protective structure if it reaches an edge
+                    # the slice depends on which edge is reached
+                    # the mass center and the protective structure center must remain aligned
+                    slc_struct = []
+                    for i,(c,s) in enumerate(zip(center, self.protective_structure.shape)):
+                        if c-s//2 < 0:
+                            sl = slice(-(c-s//2), None)
+                        elif c+s//2+1 > arr_skel.shape[i]:
+                            sl = slice(None, -(c+s//2+1 - arr_skel.shape[i]))
+                        else:
+                            sl = slice(None)
+                        slc_struct.append(sl)
+                    slc_struct.append(slice(1))
+                    mask_protection[tuple(slc)]=self.protective_structure[tuple(slc_struct)]
+                    trimmed_branch = branch * np.logical_or(mask_protection, 1-arr_extremities)
+
+                #### += 2*branch - trimmed_branch !! -> value 2 for the 'trimmed' voxels
+
+                arr_trimmed_branches += 2*(branch!=0)
+                arr_trimmed_branches -= trimmed_branch!=0
+            else:
+                arr_trimmed_branches += branch!=0 #### binary here !! ## the augmentation should be used witout BinarizeTensor
+        arr_trimmed = arr_trimmed_branches.copy()
+
+        
+        arr_trimmed = arr_trimmed.astype('float32')
+
+        return torch.from_numpy(arr_trimmed)
 
 
 class TrimCropEdges(object):

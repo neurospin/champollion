@@ -190,7 +190,7 @@ class FlipTensor(object):
     ignore_axis : None or int
     """
 
-    def __init__(self, ignore_axis=None, p=0.5):
+    def __init__(self, ignore_axis=None, p=0.):
         self.ignore_axis = ignore_axis
         self.p = p
     
@@ -199,7 +199,7 @@ class FlipTensor(object):
         flipped_arr = arr.copy()
         np.random.seed()
         r = np.random.uniform()
-        if r < self.p:
+        if r >= self.p:
             return torch.from_numpy(flipped_arr)
         else:
             axes = [0,1,2]
@@ -960,12 +960,13 @@ class TrimExtremitiesTensor(object):
     """
 
     def __init__(self, sample_extremities, sample_foldlabel,
-                 input_size, protective_structure, p=0.5):
+                 input_size, protective_structure, p=0.5, keep_bottom=True):
         self.input_size = input_size
         self.protective_structure = protective_structure
         self.p = p
         self.sample_foldlabel = sample_foldlabel
         self.sample_extremities = sample_extremities
+        self.keep_bottom = keep_bottom
     
     def __call__(self, tensor_skel):
         log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
@@ -1024,6 +1025,11 @@ class TrimExtremitiesTensor(object):
                 arr_trimmed_branches += branch
         arr_trimmed = arr_trimmed_branches.copy()
 
+        if self.keep_bottom:
+            # add the bottoms which were trimmed
+            trimmed_vx = np.logical_xor(arr_skel, arr_trimmed)
+            trimmed_bottoms = np.logical_and(arr_skel==30, trimmed_vx)
+            arr_trimmed = arr_trimmed + 30*trimmed_bottoms
         
         arr_trimmed = arr_trimmed.astype('float32')
 

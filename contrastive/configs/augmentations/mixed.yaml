@@ -20,6 +20,8 @@ sigma_noise: 0.  # set to positive to allow noise
 patch_size: 30
 vx_crop_edges: 0
 ignore_axis_trim: 2
+flip_proba: 0.
+ignore_axis_flip: !!null
 offset_proba_translation_only: 0. # offset to maintain a value if proba_augmentation is high.
 proba_augmentation: 0.3
 #mixed_list: ['foldlabel', 'cutout', 'trimdepth'] # give list of augmentations. Applies in following order: foldlabel, cutout, trimdepth

@@ -40,7 +40,7 @@ import numpy as np
 import torch
 from scipy.ndimage import rotate, zoom, binary_erosion
 from sklearn.preprocessing import OneHotEncoder
-import elasticdeform
+#import elasticdeform
 
 from contrastive.utils import logs
 from contrastive.utils.test_timeit import timeit
@@ -182,6 +182,36 @@ class BinarizeTensor(object):
         arr = tensor.numpy()
         arr[arr > 0] = 1
         return torch.from_numpy(arr)
+    
+
+class FlipTensor(object):
+    """
+    Flip one axis randomly with probability p.
+    ignore_axis : None or int
+    """
+
+    def __init__(self, ignore_axis=None, p=0.5):
+        self.ignore_axis = ignore_axis
+        self.p = p
+    
+    def __call__(self, tensor):
+        arr = tensor.numpy()
+        flipped_arr = arr.copy()
+        np.random.seed()
+        r = np.random.uniform()
+        if r < self.p:
+            return torch.from_numpy(flipped_arr)
+        else:
+            axes = [0,1,2]
+            if self.ignore_axis is not None:
+                axes.remove(self.ignore_axis)
+            ax = np.random.choice(axes)
+            slc = [slice(None) for _ in range(4)]
+            slc[ax] = slice(None, None, -1)
+            flipped_arr = flipped_arr[tuple(slc)]
+
+            arr_flipped = flipped_arr.copy()
+            return torch.from_numpy(arr_flipped)
 
 
 def count_non_null(arr):
@@ -899,7 +929,7 @@ class TrimDepthTensor(object):
 
         return torch.from_numpy(arr_trimmed)
     
-
+"""
 class ElasticDeformTensor(object):
 
     def __init__(self, sigma, points):
@@ -916,7 +946,7 @@ class ElasticDeformTensor(object):
         deformed_arr = deformed_arr.astype('float32')
 
         return torch.from_numpy(deformed_arr)
-    
+"""
 
 class TrimExtremitiesTensor(object):
     """

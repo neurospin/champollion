@@ -960,7 +960,7 @@ class TrimExtremitiesTensor(object):
     """
 
     def __init__(self, sample_extremities, sample_foldlabel,
-                 input_size, protective_structure, p=0.5, keep_bottom=True):
+                 input_size, protective_structure, p=0.5, keep_bottom=False):
         self.input_size = input_size
         self.protective_structure = protective_structure
         self.p = p
@@ -1108,16 +1108,19 @@ class HighlightExtremitiesTensor(object):
                     mask_protection[tuple(slc)]=self.protective_structure[tuple(slc_struct)]
                     trimmed_branch = branch * np.logical_or(mask_protection, 1-arr_extremities)
 
-                #### += 2*branch - trimmed_branch !! -> value 2 for the 'trimmed' voxels
-
-                arr_trimmed_branches += 2*(branch!=0)
-                arr_trimmed_branches -= trimmed_branch!=0
+                arr_trimmed_branches += trimmed_branch
             else:
-                arr_trimmed_branches += branch!=0 #### binary here !! ## the augmentation should be used witout BinarizeTensor
-        arr_trimmed = arr_trimmed_branches.copy()
+                arr_trimmed_branches += branch
+        #### binary here !! ## the augmentation should be used witout BinarizeTensor
+        arr_trimmed = (arr_trimmed_branches != 0).astype('float64')
+        trimmed_vx = (np.logical_xor(arr_skel, arr_trimmed)).astype('float64')
 
+        pepper = np.random.randint(0, 2, size=trimmed_vx.shape).astype('float64')
+
+        arr_trimmed += np.multiply(trimmed_vx, pepper)
         
         arr_trimmed = arr_trimmed.astype('float32')
+
 
         return torch.from_numpy(arr_trimmed)
 

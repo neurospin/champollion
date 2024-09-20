@@ -17,4 +17,4 @@ test_csv_file: ${dataset_folder}/hcp/Handedness/union_splits.csv
 # splits_basedir: /neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_
 subject_labels_file: ${dataset_folder}/hcp/Handedness/handedness_labels.csv
 subject_column_name: 'Subject'
-input_size: (1, 35, 30, 46)
+input_size: (1, 26, 34, 23)

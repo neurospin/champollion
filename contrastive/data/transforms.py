@@ -304,6 +304,26 @@ def transform_addbranch(input_size, config):
     return transforms.Compose(transforms_list)
 
 
+def transform_noisyedges(input_size, config):
+    transforms_list = [SimplifyTensor(),
+                       PaddingTensor(shape=input_size,
+                                     fill_value=config.fill_value),
+                       BinarizeTensor(),
+                       TrimCropEdges(max_n_voxel=config.vx_crop_edges,
+                                     ignore_axis=config.ignore_axis_trim),
+                       FlipTensor(ignore_axis=config.ignore_axis_flip,
+                                     p=config.flip_proba),
+                       NoisyEdgesTensor(slope=config.slope_noise,
+                                        offset=config.offset_noise),
+                       TranslateTensor(config.max_translation)]
+    if config.backbone_name == 'pointnet':
+        transforms_list.append(ToPointnetTensor(n_max=config.n_max))
+    if config.sigma_noise > 0:
+        transforms_list.append(GaussianNoiseTensor(sigma=config.sigma_noise))
+    
+    return transforms.Compose(transforms_list)
+
+
 def transform_translation(input_size, config):
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
@@ -349,8 +369,10 @@ def transform_random(sample_foldlabel,
                                               sample_foldlabel,
                                               input_size, config)
     elif alpha < config.distribution[7]:
-        return transform_elastic(input_size, config)
+        return transform_noisyedges(input_size, config)
     elif alpha < config.distribution[8]:
+        return transform_elastic(input_size, config)
+    elif alpha < config.distribution[9]:
         return transform_addbranch(input_size, config)
     else:
         return transform_translation(input_size, config)

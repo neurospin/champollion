@@ -12,6 +12,7 @@ max_angle: 6
 max_distance: 100
 trimdepth_delta: 141
 max_translation: 1
+max_translation_only: [2,2,1]
 checkerboard_size: 4
 keep_extremity: 'bottom'
 percentage: 20
@@ -29,15 +30,8 @@ vx_crop_edges: 0
 ignore_axis_trim: 2
 flip_proba: 0.
 ignore_axis_flip: !!null
-##distribution: [0.2, 0.4, 0.6, 0.8] #equiprobability
-##distribution: [0.1667, 0.3333, 0.5, 0.6667, 0.8333] # elastic
-##distribution: [0.2, 0.4, 0.6, 0.8, 0.8] # no elastic, equiprobablity
-##distribution: [0.2, 0.4, 0.6, 0.8, 0.8, 0.8] # no elastic, #no addbranch, equiprobablity
-##distribution: [0.1667, 0.3333, 0.5, 0.6667, 0.8333, 0.8333, 0.8333] # lateral trim # no elastic, #no addbranch, equiprobablity
+slope_noise: 0.15
+offset_noise: 0.25
 #distribution: [0.,0.2,0.4,0.6,0.6,0.8,0.8,0.8,0.8] # BEST : lateral trim # no elastic, #no addbranch, #no foldlabel, equiprobablity
-distribution: [0.,0.2,0.4,0.6,0.6,0.6,0.8,0.8,0.8] # HIGHLIGHT 0.5: lateral trim # no elastic, #no addbranch, #no foldlabel, equiprobablity
-##distribution: [0., 0.25, 0.5, 0.5, 0.75, 0.75, 0.75] # lateral trim # no elastic, #no addbranch, #no foldlabel, #no cutin equiprobablity
-#distribution: [0.,0.2,0.6,0.6,0.6,0.8,0.8,0.8] # lateral trim # no elastic, #no addbranch, #no foldlabel, #no cutin, 40% cutout
-#distribution: [0.,0.2,0.4,0.4,0.6,0.8,0.8,0.8] # lateral trim # no elastic, #no addbranch, #no foldlabel, #no cutin, multicutout instead
-#distribution: [0.,0.1667,0.3333,0.5,0.6667,0.8333,0.8333,0.8333] # all cuts !
-#distribution: [0,0,0,0,0] # for translation only
+distribution: [0.,0.2,0.4,0.6,0.6,0.6,0.8,0.8,0.8,0.8] # BEST HIGHLIGHT 0.5: lateral trim # no elastic, #no addbranch, #no foldlabel, equiprobablity
+#distribution: [0.,0.1667,0.3333,0.5,0.5,0.5,0.6667,0.8333,0.8333,0.8333] # NOISY EDGES 0.5: lateral trim # no elastic, #no addbranch, #no foldlabel, equiprobablity

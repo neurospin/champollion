@@ -831,7 +831,10 @@ class TranslateTensor(object):
     def __call__(self, tensor):
         arr = tensor.numpy()
         translated_arr = arr.copy()
-        absolute_translation_xyz = np.random.randint(self.n_voxel+1, size=3)
+        if isinstance(self.n_voxel, int):
+            absolute_translation_xyz = np.random.randint(self.n_voxel+1, size=3)
+        else:
+            absolute_translation_xyz = np.array([np.random.randint(n_vx_dim+1) for n_vx_dim in self.n_voxel])
         sign_translation = np.random.randint(2, size=3)
         slc = [slice(None) if (translation==0) else slice(translation, None) if sign else slice(-translation)
                for sign, translation in zip(sign_translation, absolute_translation_xyz)]
@@ -841,6 +844,66 @@ class TranslateTensor(object):
         translated_arr = np.expand_dims(translated_arr[..., 0], axis=0)
 
         return torch.from_numpy(translated_arr)
+
+
+class NoisyEdgesTensor(object):
+
+    """
+    Add pepper noise to the voxels at the edges of the crop.
+    The probability increases towards the edges.
+    """
+
+    def __init__(self, slope, offset):
+        self.slope = slope
+        self.offset = offset
+
+    def __call__(self, tensor):
+        arr = tensor.numpy()
+        img_shape = arr.shape
+        masked_arr = arr.copy()
+
+        k_max = int((1-self.offset) / self.slope)
+        mask = np.ones(arr.shape)
+        for k in range(k_max):
+            outer_layer_k = np.array([[[(i<=k) or (i>=img_shape[2]-1-k) or (j<=k) or (j>=img_shape[1]-1-k) or (l<=k) or (l>=img_shape[0]-1-k)
+                                        for i in range(img_shape[2])] for j in range(img_shape[1])] for l in range(img_shape[0])])
+            outer_layer_k = np.expand_dims(outer_layer_k, axis=-1)
+            outer_layer_k = outer_layer_k.astype('float64')
+            mask -= self.slope*outer_layer_k
+
+        # generate random noise
+        noise = np.random.uniform(size=arr.shape)
+        # threshold based on probability mask
+        binary_noise = noise < mask
+        masked_arr[np.where(binary_noise==0)]=0
+
+        return torch.from_numpy(masked_arr)
+    
+
+class CropFixedSizeTensor(object):
+
+    """
+    Given a fixed nb of vx to remove on each axis,
+    defines a random fixed size crop.
+    """
+
+    def __init__(self, n_vx_to_remove):
+        self.n_vx_to_remove = n_vx_to_remove
+
+    def __call__(self, tensor):
+        arr = tensor.numpy()
+        cropped_arr = arr.copy()
+        img_size = arr.shape[:3]
+        indexes = []
+        for img_dim, to_remove in zip(img_size, self.n_vx_to_remove):
+            delta_before = np.random.randint(0, to_remove+1)
+            indexes.append(slice(int(delta_before),
+                                 int(delta_before + img_dim - to_remove)))
+        indexes.append(slice(1))
+        cropped_arr = cropped_arr[tuple(indexes)]
+        cropped_arr = np.expand_dims(cropped_arr[..., 0], axis=0)
+
+        return torch.from_numpy(cropped_arr)
     
 
 class TrimDepthTensor(object):

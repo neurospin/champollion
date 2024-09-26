@@ -16,7 +16,7 @@ subjects_extremity_all: ${dataset_folder}/UkBioBank/crops/2mm/ORBITAL/mask/Lextr
 crop_file_suffix: _cropped_skeleton.nii.gz
 pickle_benchmark:
 train_val_csv_file: ${dataset_folder}/UkBioBank/subjects_full.csv
-subject_labels_file: ${dataset_folder}/UkBioBank/participants_labels.csv
+subject_labels_file: ${dataset_folder}/UkBioBank/participants.csv
 subject_column_name: 'Subject'
 input_size: (1, 30, 38, 22)
 #input_size: (1, 39, 32, 17)

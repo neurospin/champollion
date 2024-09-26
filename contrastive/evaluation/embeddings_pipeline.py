@@ -246,7 +246,7 @@ if __name__ == "__main__":
     """
     
     """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/orbital_512",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/orbital_scheduler",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
                         idx_region_evaluation = None,
@@ -256,10 +256,10 @@ if __name__ == "__main__":
                         embeddings_only=False, use_best_model=False,
                         subsets=['full'], epochs=[None], split='custom', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
-                        verbose=False)
+                         verbose=False)
     """
     """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/10_regions",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/10_regions_flip_acc3",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/orbital_right_hcp_custom"],
                         idx_region_evaluation = None,
@@ -270,55 +270,72 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='custom', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
                         verbose=False)
-    
-    
     """
-    
+
     """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/cingulate_genetics",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/orbital_extremities_pepper",
+                        dataset_localization="neurospin",
+                        datasets=["julien/MICCAI_2024/training/orbital_left_UKB"],
+                        idx_region_evaluation = None,
+                        labels=['isOld'],
+                        classifier_name='logistic',
+                        short_name='ukb', overwrite=True, embeddings=True,
+                        embeddings_only=False, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='random', cv=3,
+                        splits_basedir='',
+                        verbose=False)
+    """
+
+    """   
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/cingulate_larger_translation",
         dataset_localization="neurospin",
-        datasets=["julien/cingulate_UKB_right_5percent"],
+        datasets=["julien/MICCAI_2024/evaluation/cingulate_right_ACCpatterns_custom"],
         idx_region_evaluation = None,
-        labels=['Sex'],
+        labels=['Right_PCS'],
         classifier_name='logistic',
-        short_name='UKB', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
-        subsets=['train_val'], epochs=[None], split='random', cv=3,
+        short_name='ACC', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
+        subsets=['full'], epochs=[None], split='custom', cv=3,
+        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/ACCpatterns_subjects_train_split_',
+        verbose=False)
+    """
+
+    embeddings_pipeline('/volatile/jl277509/Runs/02_STS_babies/Program/Output/PCS_FINAL_MODEL/',
+        dataset_localization="neurospin",
+        datasets=["with_reskel_distbottom/2mm/hcp/CINGULATE_right"],
+        idx_region_evaluation = None,
+        labels=['Right_PCS'],
+        classifier_name='logistic',
+        short_name='hcp', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
+        subsets=['full'], epochs=[None], split='random', cv=3,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/ACCpatterns_subjects_train_split_',
         verbose=False)
     
     """
-    
-    """
-    
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/10_regions",
+    embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V0/CINGULATE_left/2024-07-15",
         dataset_localization="neurospin",
-        datasets=["julien/MICCAI_2024/evaluation/cingulate_left_ACCpatterns_custom"],
+        datasets=["julien/MICCAI_2024/evaluation/cingulate_left_CCD"],
         idx_region_evaluation = None,
         labels=['Left_PCS'],
         classifier_name='logistic',
-        short_name='ACC', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['test'], epochs=[None], split='custom', cv=3,
+        short_name='CCD', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
+        subsets=['full'], epochs=[None], split='custom', cv=3,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/ACCpatterns_subjects_train_split_',
         verbose=False)
-    
     """
-    
-    
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/FIP_genetics",
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/FIP_LR_noisyedges",
                         dataset_localization="neurospin",
-                        datasets=["julien/MICCAI_2024/training/FIP_right"],
+                        datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
                         idx_region_evaluation = None,
-                        labels=['Sex'],
+                        labels=['Right_FIP'],
                         classifier_name='logistic',
-                        short_name='UKB', overwrite=True, embeddings=True,
-                        embeddings_only=True, use_best_model=False,
-                        subsets=['train_val'], epochs=[None], split='random', cv=3,
+                        short_name='FIP', overwrite=True, embeddings=True,
+                        embeddings_only=False, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='custom', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
                         verbose=False)
-    
 
-    """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/10_regions",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/FIP_LR_noisyedges",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_left_hcp_custom"],
                         idx_region_evaluation = None,
@@ -330,22 +347,34 @@ if __name__ == "__main__":
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
                         verbose=False)
     """
-    
-    
-    
+
     """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/SC-sylv_512",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/FIP_LR",
+                        dataset_localization="neurospin",
+                        datasets=["julien/MICCAI_2024/training/FIP_right"],
+                        idx_region_evaluation = None,
+                        labels=['isOld'],
+                        classifier_name='logistic',
+                        short_name='ukb', overwrite=True, embeddings=True,
+                        embeddings_only=False, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='random', cv=3,
+                        splits_basedir='',
+                        verbose=False)
+    """
+    """
+    
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/10_regions",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_hcp_custom"],
         idx_region_evaluation=None,
         labels=[f'Isomap_central_left_dim{k}' for k in range(1,7)],
         short_name='troiani', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['full'], epochs=[None], split='custom', cv=3,
+        subsets=['full'], epochs=range(0,20,5), split='custom', cv=3,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
         verbose=False)
+
+    
     """
-    
-    
     
     
     

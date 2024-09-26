@@ -27,6 +27,8 @@ random_state: 25
 scheduler: False
 step_size: 10
 gamma: 1.0
+threshold_plateau: 0.1
+factor: 0.33
 class_weights: [1., 1.]
 accumulate_grad_batches: 1
 multiregion_single_encoder: False

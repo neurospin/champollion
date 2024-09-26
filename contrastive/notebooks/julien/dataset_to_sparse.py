@@ -7,6 +7,7 @@ import yaml
 import copy
 
 sides = ['L', 'R']
+
 """
 sulcus_list = ['F.Coll.-S.Rh.', 'S.F.median-S.F.pol.tr.-S.F.sup.', 'S.F.inf.-BROCA-S.Pe.C.inf.', \
                'S.Po.C.', 'fronto-parietal_medial_face.', 'F.I.P.', 'S.T.s.-S.GSM.', 'CINGULATE.', \
@@ -16,15 +17,17 @@ sulcus_list = ['F.Coll.-S.Rh.', 'S.F.median-S.F.pol.tr.-S.F.sup.', 'S.F.inf.-BRO
                'S.T.i.-S.O.T.lat.', 'S.Pe.C.', 'S.T.s.br.', 'Sc.Cal.-S.Li.', 'S.T.s.', 'F.C.L.p.-subsc.-F.C.L.a.-INSULA.', \
                'S.C.-sylv.', 'S.C.-S.Pe.C.', 'OCCIPITAL', 'S.Or.']
 """
+# NB: S.T.s.-S.GSM. , extremities were not generated ? TODO: after TGCC reopens
 
-sulcus_list = ['S.Or.', 'S.C.-sylv.', 'F.I.P.', 'CINGULATE.', 'S.T.s.']
-#sulcus_list = ['S.Or.']
+#sulcus_list = ['S.C.-sylv.', 'CINGULATE.', 'S.T.s.']
+sulcus_list = ['S.Or.', 'F.I.P.']
+#sulcus_list = ['S.F.inf.-BROCA-S.Pe.C.inf.']
 
 #rotated = '_rotated'
 rotated = ''
-#root_save_dir = f'/volatile/jl277509/data/UkBioBank/crops/{rotated}/2mm/'
+root_save_dir = f'/volatile/jl277509/data/UkBioBank/crops/{rotated}/2mm/'
 #root_save_dir = f'/neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/sparse_load/2mm/'
-root_save_dir = f'/home_local/jl277509/data/sparse_load/UkBioBank/crops/2mm'
+#root_save_dir = f'/home_local/jl277509/data/sparse_load/UkBioBank/crops/2mm'
 
 # TODO: avoid copy paste between modalities
 for sulcus in tqdm(sulcus_list):
@@ -46,6 +49,13 @@ for sulcus in tqdm(sulcus_list):
         extremities = np.load(os.path.join(data_dir, f'{side}extremities{rotated}.npy'))
         extremities[skels==0]=0
         extremities[np.logical_and(skels!=0, extremities==0)]=-1
+
+        if side=='R':
+            print('Flipping right side')
+            skels = np.flip(skels, axis=1)
+            foldlabels = np.flip(foldlabels, axis=1)
+            distbottoms = np.flip(distbottoms, axis=1)
+            extremities = np.flip(extremities, axis=1)
 
         save_dir = f'{root_save_dir}/{sulcus}/mask/{side}skeleton_sparse'
         if not os.path.isdir(os.path.join(save_dir, 'coords')):

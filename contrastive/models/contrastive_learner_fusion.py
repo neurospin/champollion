@@ -414,7 +414,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             lr=self.config.lr,
             weight_decay=self.config.weight_decay)
         return_dict = {"optimizer": optimizer}
-
+        """
         if 'scheduler' in self.config.keys() and self.config.scheduler:
             scheduler = torch.optim.lr_scheduler.StepLR(
                 optimizer,
@@ -422,6 +422,20 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                 gamma=self.config.gamma)
             return_dict["lr_scheduler"] = {"scheduler": scheduler,
                                            "interval": "epoch"}
+        """
+        if 'scheduler' in self.config.keys() and self.config.scheduler:  
+            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer,
+                mode='min',           # We want to minimize the loss
+                factor=self.config.factor, # Divide the learning rate by 3
+                patience=self.config.step_size, # Wait for 10 epochs without improvement
+                threshold=self.config.threshold_plateau, # Minimum loss reduction of 10% to be considered an improvement
+                threshold_mode='rel', # Relative threshold, i.e., 10% relative decrease in loss
+            )
+            return_dict["lr_scheduler"] = {"scheduler": scheduler,
+                                           "monitor": 'val_loss',
+                                           "interval": "epoch",
+                                           "frequency": 1}
 
         return return_dict
     

@@ -13,4 +13,5 @@ train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/orbital_p
 test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/PreCatatoes/union_splits.csv
 subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/PreCatatoes/PreCatatoes_labels.csv
 subject_column_name: 'Subject'
+mask_path:
 input_size: (1, 30, 38, 22)

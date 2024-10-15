@@ -11,4 +11,5 @@ pickle_benchmark:
 train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/CCD/train_val_subject.csv
 subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/CCD/ccd_labels.csv
 subject_column_name: 'Subject'
+mask_path:
 input_size: (1, 18, 41, 38)

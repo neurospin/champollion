@@ -12,6 +12,7 @@ train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/ACCpatter
 test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/ACCpatterns_subjects_train_val.csv
 subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/subjects_labels.csv
 subject_column_name: 'long_name'
+mask_path:
 #input_size: (1, 43, 22, 16)
 input_size: (1, 16, 37, 37)
 #input_size: (1, 17, 40, 38)

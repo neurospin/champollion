@@ -410,11 +410,13 @@ class ContrastiveDatasetFusion():
         if self.config.multiregion_single_encoder:
             regs = [0]
             input_sizes = [self.config.data[idx_region].input_size]
+            mask_paths = [self.config.data[idx_region].mask_path]
         else:
             regs = range(len(filenames))
             input_sizes = [self.config.data[reg].input_size for reg in regs]
+            mask_paths = [self.config.data[reg].mask_path for reg in regs]
         # compute the transforms
-        for reg, input_size in zip(regs, input_sizes):
+        for reg, mask_path, input_size in zip(regs, mask_paths, input_sizes):
             if self.transform:
                 # mix of branch clipping, cutout, cutin, trimdepth, and trimextremities
                 if self.config.random_choice:
@@ -422,12 +424,14 @@ class ContrastiveDatasetFusion():
                         sample_foldlabels[reg],
                         sample_distbottoms[reg],
                         sample_extremities[reg],
+                        mask_path=mask_path,
                         input_size=input_size,
                         config=self.config)
                     transform2 = transform_random(
                         sample_foldlabels[reg],
                         sample_distbottoms[reg],
                         sample_extremities[reg],
+                        mask_path=mask_path,
                         input_size=input_size,
                         config=self.config)
                 elif self.config.mixed:
@@ -435,12 +439,14 @@ class ContrastiveDatasetFusion():
                         sample_foldlabels[reg],
                         sample_distbottoms[reg],
                         sample_extremities[reg],
+                        mask_path=mask_path,
                         input_size=input_size,
                         config=self.config)
                     transform2 = transform_mixed(
                         sample_foldlabels[reg],
                         sample_distbottoms[reg],
                         sample_extremities[reg],
+                        mask_path=mask_path,
                         input_size=input_size,
                         config=self.config)
                 # branch clipping
@@ -468,9 +474,11 @@ class ContrastiveDatasetFusion():
                 # cutout with or without noise
                 else:
                     transform1 = transform_cutout(
+                        mask_path=mask_path,
                         input_size=input_size,
                         config=self.config)
                     transform2 = transform_cutin(
+                        mask_path=mask_path,
                         input_size=input_size,
                         config=self.config)
                     

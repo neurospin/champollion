@@ -440,7 +440,7 @@ class PartialCutOutTensor_Roll(object):
     We assume that the rectangle to be cut is inside the image.
     """
 
-    def __init__(self, from_skeleton=True, input_size=None,
+    def __init__(self, mask, from_skeleton=True, input_size=None,
                  keep_extremity='bottom', patch_size=None,
                  random_size=False, localization=None):
         """[summary]
@@ -449,6 +449,8 @@ class PartialCutOutTensor_Roll(object):
         If from_skeleton==False,
             takes bottom_only image, cuts it out and fills with skeleton image
         Args:
+            mask (bool array): the mask of the ROI limits where
+                the center of the cutout can be.
             from_skeleton (bool, optional): Defaults to True.
             patch_size (either int or list of int): Defaults to None.
                 if int, percentage of the volume to cutout.
@@ -468,6 +470,7 @@ class PartialCutOutTensor_Roll(object):
         self.random_size = random_size
         self.localization = localization
         self.from_skeleton = from_skeleton
+        self.mask = mask
         if keep_extremity=='random':
             np.random.seed()
             r = np.random.randint(3)
@@ -494,19 +497,32 @@ class PartialCutOutTensor_Roll(object):
         else:
             size = np.copy(self.patch_size)
         assert len(size) == len(img_shape), "Incorrect patch dimension."
-        start_cutout = []
         for ndim in range(len(img_shape)):
             if size[ndim] > img_shape[ndim] or size[ndim] < 0:
                 size[ndim] = img_shape[ndim]
             if self.random_size:
                 size[ndim] = np.random.randint(0, size[ndim])
-            if self.localization is not None:
+        if self.localization is not None:
+            start_cutout = []
+            for ndim in range(len(img_shape)):
                 delta_before = max(
                     self.localization[ndim] - size[ndim] // 2, 0)
-            else:
-                np.random.seed()
-                delta_before = np.random.randint(0, img_shape[ndim])
-            start_cutout.append(delta_before)
+                start_cutout.append(delta_before)
+        else:
+            np.random.seed()
+            boolean = True
+            # make sure the center of the crop is inside the mask
+            while boolean or not self.mask[tuple(middle_cutout)]:
+                boolean = False
+                start_cutout = []
+                middle_cutout = []
+                for ndim in range(len(img_shape)):
+                    delta_before = np.random.randint(0, img_shape[ndim])
+                    start_cutout.append(delta_before)
+                    # define middle of cutout, taking roll into account
+                    middle_pos = int((delta_before + size[ndim] // 2)%img_shape[ndim])
+                    middle_cutout.append(middle_pos)       
+            
 
         # Creates rolling mask cutout
         mask_roll = np.zeros(img_shape).astype('float32')

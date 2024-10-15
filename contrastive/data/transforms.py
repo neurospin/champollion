@@ -122,11 +122,13 @@ def transform_no_foldlabel(from_skeleton, input_size, config):
     return transforms.Compose(transforms_list)
 
 
-def transform_cutout(input_size, config):
+def transform_cutout(mask_path, input_size, config):
+    mask = np.load(mask_path)
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
-                       PartialCutOutTensor_Roll(from_skeleton=True,
+                       PartialCutOutTensor_Roll(mask,
+                                                from_skeleton=True,
                                                 input_size=input_size,
                                                 keep_extremity=config.keep_extremity,
                                                 patch_size=config.patch_size_cutout),
@@ -144,11 +146,13 @@ def transform_cutout(input_size, config):
     return transforms.Compose(transforms_list)
 
 
-def transform_cutin(input_size, config):
+def transform_cutin(mask_path, input_size, config):
+    mask = np.load(mask_path)
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
-                       PartialCutOutTensor_Roll(from_skeleton=False,
+                       PartialCutOutTensor_Roll(mask,
+                                                from_skeleton=False,
                                                 input_size=input_size,
                                                 keep_extremity=config.keep_extremity,
                                                 patch_size=config.patch_size_cutin),
@@ -344,7 +348,7 @@ def transform_translation(input_size, config):
 
 def transform_random(sample_foldlabel,
                      sample_distbottom, sample_extremities,
-                     input_size, config):
+                     mask_path, input_size, config):
     np.random.seed()
     alpha = np.random.uniform()
     if alpha < config.distribution[0]:
@@ -355,9 +359,9 @@ def transform_random(sample_foldlabel,
                                    sample_foldlabel,
                                    input_size, config)
     elif alpha < config.distribution[2]:
-        return transform_cutout(input_size, config)
+        return transform_cutout(mask_path, input_size, config)
     elif alpha < config.distribution[3]:
-        return transform_cutin(input_size, config)
+        return transform_cutin(mask_path, input_size, config)
     elif alpha < config.distribution[4]:
         return transform_multicutout(input_size, config)
     elif alpha < config.distribution[5]:
@@ -379,7 +383,7 @@ def transform_random(sample_foldlabel,
     
 
 def transform_mixed(sample_foldlabel, sample_distbottom,
-                    sample_extremities, input_size, config):
+                    sample_extremities, mask_path, input_size, config):
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value)]
@@ -418,8 +422,10 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                 from_skeleton=True
             else:
                 from_skeleton=False
+            mask = np.load(mask_path)
             transforms_list.append(
-                PartialCutOutTensor_Roll(from_skeleton=from_skeleton,
+                PartialCutOutTensor_Roll(mask,
+                                         from_skeleton=from_skeleton,
                                          input_size=input_size,
                                          keep_extremity=config.keep_extremity,
                                          patch_size=config.patch_size)

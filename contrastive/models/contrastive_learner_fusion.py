@@ -414,7 +414,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             lr=self.config.lr,
             weight_decay=self.config.weight_decay)
         return_dict = {"optimizer": optimizer}
-        """
+
         if 'scheduler' in self.config.keys() and self.config.scheduler:
             scheduler = torch.optim.lr_scheduler.StepLR(
                 optimizer,
@@ -422,7 +422,9 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                 gamma=self.config.gamma)
             return_dict["lr_scheduler"] = {"scheduler": scheduler,
                                            "interval": "epoch"}
-        """
+
+
+    """
         if 'scheduler' in self.config.keys() and self.config.scheduler:  
             scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
                 optimizer,
@@ -438,6 +440,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                                            "frequency": 1}
 
         return return_dict
+    """
     
     def barlow_twins_loss(self, z_i, z_j):
         "Loss function for SSL (BarlowTwins)"

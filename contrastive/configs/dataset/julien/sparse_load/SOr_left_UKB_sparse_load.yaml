@@ -19,4 +19,5 @@ pickle_benchmark: null
 train_val_csv_file: ${dataset_folder}/UkBioBank/L_subjects.csv
 subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/participants_labels.csv
 subject_column_name: Subject
+mask_path: ${dataset_folder}/UkBioBank/crops/2mm/S.Or./mask/Lmask.npy
 input_size: (1, 30, 38, 22)

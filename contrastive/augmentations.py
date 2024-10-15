@@ -457,10 +457,13 @@ class PartialCutOutTensor_Roll(object):
             inplace (bool, optional): Defaults to False.
             localization ([type], optional): Defaults to None.
         """
-        if not isinstance(patch_size, int):
-            self.patch_size = rotate_list(patch_size)
-        else:
+
+        if isinstance(patch_size, int):
             self.patch_size = patch_size
+        elif len(patch_size)==2: # a range is given, select a random size in the range
+            self.patch_size = np.random.randint(low=patch_size[0], high=patch_size[1])
+        else: # a crop size is given
+            self.patch_size = rotate_list(patch_size)
         self.input_size = input_size
         self.random_size = random_size
         self.localization = localization

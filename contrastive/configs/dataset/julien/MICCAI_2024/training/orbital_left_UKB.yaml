@@ -18,5 +18,6 @@ pickle_benchmark:
 train_val_csv_file: ${dataset_folder}/UkBioBank/subjects_full.csv
 subject_labels_file: ${dataset_folder}/UkBioBank/participants.csv
 subject_column_name: 'Subject'
+mask_path: ${dataset_folder}/UkBioBank/crops/2mm/S.Or./mask/Lmask.npy
 input_size: (1, 30, 38, 22)
 #input_size: (1, 39, 32, 17)

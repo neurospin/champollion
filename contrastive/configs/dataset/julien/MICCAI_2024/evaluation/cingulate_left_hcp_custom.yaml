@@ -14,4 +14,5 @@ test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/union_cust
 #splits_basedir: /neurospin/dico/data/deep_folding/current/datasets/hcp/hcp_subjects_train_split_
 subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/hcp_isomap_labels.csv
 subject_column_name: 'Subject'
+mask_path:
 input_size: (1, 18, 41, 38)

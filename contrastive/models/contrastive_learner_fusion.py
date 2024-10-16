@@ -424,7 +424,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                                            "interval": "epoch"}
 
 
-    """
+        """
         if 'scheduler' in self.config.keys() and self.config.scheduler:  
             scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
                 optimizer,
@@ -435,10 +435,10 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                 threshold_mode='rel', # Relative threshold, i.e., 10% relative decrease in loss
             )
             return_dict["lr_scheduler"] = {"scheduler": scheduler,
-                                           "monitor": 'val_loss',
-                                           "interval": "epoch",
-                                           "frequency": 1}
-    """
+                                        "monitor": 'val_loss',
+                                        "interval": "epoch",
+                                        "frequency": 1}
+        """
         return return_dict
     
     

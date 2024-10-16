@@ -52,6 +52,7 @@ from contrastive.augmentations import ToPointnetTensor
 from contrastive.backbones.densenet import DenseNet
 from contrastive.backbones.convnet import ConvNet
 from contrastive.backbones.resnet import ResNet, BasicBlock
+from contrastive.backbones.convnext import ConvNeXt
 #from contrastive.backbones.pointnet import PointNetCls
 from contrastive.backbones.projection_heads import *
 from contrastive.data.utils import change_list_device
@@ -125,6 +126,14 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     initial_kernel_size=config.initial_kernel_size,
                     initial_stride=config.initial_stride,
                     adaptive_pooling=config.adaptive_pooling))
+        elif config.backbone_name == 'convnext':
+            for i in range(n_datasets):
+                self.backbones.append(ConvNeXt(
+                    in_chans=1,
+                    num_classes=config.backbone_output_size, # doesn't matter if head is commented
+                    depths=config.depth,
+                    dims=config.dims,
+                    initial_stride=config.initial_stride))
         # elif config.backbone_name == 'pointnet':
         #     self.backbone = PointDataModule_LearningFalse)
         else:

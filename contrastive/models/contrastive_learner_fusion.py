@@ -438,9 +438,9 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                                            "monitor": 'val_loss',
                                            "interval": "epoch",
                                            "frequency": 1}
-
-        return return_dict
     """
+        return return_dict
+    
     
     def barlow_twins_loss(self, z_i, z_j):
         "Loss function for SSL (BarlowTwins)"

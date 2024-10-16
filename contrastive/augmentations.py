@@ -512,16 +512,16 @@ class PartialCutOutTensor_Roll(object):
             np.random.seed()
             boolean = True
             # make sure the center of the crop is inside the mask
-            #while boolean or not self.mask[tuple(middle_cutout)]:
-            boolean = False
-            start_cutout = []
-            middle_cutout = []
-            for ndim in range(len(img_shape)):
-                delta_before = np.random.randint(0, img_shape[ndim])
-                start_cutout.append(delta_before)
-                # define middle of cutout, taking roll into account
-                middle_pos = int((delta_before + size[ndim] // 2)%img_shape[ndim])
-                middle_cutout.append(middle_pos)       
+            while boolean or not self.mask[tuple(middle_cutout)]:
+                boolean = False
+                start_cutout = []
+                middle_cutout = []
+                for ndim in range(len(img_shape)):
+                    delta_before = np.random.randint(0, img_shape[ndim])
+                    start_cutout.append(delta_before)
+                    # define middle of cutout, taking roll into account
+                    middle_pos = int((delta_before + size[ndim] // 2)%img_shape[ndim])
+                    middle_cutout.append(middle_pos)       
             
 
         # Creates rolling mask cutout

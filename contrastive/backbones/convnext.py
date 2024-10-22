@@ -6,6 +6,7 @@
 # LICENSE file in the root directory of this source tree.
 
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -23,9 +24,9 @@ class Block(nn.Module):
         drop_path (float): Stochastic depth rate. Default: 0.0
         layer_scale_init_value (float): Init value for Layer Scale. Default: 1e-6.
     """
-    def __init__(self, dim, drop_path=0., layer_scale_init_value=1e-6):
+    def __init__(self, dim, kernel_size=7, drop_path=0., layer_scale_init_value=1e-6):
         super().__init__()
-        self.dwconv = nn.Conv3d(dim, dim, kernel_size=7, padding=3, groups=dim) # depthwise conv
+        self.dwconv = nn.Conv3d(dim, dim, kernel_size=kernel_size, padding=kernel_size//2, groups=dim) # depthwise conv
         self.norm = LayerNorm(dim, eps=1e-6)
         self.pwconv1 = nn.Linear(dim, 4 * dim) # pointwise/1x1 convs, implemented with linear layers
         self.act = nn.GELU()
@@ -37,15 +38,14 @@ class Block(nn.Module):
     def forward(self, x):
         input = x
         x = self.dwconv(x)
-        x = x.permute(0, 2, 3, 1) # (N, C, H, W) -> (N, H, W, C)
+        x = x.permute(0, 2, 3, 4, 1) # (N, C, H, W, D) -> (N, H, W, D, C) # TODO: add 3rd dim here !
         x = self.norm(x)
         x = self.pwconv1(x)
         x = self.act(x)
         x = self.pwconv2(x)
         if self.gamma is not None:
             x = self.gamma * x
-        x = x.permute(0, 3, 1, 2) # (N, H, W, C) -> (N, C, H, W)
-
+        x = x.permute(0, 4, 1, 2, 3) # (N, H, W, D, C) -> (N, C, H, W, D)
         x = input + self.drop_path(x)
         return x
 
@@ -63,42 +63,56 @@ class ConvNeXt(nn.Module):
         layer_scale_init_value (float): Init value for Layer Scale. Default: 1e-6.
         head_init_scale (float): Init scaling value for classifier weights and biases. Default: 1.
     """
-    def __init__(self, in_chans=3, num_classes=1000, 
-                 depths=[3, 3, 9, 3], dims=[96, 192, 384, 768], initial_stride=4
-                 drop_path_rate=0., layer_scale_init_value=1e-6, head_init_scale=1.,
+    def __init__(self, in_chans=3, num_classes=1000, nb_blocks=4,
+                 depths=[3, 3, 9, 3], dims=[96, 192, 384, 768], initial_stride=4,
+                 initial_kernel_size=4, kernel_size=7, drop_path_rate=0., adaptive_pooling=None,
+                 layer_scale_init_value=1e-6, head_init_scale=1.,
                  ):
         super().__init__()
 
+        self.nb_blocks=nb_blocks
+        self.adaptive_pooling=adaptive_pooling
         self.downsample_layers = nn.ModuleList() # stem and 3 intermediate downsampling conv layers
         stem = nn.Sequential(
-            nn.Conv3d(in_chans, dims[0], kernel_size=4, stride=initial_stride),
+            nn.Conv3d(in_chans, dims[0], kernel_size=initial_kernel_size, stride=initial_stride, padding=initial_kernel_size//2),
             LayerNorm(dims[0], eps=1e-6, data_format="channels_first")
         )
         self.downsample_layers.append(stem)
-        for i in range(3):
+        for i in range(self.nb_blocks-1):
             downsample_layer = nn.Sequential(
                     LayerNorm(dims[i], eps=1e-6, data_format="channels_first"),
-                    nn.Conv3d(dims[i], dims[i+1], kernel_size=2, stride=2),
+                    nn.Conv3d(dims[i], dims[i+1], kernel_size=2, stride=2, padding=1),
             )
             self.downsample_layers.append(downsample_layer)
 
         self.stages = nn.ModuleList() # 4 feature resolution stages, each consisting of multiple residual blocks
         dp_rates=[x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))] 
         cur = 0
-        for i in range(4):
+        for i in range(self.nb_blocks):
             stage = nn.Sequential(
-                *[Block(dim=dims[i], drop_path=dp_rates[cur + j], 
+                *[Block(dim=dims[i], kernel_size=kernel_size, drop_path=dp_rates[cur + j], 
                 layer_scale_init_value=layer_scale_init_value) for j in range(depths[i])]
             )
             self.stages.append(stage)
             cur += depths[i]
 
         self.norm = nn.LayerNorm(dims[-1], eps=1e-6) # final norm layer
-        #self.head = nn.Linear(dims[-1], num_classes) # TODO: should it be removed ? We can also keep this layer
+        if self.adaptive_pooling is None:
+            pass
+        elif self.adaptive_pooling[0]=='max':
+            self.pool = nn.AdaptiveMaxPool3d(self.adaptive_pooling[1])
+        elif self.adaptive_pooling[0]=='average':
+            self.pool = nn.AdaptiveAvgPool3d(self.adaptive_pooling[1])
+        if self.adaptive_pooling is not None:
+            self.flatten = nn.Flatten()
+            out_resolution = np.prod(self.adaptive_pooling[1])
+            self.head = nn.Linear(dims[-1]*out_resolution, num_classes) # TODO: should it be removed ? We can also keep this layer
+        else:
+            self.head = nn.Linear(dims[-1], num_classes)
 
         self.apply(self._init_weights)
-        #self.head.weight.data.mul_(head_init_scale)
-        #self.head.bias.data.mul_(head_init_scale)
+        self.head.weight.data.mul_(head_init_scale)
+        self.head.bias.data.mul_(head_init_scale)
 
     def _init_weights(self, m):
         if isinstance(m, (nn.Conv3d, nn.Linear)):
@@ -106,14 +120,19 @@ class ConvNeXt(nn.Module):
             nn.init.constant_(m.bias, 0)
 
     def forward_features(self, x):
-        for i in range(4):
+        for i in range(self.nb_blocks):
             x = self.downsample_layers[i](x)
             x = self.stages[i](x)
-        return self.norm(x.mean([-2, -1])) # global average pooling, (N, C, H, W) -> (N, C) # TODO: adaptive pooling ?
+        if self.adaptive_pooling is None:
+            return self.norm(x.mean([-3, -2, -1])) # global average pooling, (N, C, H, W, D) -> (N, C) # TODO: adaptive pooling ?
+        else:
+            x = self.pool(x)
+            x = self.flatten(x)
+            return x # custom adaptive pooling instead
 
     def forward(self, x):
         x = self.forward_features(x)
-        #x = self.head(x)
+        x = self.head(x)
         return x
 
 class LayerNorm(nn.Module):

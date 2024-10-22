@@ -440,7 +440,7 @@ class PartialCutOutTensor_Roll(object):
     We assume that the rectangle to be cut is inside the image.
     """
 
-    def __init__(self, mask, from_skeleton=True, input_size=None,
+    def __init__(self, mask, mask_constraint=False, from_skeleton=True, input_size=None,
                  keep_extremity='bottom', patch_size=None,
                  random_size=False, localization=None):
         """[summary]
@@ -451,6 +451,7 @@ class PartialCutOutTensor_Roll(object):
         Args:
             mask (bool array): the mask of the ROI limits where
                 the center of the cutout can be.
+            mask_constraint (bool): whether mask is used or not.
             from_skeleton (bool, optional): Defaults to True.
             patch_size (either int or list of int): Defaults to None.
                 if int, percentage of the volume to cutout.
@@ -471,6 +472,7 @@ class PartialCutOutTensor_Roll(object):
         self.localization = localization
         self.from_skeleton = from_skeleton
         self.mask = mask
+        self.mask_constraint = mask_constraint
         if keep_extremity=='random':
             np.random.seed()
             r = np.random.randint(3)
@@ -510,19 +512,24 @@ class PartialCutOutTensor_Roll(object):
                 start_cutout.append(delta_before)
         else:
             np.random.seed()
-            boolean = True
-            # make sure the center of the crop is inside the mask
-            while boolean or not self.mask[tuple(middle_cutout)]:
-                boolean = False
+            if self.mask_constraint:
+                boolean = True
+                # loop until the center of the crop is inside the mask
+                while boolean or not self.mask[tuple(middle_cutout)]:
+                    boolean = False
+                    start_cutout = []
+                    middle_cutout = []
+                    for ndim in range(len(img_shape)):
+                        delta_before = np.random.randint(0, img_shape[ndim])
+                        start_cutout.append(delta_before)
+                        # define middle of cutout, taking roll into account
+                        middle_pos = int((delta_before + size[ndim] // 2)%img_shape[ndim])
+                        middle_cutout.append(middle_pos)       
+            else:
                 start_cutout = []
-                middle_cutout = []
                 for ndim in range(len(img_shape)):
                     delta_before = np.random.randint(0, img_shape[ndim])
                     start_cutout.append(delta_before)
-                    # define middle of cutout, taking roll into account
-                    middle_pos = int((delta_before + size[ndim] // 2)%img_shape[ndim])
-                    middle_cutout.append(middle_pos)       
-            
 
         # Creates rolling mask cutout
         mask_roll = np.zeros(img_shape).astype('float32')
@@ -561,7 +568,7 @@ class PartialCutOutTensor_Roll(object):
             else:
                 arr_outside = arr_outside * (arr_outside == 0)
 
-        log.info(f"{self.from_skeleton},{np.sum(arr!=0)},{np.sum(np.logical_and(arr!=0, arr!=30))},{np.sum(np.logical_and((arr_inside+arr_outside)!=0,(arr_inside+arr_outside)!=30))}")
+        #log.info(f"{self.from_skeleton},{np.sum(arr!=0)},{np.sum(np.logical_and(arr!=0, arr!=30))},{np.sum(np.logical_and((arr_inside+arr_outside)!=0,(arr_inside+arr_outside)!=30))}")
 
         return torch.from_numpy(arr_inside + arr_outside)
 

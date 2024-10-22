@@ -130,10 +130,14 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             for i in range(n_datasets):
                 self.backbones.append(ConvNeXt(
                     in_chans=1,
-                    num_classes=config.backbone_output_size, # doesn't matter if head is commented
+                    num_classes=config.backbone_output_size,
+                    nb_blocks=config.nb_blocks,
                     depths=config.depth,
                     dims=config.dims,
-                    initial_stride=config.initial_stride))
+                    initial_stride=config.initial_stride,
+                    initial_kernel_size=config.initial_kernel_size,
+                    kernel_size=config.kernel_size,
+                    adaptive_pooling=config.adaptive_pooling))
         # elif config.backbone_name == 'pointnet':
         #     self.backbone = PointDataModule_LearningFalse)
         else:

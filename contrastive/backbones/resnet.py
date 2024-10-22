@@ -151,7 +151,7 @@ class ResNet(nn.Module):
                              "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
         self.groups = groups
         self.base_width = width_per_group
-        initial_stride = 2 if initial_kernel_size==7 else 1
+        #initial_stride = 2 if initial_kernel_size==7 else 1
         padding = (initial_kernel_size-initial_stride+1)//2
         self.conv1 = nn.Conv3d(in_channels, self.inplanes, kernel_size=initial_kernel_size, stride=initial_stride,
                                padding=padding, bias=False)

@@ -128,6 +128,7 @@ def transform_cutout(mask_path, input_size, config):
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
                        PartialCutOutTensor_Roll(mask,
+                                                mask_constraint=config.mask_constraint,
                                                 from_skeleton=True,
                                                 input_size=input_size,
                                                 keep_extremity=config.keep_extremity,
@@ -152,6 +153,7 @@ def transform_cutin(mask_path, input_size, config):
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
                        PartialCutOutTensor_Roll(mask,
+                                                mask_constraint=config.mask_constraint,
                                                 from_skeleton=False,
                                                 input_size=input_size,
                                                 keep_extremity=config.keep_extremity,
@@ -425,6 +427,7 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
             mask = np.load(mask_path)
             transforms_list.append(
                 PartialCutOutTensor_Roll(mask,
+                                         mask_constraint=config.mask_constraint,
                                          from_skeleton=from_skeleton,
                                          input_size=input_size,
                                          keep_extremity=config.keep_extremity,

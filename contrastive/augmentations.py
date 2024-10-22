@@ -1134,16 +1134,18 @@ class HighlightExtremitiesTensor(object):
     Parameters
     ----------
     p: probability to trim each branch (i.e. proportion of trimmed branches)
+    pepper: proba to erase each voxel in trimmed branch
     protective structure: object such as morphology.ball(n). The object
     shape must be odd (so it has an int center).
     arr_extremities : binary mask of the trimmed skeleton voxels.
     """
 
     def __init__(self, sample_extremities, sample_foldlabel,
-                 input_size, protective_structure, p=0.5):
+                 input_size, protective_structure, p=0.5, pepper=0.5):
         self.input_size = input_size
         self.protective_structure = protective_structure
         self.p = p
+        self.pepper=pepper
         self.sample_foldlabel = sample_foldlabel
         self.sample_extremities = sample_extremities
     
@@ -1206,7 +1208,8 @@ class HighlightExtremitiesTensor(object):
         arr_trimmed = (arr_trimmed_branches != 0).astype('float64')
         trimmed_vx = (np.logical_xor(arr_skel, arr_trimmed)).astype('float64')
 
-        pepper = np.random.randint(0, 2, size=trimmed_vx.shape).astype('float64')
+        #pepper = np.random.randint(0, 2, size=trimmed_vx.shape).astype('float64')
+        pepper = (np.random.rand(*trimmed_vx.shape) > self.pepper).astype('float64')
 
         arr_trimmed += np.multiply(trimmed_vx, pepper)
         

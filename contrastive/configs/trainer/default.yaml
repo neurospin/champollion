@@ -34,5 +34,5 @@ accumulate_grad_batches: 1
 multiregion_single_encoder: False
 multiple_projection_heads: False
 linear_in_backbone: True
-load_sparse: False
+load_sparse: True
 save_views: True

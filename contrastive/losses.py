@@ -123,7 +123,9 @@ class BarlowTwinsLoss(nn.Module):
             c_diff = (c - torch.eye(D,device=self.device)).pow(2) # DxD
             # multiply off-diagonal elems of c_diff by lambda
             c_diff[~torch.eye(D, dtype=bool)] *= self.lambda_param
-            loss = c_diff.sum()
+            loss_invariance = c_diff[torch.eye(D, dtype=bool)].sum()
+            loss_redundancy = c_diff[~torch.eye(D, dtype=bool)].sum()
+            loss = loss_invariance + loss_redundancy
         elif self.correlation=='auto':
             # auto-correlation matrix
             c1 = torch.mm(z_a_norm.T, z_a_norm) / N # DxD
@@ -136,13 +138,14 @@ class BarlowTwinsLoss(nn.Module):
             # loss
             c_diff = (c - torch.eye(D,device=self.device)).pow(2) # DxD
             c_diff[~torch.eye(D, dtype=bool)]=0
-            loss = c_diff.sum()
-            loss += self.lambda_param*redundancy_loss
+            loss_invariance = c_diff.sum()
+            loss_redundancy = self.lambda_param*redundancy_loss
+            loss = loss_invariance + loss_redundancy
         else:
             raise ValueError("Wrong correlation specified in BarlowTwins\
                              config: use cross or auto.")
 
-        return loss
+        return(loss, loss_invariance, loss_redundancy)
 
 
 class VicRegLoss(nn.Module):

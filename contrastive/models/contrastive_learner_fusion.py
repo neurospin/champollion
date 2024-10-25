@@ -125,7 +125,8 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     prediction_bias=False,
                     initial_kernel_size=config.initial_kernel_size,
                     initial_stride=config.initial_stride,
-                    adaptive_pooling=config.adaptive_pooling))
+                    adaptive_pooling=config.adaptive_pooling,
+                    linear_in_backbone=config.linear_in_backbone))
         elif config.backbone_name == 'convnext':
             for i in range(n_datasets):
                 self.backbones.append(ConvNeXt(
@@ -220,9 +221,15 @@ class ContrastiveLearnerFusion(pl.LightningModule):
 
         # Keeps track of losses
         self.training_step_outputs = []
-        self.training_step_idxs_region = [] 
         self.validation_step_outputs = []
-        self.validation_step_idxs_region = [] 
+        if self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
+            self.training_step_idxs_region = [] 
+            self.validation_step_idxs_region = []
+        if self.config.mode == "encoder" and self.config.contrastive_model=='BarlowTwins':
+            self.training_step_loss_inv = []
+            self.training_step_loss_redund = []
+            self.validation_step_loss_inv = []
+            self.validation_step_loss_redund = []
 
         # Output of intermediate layer of ProjectionHead
         self.activation={}
@@ -540,7 +547,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         elif self.config.contrastive_model=='SimCLR':
             batch_loss, sim_zij, sim_zii, sim_zjj = self.nt_xen_loss(z_i, z_j)
         elif self.config.contrastive_model=='BarlowTwins':
-            batch_loss = self.barlow_twins_loss(z_i,z_j)
+            batch_loss, loss_invariance, loss_redundancy = self.barlow_twins_loss(z_i,z_j)
         elif self.config.contrastive_model=='VicReg':
             batch_loss = self.vic_reg_loss(z_i,z_j)
         #TODO: add error if None of these names
@@ -569,8 +576,15 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         # logs - a dictionary
         #self.log('Loss/Train', float(batch_loss), on_epoch=True)
         logs = {"train_loss": float(batch_loss)}
+        if self.config.contrastive_model=='BarlowTwins':
+            logs["train_loss_inv"] = float(loss_invariance)
+            logs["train_loss_redund"] = float(loss_redundancy)
 
         self.training_step_outputs.append(batch_loss)
+        if self.config.contrastive_model=='BarlowTwins':
+            # decompose loss in invariance and redundancy term
+            self.training_step_loss_inv.append(loss_invariance)
+            self.training_step_loss_redund.append(loss_redundancy)
         if self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
             self.training_step_idxs_region.append(idx_region)
 
@@ -1064,6 +1078,19 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             avg_loss,
             self.current_epoch)
         
+        if self.config.contrastive_model=='BarlowTwins':
+            # visu the two loss components on tensorboard
+            avg_loss_inv = torch.stack([x for x in self.training_step_loss_inv]).mean()
+            avg_loss_redund = torch.stack([x for x in self.training_step_loss_redund]).mean()
+            self.loggers[0].experiment.add_scalar(
+                "LossInv/Train",
+                avg_loss_inv,
+                self.current_epoch)
+            self.loggers[0].experiment.add_scalar(
+                "LossRedund/Train",
+                avg_loss_redund,
+                self.current_epoch)
+
         # if multiregion, train loss for each region
         if self.config.multiregion_single_encoder:
             for region in range(self.n_regions):
@@ -1131,7 +1158,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         elif self.config.contrastive_model=='SimCLR':
             batch_loss, sim_zij, sim_zii, sim_zjj = self.nt_xen_loss(z_i, z_j)
         elif self.config.contrastive_model=='BarlowTwins':
-            batch_loss = self.barlow_twins_loss(z_i,z_j)
+            batch_loss, loss_invariance, loss_redundancy = self.barlow_twins_loss(z_i,z_j)
         elif self.config.contrastive_model=='VicReg':
             batch_loss = self.vic_reg_loss(z_i,z_j)
         #TODO: add error if None of these names
@@ -1142,12 +1169,19 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             self.log('diff_auc', float(0))
         # logs- a dictionary
         logs = {"val_loss": float(batch_loss)}
+        if self.config.contrastive_model=='BarlowTwins':
+            logs["val_loss_inv"] = float(loss_invariance)
+            logs["val_loss_redund"] = float(loss_redundancy)
         batch_dictionary = {
             # REQUIRED: It ie required for us to return "loss"
             "val_loss": batch_loss,
             # optional for batch logging purposes
             "log": logs}
         self.validation_step_outputs.append(batch_loss)
+        if self.config.contrastive_model=='BarlowTwins':
+            # decompose loss in invariance and redundancy term
+            self.validation_step_loss_inv.append(loss_invariance)
+            self.validation_step_loss_redund.append(loss_redundancy)
         if self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
             self.validation_step_idxs_region.append(idx_region)
 
@@ -1250,6 +1284,19 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             "Loss/Val",
             avg_loss,
             self.current_epoch)
+        
+        if self.config.contrastive_model=='BarlowTwins':
+            # visu the two loss components on tensorboard
+            avg_loss_inv = torch.stack([x for x in self.validation_step_loss_inv]).mean()
+            avg_loss_redund = torch.stack([x for x in self.validation_step_loss_redund]).mean()
+            self.loggers[0].experiment.add_scalar(
+                "LossInv/Val",
+                avg_loss_inv,
+                self.current_epoch)
+            self.loggers[0].experiment.add_scalar(
+                "LossRedund/Val",
+                avg_loss_redund,
+                self.current_epoch)
         
         # if multiregion, val loss for each region
         if self.config.multiregion_single_encoder:

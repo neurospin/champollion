@@ -3,6 +3,7 @@ Code borrowed from https://github.com/Duplums/SMLvsDL/blob/master/dl_training/mo
 It belongs to Benoît Dufumier.
 """
 
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -141,6 +142,7 @@ class ResNet(nn.Module):
         self.dilation = 1
         self.out_block = out_block
         self.adaptive_pooling = adaptive_pooling
+        self.linear_in_backbone = linear_in_backbone
 
         if replace_stride_with_dilation is None:
             # each element in the tuple indicates if we should replace
@@ -161,10 +163,10 @@ class ResNet(nn.Module):
 
         #channels = [64, 128, 256, 512]
 
-        self.layer1 = self._make_layer(block, channels[0], layers[0])
+        self.layer1 = self._make_layer(block, channels[0], layers[0], stride=1)
         self.layer2 = self._make_layer(block, channels[1], layers[1], stride=2,
                                        dilate=replace_stride_with_dilation[0])
-        self.layer3 = self._make_layer(block, channels[2], layers[2], stride=1,
+        self.layer3 = self._make_layer(block, channels[2], layers[2], stride=2,
                                        dilate=replace_stride_with_dilation[1])
         self.layer4 = self._make_layer(block, channels[3], layers[3], stride=2,
                                        dilate=replace_stride_with_dilation[2])
@@ -177,14 +179,19 @@ class ResNet(nn.Module):
         if dropout_rate is not None and dropout_rate>0:
             self.dropout = nn.Dropout(dropout_rate)
 
+        # linear layer to map to embeddings size
+        if self.linear_in_backbone:
+            output_dim = np.prod(self.adaptive_pooling[1])*channels[-1]
+            self.linear = nn.Linear(output_dim, num_classes)
+
         # attention mechanism
-        self.attention_map = None
-        if out_block is None:
-            self.fc = nn.Linear(channels[-1] * block.expansion, num_classes, bias=prediction_bias)
-        elif out_block == "contrastive":
-            self.critic = Critic(channels[-1] * block.expansion)
-        else:
-            raise NotImplementedError()
+        #self.attention_map = None
+        #if out_block is None:
+        #    self.fc = nn.Linear(channels[-1] * block.expansion, num_classes, bias=prediction_bias)
+        #elif out_block == "contrastive":
+        #    self.critic = Critic(channels[-1] * block.expansion)
+        #else:
+        #    raise NotImplementedError()
 
         for m in self.modules():
             if isinstance(m, nn.Conv3d):
@@ -206,10 +213,7 @@ class ResNet(nn.Module):
                     nn.init.constant_(m.bn3.weight, 0)
                 elif isinstance(m, BasicBlock):
                     nn.init.constant_(m.bn2.weight, 0)
-        
-        # linear layer
-        #if linear_in_backbone:
-        #    self.linear = nn.Linear(channels[-1], num_classes) # use 512 dimensions ? or add a linear layer ?
+                    
 
     def get_current_visuals(self):
         return self.inputs
@@ -254,11 +258,13 @@ class ResNet(nn.Module):
         x6 = torch.flatten(x5, 1)
         if hasattr(self, 'dropout'):
             x6  = self.dropout(x6)
-        elif self.out_block == "contrastive":
-            x6 = self.critic(x6)
-            return x6
-        else:
-            x6 = self.fc(x6).squeeze(dim=1)
+        #elif self.out_block == "contrastive":
+        #    x6 = self.critic(x6)
+        #    return x6
+        #else:
+        #    x6 = self.fc(x6).squeeze(dim=1)
+        if self.linear_in_backbone:
+            x6 = self.linear(x6)
         return x6
 
 

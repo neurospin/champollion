@@ -3,7 +3,8 @@
 backbone_name: resnet
 backbone_output_size: 256
 layers: [2,2,2,2]
-channels: [64,128,256,512]
+#channels: [64,128,256,512]
+channels: [32,64,128,256]
 zero_init_residual: True
 initial_kernel_size: 7
 initial_stride: 1

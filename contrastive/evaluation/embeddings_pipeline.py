@@ -330,7 +330,7 @@ if __name__ == "__main__":
     """
     
     
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/FIP_right_40k",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/FIP_right_40k_resnet",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
                         idx_region_evaluation = None,
@@ -357,15 +357,16 @@ if __name__ == "__main__":
                         verbose=False)
 
     """
+    
     """
-    embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V0/FIP_right",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/FIP_right_40k",
                         dataset_localization="neurospin",
-                        datasets=["julien/MICCAI_2024/training/FIP_right"],
+                        datasets=["julien/MICCAI_2024/training/FIP_40k_right"],
                         idx_region_evaluation = None,
                         labels=['isOld'],
                         classifier_name='logistic',
-                        short_name='ukb_right', overwrite=True, embeddings=True,
-                        embeddings_only=False, use_best_model=False,
+                        short_name='ukb', overwrite=True, embeddings=True,
+                        embeddings_only=True, use_best_model=False,
                         subsets=['full'], epochs=[None], split='random', cv=3,
                         splits_basedir='',
                         verbose=False)

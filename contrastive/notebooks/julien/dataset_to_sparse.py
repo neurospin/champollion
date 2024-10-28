@@ -6,7 +6,7 @@ from tqdm import tqdm
 import yaml
 import copy
 
-sides = ['L', 'R']
+sides = ['L']
 
 """
 sulcus_list = ['F.Coll.-S.Rh.', 'S.F.median-S.F.pol.tr.-S.F.sup.', 'S.F.inf.-BROCA-S.Pe.C.inf.', \
@@ -20,12 +20,12 @@ sulcus_list = ['F.Coll.-S.Rh.', 'S.F.median-S.F.pol.tr.-S.F.sup.', 'S.F.inf.-BRO
 # NB: S.T.s.-S.GSM. , extremities were not generated ? TODO: after TGCC reopens
 
 #sulcus_list = ['S.C.-sylv.', 'CINGULATE.', 'S.T.s.']
-sulcus_list = ['S.Or.', 'F.I.P.']
+sulcus_list = ['S.Or.']
 #sulcus_list = ['S.F.inf.-BROCA-S.Pe.C.inf.']
 
 #rotated = '_rotated'
 rotated = ''
-root_save_dir = f'/volatile/jl277509/data/UkBioBank/crops/{rotated}/2mm/'
+root_save_dir = f'/volatile2/jl277509/data/UkBioBank/crops/{rotated}/2mm/'
 #root_save_dir = f'/neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/sparse_load/2mm/'
 #root_save_dir = f'/home_local/jl277509/data/sparse_load/UkBioBank/crops/2mm'
 

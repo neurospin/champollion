@@ -213,6 +213,21 @@ class FlipTensor(object):
             arr_flipped = flipped_arr.copy()
             return torch.from_numpy(arr_flipped)
 
+class FlipFirstAxisTensor(object):
+    """
+    Flip first axis.
+    """
+    def __init__(self):
+        pass
+
+    def __call__(self, tensor):
+        arr = tensor.numpy()
+        flipped_arr = arr.copy()
+        slc = [slice(None) for _ in range(4)]
+        slc[0] = slice(None, None, -1) # first axis
+        flipped_arr = flipped_arr[tuple(slc)]
+        arr_flipped = flipped_arr.copy()
+        return torch.from_numpy(arr_flipped)
 
 def count_non_null(arr):
     return (arr != 0).sum()

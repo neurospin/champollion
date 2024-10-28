@@ -1118,8 +1118,16 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         #         "Score/Train",
         #         score,
         #         self.current_epoch)
+        if self.config.mode == "encoder" and self.config.contrastive_model=='BarlowTwins':
+            avg_loss_inv = avg_loss_inv.detach().cpu().item()
+            avg_loss_redund = avg_loss_redund.detach().cpu().item()
 
         self.training_step_outputs.clear()  # free memory
+        if self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
+            self.training_step_idxs_region.clear()
+        if self.config.mode == "encoder" and self.config.contrastive_model=='BarlowTwins':
+            self.training_step_loss_inv.clear()
+            self.training_step_loss_redund.clear()
 
 
     def validation_step(self, val_batch, batch_idx):
@@ -1341,5 +1349,13 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     'epoch': self.current_epoch, 'best_loss': avg_loss}
                 with open(save_path+"best_model_params.json", 'w') as file:
                     json.dump(best_model_params, file)
+            if self.config.mode == "encoder" and self.config.contrastive_model=='BarlowTwins':
+                avg_loss_inv = avg_loss_inv.detach().cpu().item()
+                avg_loss_redund = avg_loss_redund.detach().cpu().item()
 
         self.validation_step_outputs.clear()  # free memory
+        if self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
+            self.validation_step_idxs_region.clear()
+        if self.config.mode == "encoder" and self.config.contrastive_model=='BarlowTwins':
+            self.validation_step_loss_inv.clear()
+            self.validation_step_loss_redund.clear()

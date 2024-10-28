@@ -51,16 +51,17 @@ def transform_nothing_done():
         ])
 
 
-def transform_only_padding(input_size, config):
+def transform_only_padding(input_size, flip_dataset, config):
     if config.backbone_name != 'pointnet':
-        return \
-            transforms.Compose([
+        transforms_list = [
                 SimplifyTensor(),
                 PaddingTensor(shape=input_size,
                               fill_value=config.fill_value),
-                BinarizeTensor(),
-                EndTensor()
-            ])
+                BinarizeTensor()]
+        if flip_dataset:
+            transforms_list.append(FlipFirstAxisTensor())
+        transforms_list.append(EndTensor())
+        return transforms.Compose(transforms_list)
     else:
         return \
             transforms.Compose([
@@ -90,7 +91,6 @@ def transform_foldlabel(sample_foldlabel, input_size, config):
                                      p=config.flip_proba),
                        TranslateTensor(config.max_translation)]
                        #RotateTensor(max_angle=config.max_angle)]
-    
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))
     if config.sigma_noise > 0:
@@ -122,7 +122,7 @@ def transform_no_foldlabel(from_skeleton, input_size, config):
     return transforms.Compose(transforms_list)
 
 
-def transform_cutout(mask_path, input_size, config):
+def transform_cutout(mask_path, input_size, flip_dataset, config):
     mask = np.load(mask_path)
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
@@ -139,6 +139,8 @@ def transform_cutout(mask_path, input_size, config):
                        FlipTensor(ignore_axis=config.ignore_axis_flip,
                                      p=config.flip_proba),
                        TranslateTensor(config.max_translation)]
+    if flip_dataset:
+        transforms_list.append(FlipFirstAxisTensor())
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))
     if config.sigma_noise > 0:
@@ -147,7 +149,7 @@ def transform_cutout(mask_path, input_size, config):
     return transforms.Compose(transforms_list)
 
 
-def transform_cutin(mask_path, input_size, config):
+def transform_cutin(mask_path, input_size, flip_dataset, config):
     mask = np.load(mask_path)
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
@@ -164,6 +166,8 @@ def transform_cutin(mask_path, input_size, config):
                        FlipTensor(ignore_axis=config.ignore_axis_flip,
                                      p=config.flip_proba),
                        TranslateTensor(config.max_translation)]
+    if flip_dataset:
+        transforms_list.append(FlipFirstAxisTensor())
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))
     if config.sigma_noise > 0:
@@ -194,7 +198,7 @@ def transform_multicutout(input_size, config):
 
 
 def transform_trimdepth(sample_distbottom, sample_foldlabel,
-                        input_size, config):
+                        input_size, flip_dataset, config):
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
@@ -213,6 +217,8 @@ def transform_trimdepth(sample_distbottom, sample_foldlabel,
                        FlipTensor(ignore_axis=config.ignore_axis_flip,
                                      p=config.flip_proba),
                        TranslateTensor(config.max_translation)]
+    if flip_dataset:
+        transforms_list.append(FlipFirstAxisTensor())
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))
     if config.sigma_noise > 0:
@@ -247,7 +253,7 @@ def transform_trimextremities(sample_extremities, sample_foldlabel,
 
 ## no binarize tensor !! to keep the value 2.
 def transform_highlightextremities(sample_extremities, sample_foldlabel,
-                                   input_size, config):
+                                   input_size, flip_dataset, config):
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
@@ -262,6 +268,8 @@ def transform_highlightextremities(sample_extremities, sample_foldlabel,
                        FlipTensor(ignore_axis=config.ignore_axis_flip,
                                      p=config.flip_proba),
                        TranslateTensor(config.max_translation)]
+    if flip_dataset:
+        transforms_list.append(FlipFirstAxisTensor())
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))
     if config.sigma_noise > 0:
@@ -331,7 +339,7 @@ def transform_noisyedges(input_size, config):
     return transforms.Compose(transforms_list)
 
 
-def transform_translation(input_size, config):
+def transform_translation(input_size, flip_dataset, config):
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
@@ -341,6 +349,8 @@ def transform_translation(input_size, config):
                        FlipTensor(ignore_axis=config.ignore_axis_flip,
                                      p=config.flip_proba),
                        TranslateTensor(config.max_translation)]
+    if flip_dataset:
+        transforms_list.append(FlipFirstAxisTensor())
     if config.backbone_name == 'pointnet':
         transforms_list.append(ToPointnetTensor(n_max=config.n_max))
     if config.sigma_noise > 0:
@@ -351,38 +361,23 @@ def transform_translation(input_size, config):
 
 def transform_random(sample_foldlabel,
                      sample_distbottom, sample_extremities,
-                     mask_path, input_size, config):
+                     mask_path, input_size, flip_dataset, config):
     np.random.seed()
     alpha = np.random.uniform()
     if alpha < config.distribution[0]:
-        return transform_foldlabel(sample_foldlabel,
-                                   input_size, config)
-    elif alpha < config.distribution[1]:
         return transform_trimdepth(sample_distbottom,
                                    sample_foldlabel,
-                                   input_size, config)
+                                   input_size, flip_dataset, config)
+    elif alpha < config.distribution[1]:
+        return transform_cutout(mask_path, input_size, flip_dataset, config)
     elif alpha < config.distribution[2]:
-        return transform_cutout(mask_path, input_size, config)
+        return transform_cutin(mask_path, input_size, flip_dataset, config)
     elif alpha < config.distribution[3]:
-        return transform_cutin(mask_path, input_size, config)
-    elif alpha < config.distribution[4]:
-        return transform_multicutout(input_size, config)
-    elif alpha < config.distribution[5]:
-        return transform_trimextremities(sample_extremities,
-                                         sample_foldlabel,
-                                         input_size, config)
-    elif alpha < config.distribution[6]:
         return transform_highlightextremities(sample_extremities,
                                               sample_foldlabel,
-                                              input_size, config)
-    elif alpha < config.distribution[7]:
-        return transform_noisyedges(input_size, config)
-    elif alpha < config.distribution[8]:
-        return transform_elastic(input_size, config)
-    elif alpha < config.distribution[9]:
-        return transform_addbranch(input_size, config)
+                                              input_size, flip_dataset, config)
     else:
-        return transform_translation(input_size, config)
+        return transform_translation(input_size, flip_dataset, config)
     
 
 def transform_mixed(sample_foldlabel, sample_distbottom,

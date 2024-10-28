@@ -411,12 +411,14 @@ class ContrastiveDatasetFusion():
             regs = [0]
             input_sizes = [self.config.data[idx_region].input_size]
             mask_paths = [self.config.data[idx_region].mask_path]
+            flips = [self.config.data[idx_region].flip_dataset]
         else:
             regs = range(len(filenames))
             input_sizes = [self.config.data[reg].input_size for reg in regs]
             mask_paths = [self.config.data[reg].mask_path for reg in regs]
+            flips = [self.config.data[reg].flip_dataset for reg in regs]
         # compute the transforms
-        for reg, mask_path, input_size in zip(regs, mask_paths, input_sizes):
+        for reg, mask_path, input_size, flip in zip(regs, mask_paths, input_sizes, flips):
             if self.transform:
                 # mix of branch clipping, cutout, cutin, trimdepth, and trimextremities
                 if self.config.random_choice:
@@ -426,6 +428,7 @@ class ContrastiveDatasetFusion():
                         sample_extremities[reg],
                         mask_path=mask_path,
                         input_size=input_size,
+                        flip_dataset=flip,
                         config=self.config)
                     transform2 = transform_random(
                         sample_foldlabels[reg],
@@ -433,6 +436,7 @@ class ContrastiveDatasetFusion():
                         sample_extremities[reg],
                         mask_path=mask_path,
                         input_size=input_size,
+                        flip_dataset=flip,
                         config=self.config)
                 elif self.config.mixed:
                     transform1 = transform_mixed(
@@ -484,9 +488,9 @@ class ContrastiveDatasetFusion():
                     
             else:
                 transform1 = transform_only_padding(
-                    input_size, self.config)
+                    input_size, flip, self.config)
                 transform2 = transform_only_padding(
-                    input_size, self.config)
+                    input_size, flip, self.config)
             self.transform1.append(transform1)
             self.transform2.append(transform2)
 
@@ -494,12 +498,14 @@ class ContrastiveDatasetFusion():
                 if self.config.mode == "decoder":
                     transform3 = transform_only_padding(
                         input_size,
+                        flip,
                         self.config)
                 else:
                     transform3 = transform_nothing_done()
                     if not self.transform:
                         transform3 = transform_only_padding(
                             input_size,
+                            flip,
                             self.config)
                 self.transform3.append(transform3)
 

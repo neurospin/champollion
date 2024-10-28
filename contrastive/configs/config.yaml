@@ -3,6 +3,8 @@ defaults:
   - augmentations: random
   - backbone: ConvNet
   - classifier: svm
+  #- dataset/julien/UKB40/sparse_load/FIP_right_UKB40_sparse_load
+  #- dataset/julien/UKB40/sparse_load/SOr_left_UKB40_sparse_load
   #- dataset/julien/MICCAI_2024/training/FIP_right.yaml
   #- dataset/julien/multiple_regions/training/5000cingulate_5000orbital_UKB.yaml
   #- dataset/julien/multiple_regions/training/multiple_regions_UKB.yaml
@@ -37,8 +39,8 @@ defaults:
   #- dataset/julien/MICCAI_2024/supervised/cingulate_right_ACCpatterns_supervised
   #- dataset/local_julien/1-5mm/cingulate_UKB_right_1-5mm.yaml
   #- dataset/local_julien/old/STs_UkBioBank.yaml
-  # - dataset/occipital_schiz_L_strat_bis_threshold1
-  #- dataset_localization: volatile_julien
+  #- dataset/occipital_schiz_L_strat_bis_threshold1
+  #- dataset_localization: volatile2_julien
   - embeddings: embeddings
   - hydra: local
   - label: Left_OFC

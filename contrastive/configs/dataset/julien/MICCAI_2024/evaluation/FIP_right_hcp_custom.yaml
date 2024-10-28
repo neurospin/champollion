@@ -1,6 +1,6 @@
 # @package dataset.FIP_right_hcp_custom
 dataset_name: FIP_right_hcp_custom
-numpy_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/F.I.P./mask/Rskeleton_flipped.npy
+numpy_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/F.I.P./mask/Rskeleton.npy
 subjects_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/F.I.P./mask/Rskeleton_subject.csv
 foldlabel_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/F.I.P./mask/Rlabel.npy
 subjects_foldlabel_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/F.I.P./mask/Rlabel_subject.csv
@@ -15,4 +15,5 @@ test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/union_
 subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/FIP_labels.csv
 subject_column_name: 'Subject'
 mask_path:
+flip_dataset: False
 input_size: (1, 39, 45, 44)

@@ -11,7 +11,7 @@ class ProjectionHead(pl.LightningModule):
                  activation='linear',
                  drop_rate=0):
         super(ProjectionHead, self).__init__()
-        self.num_representation_features = num_representation_features
+        self.num_representation_features = num_representation_features # useless ?
 
         # define layers
         layers = []
@@ -22,17 +22,21 @@ class ProjectionHead(pl.LightningModule):
             layers.append(
                 ('Linear%s' % i, nn.Linear(input_size, output_size)))
             
-            # add activation after each layer
-            if activation == 'linear':
+            # add activation after each layer except last
+            if i == len(layers_shapes)-2:
                 pass
-            elif activation == 'relu':
-                layers.append((f'LeakyReLU{i}', nn.LeakyReLU()))
-            elif activation == 'sigmoid':
-                layers.append((f'Sigmoid{i}', nn.Sigmoid()))
             else:
-                raise ValueError(f"The given activation '{activation}' is not \
-handled. Choose between 'linear', 'relu' or 'sigmoid'.")
-            layers.append((f'DropOut{i}', nn.Dropout(p=drop_rate)))
+                layers.append((f'BatchNorm{i}', nn.BatchNorm1d(output_size)))
+                if activation == 'linear':
+                    pass
+                elif activation == 'relu':
+                    layers.append((f'LeakyReLU{i}', nn.LeakyReLU()))
+                elif activation == 'sigmoid':
+                    layers.append((f'Sigmoid{i}', nn.Sigmoid()))
+                else:
+                    raise ValueError(f"The given activation '{activation}' is not \
+    handled. Choose between 'linear', 'relu' or 'sigmoid'.")
+                layers.append((f'DropOut{i}', nn.Dropout(p=drop_rate)))
             
             input_size = output_size
         

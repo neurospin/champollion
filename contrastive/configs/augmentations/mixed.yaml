@@ -7,24 +7,16 @@ trimdepth: False
 uniform_trim: False
 binary_trim: True
 binary_proba_trim: 0.5
-proba_trimedges: 0.5
-keep_bottom_extremities: False
-ball_radius: 2
-fill_value: 0
 max_distance: 100
 trimdepth_delta: 141
+proba_trimedges: 0.5
+proba_pepper: 0.5
+ball_radius: 2
+fill_value: 0
 max_translation: 1
 keep_extremity: 'bottom'
-percentage: 1
-variable_percentage: False
-sigma_noise: 0.  # set to positive to allow noise
-patch_size: 30
-vx_crop_edges: 0
-ignore_axis_trim: 2
-flip_proba: 0.
-ignore_axis_flip: !!null
+patch_size_cutout: 30
+patch_size_cutin: 30
+mask_constraint: False
 offset_proba_translation_only: 0. # offset to maintain a value if proba_augmentation is high.
 proba_augmentation: 0.3
-#mixed_list: ['foldlabel', 'cutout', 'trimdepth'] # give list of augmentations. Applies in following order: foldlabel, cutout, trimdepth
-#mixed_list: ['trimdepth']
-# reduce complexity to cutout, trimdepth, trimextremities

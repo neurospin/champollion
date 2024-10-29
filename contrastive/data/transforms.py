@@ -406,20 +406,23 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
         r = np.random.uniform()
         if r < config.proba_augmentation:
             transforms_list.append(
-                TrimExtremitiesTensor(sample_extremities=sample_extremities,
-                                      sample_foldlabel=sample_foldlabel,
-                                      input_size=input_size,
-                                      protective_structure=np.expand_dims(ball(config.ball_radius), axis=-1),
-                                      p=config.proba_trimedges,
-                                      keep_bottom=config.keep_bottom_extremities)
+                HighlightExtremitiesTensor(sample_extremities=sample_extremities,
+                            sample_foldlabel=sample_foldlabel,
+                            input_size=input_size,
+                            protective_structure=np.expand_dims(ball(config.ball_radius), axis=-1),
+                            p=config.proba_trimedges,
+                            pepper=config.proba_pepper)
             )
         r = np.random.uniform()
         if r < 2*config.proba_augmentation:
             r = np.random.uniform()
+            # cutout and cutin are mutually exclusive
             if r < 0.5:
                 from_skeleton=True
+                patch_size = config.patch_size_cutout
             else:
                 from_skeleton=False
+                patch_size = config.patch_size_cutin
             mask = np.load(mask_path)
             transforms_list.append(
                 PartialCutOutTensor_Roll(mask,
@@ -427,19 +430,10 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                                          from_skeleton=from_skeleton,
                                          input_size=input_size,
                                          keep_extremity=config.keep_extremity,
-                                         patch_size=config.patch_size)
+                                         patch_size=patch_size)
             )
-            
     transforms_list.append(BinarizeTensor())
-    transforms_list.append(TrimCropEdges(max_n_voxel=config.vx_crop_edges,
-                                         ignore_axis=config.ignore_axis_trim)),
-    transforms_list.append(FlipTensor(ignore_axis=config.ignore_axis_flip,
-                                     p=config.flip_proba))
     transforms_list.append(TranslateTensor(config.max_translation))
-    if config.backbone_name == 'pointnet':
-        transforms_list.append(ToPointnetTensor(n_max=config.n_max))
-    if config.sigma_noise > 0:
-        transforms_list.append(GaussianNoiseTensor(sigma=config.sigma_noise))
     
     return transforms.Compose(transforms_list)
 

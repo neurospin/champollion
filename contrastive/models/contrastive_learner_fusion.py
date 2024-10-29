@@ -180,6 +180,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                 else:
                     # add a variable size linear layer to each projection head
                     layers_shapes_including_variable = layers_shapes.copy()
+                    # TODO: make it compatible with ResNet !
                     backbone_output_shape = [config.data[reg].input_size[1] // 2**config.encoder_depth,
                                             config.data[reg].input_size[2] // 2**config.encoder_depth,
                                             config.data[reg].input_size[3] // 2**config.encoder_depth]
@@ -464,7 +465,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
     
     def barlow_twins_loss(self, z_i, z_j):
         "Loss function for SSL (BarlowTwins)"
-        loss = BarlowTwinsLoss(lambda_param=self.config.lambda_BT / float(self.config.backbone_output_size),
+        loss = BarlowTwinsLoss(lambda_param=self.config.lambda_BT,
                                correlation=self.config.BT_correlation,
                                device=self.config.device)
         return loss.forward(z_i, z_j)

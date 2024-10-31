@@ -66,7 +66,7 @@ def read_npy_file(npy_file_path: str) -> np.ndarray:
 def read_subject_csv(csv_file_path: str) -> pd.DataFrame:
     """Reads csv subject file.
     It contains one column named \'Subject\' with all subject names"""
-    subjects = pd.read_csv(csv_file_path)
+    subjects = pd.read_csv(csv_file_path, dtype=str)
     if 'Subject' in subjects.columns:
         return subjects
     else:
@@ -160,7 +160,7 @@ def read_subset_csv(csv_file_path: str, name='train_val') -> pd.DataFrame:
     This csv has a unique column.
     The resulting dataframe gives the name 'Subject' to this column
     """
-    subjects = pd.read_csv(csv_file_path, names=['Subject'])
+    subjects = pd.read_csv(csv_file_path, names=['Subject'], dtype=str)
     log.debug(f"{name}_subjects = {subjects.head()}")
 
     return subjects

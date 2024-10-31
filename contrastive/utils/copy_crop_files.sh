@@ -1,7 +1,7 @@
 input_folder="/neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm"
 output_folder="/home_local/jc225751/Runs/70_self-supervised_two-regions/Input/UkBioBank/crops/2mm"
 
-regions="fronto-parietal_medial_face."
+regions="S.T.s.br."
 
 for region in $regions;
 do 

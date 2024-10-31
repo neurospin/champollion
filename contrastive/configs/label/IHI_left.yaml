@@ -1,0 +1,3 @@
+# @package _global_
+label_names: ["C0_L"]
+nb_classes: 2

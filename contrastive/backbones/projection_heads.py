@@ -26,7 +26,7 @@ class ProjectionHead(pl.LightningModule):
             if i == len(layers_shapes)-2:
                 pass
             else:
-                layers.append((f'BatchNorm{i}', nn.BatchNorm1d(output_size)))
+                #layers.append((f'BatchNorm{i}', nn.BatchNorm1d(output_size)))
                 if activation == 'linear':
                     pass
                 elif activation == 'relu':

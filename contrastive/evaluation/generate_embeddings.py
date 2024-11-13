@@ -116,6 +116,10 @@ def compute_embeddings(config, subsets=None):
         print(f"weights loaded from: {ckpt_path}")
         checkpoint = torch.load(
             ckpt_path, map_location=torch.device(config.device))
+        
+        # TODO : load projection head only if linear in projection head
+        # otherwise load backbone only
+
         # remove keys not matching (when multiple projection heads, select one).
         if 'idx_region_evaluation' in config.keys():
             model_dict = model.state_dict()
@@ -134,8 +138,14 @@ def compute_embeddings(config, subsets=None):
                 state_dict[newk] = state_dict.pop(oldk)
             model_dict.update(state_dict) 
             model.load_state_dict(state_dict)
+        #else:
+        #    model.load_state_dict(checkpoint['state_dict'])
+        ## Do not load projection head
         else:
-            model.load_state_dict(checkpoint['state_dict'])
+            model_dict = model.state_dict()
+            state_dict = {k: v for k, v in checkpoint['state_dict'].items() if 'projection_head' not in k}
+            for name, param in state_dict.items():
+                model_dict[name].copy_(param)
 
         model.eval()
 

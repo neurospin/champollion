@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - augmentations: random
+  - augmentations: mixed
   - backbone: ConvNet
   - classifier: svm
   #- dataset/julien/UKB40/sparse_load/FIP_right_UKB40_sparse_load

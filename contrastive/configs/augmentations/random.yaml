@@ -18,9 +18,9 @@ keep_extremity: 'bottom'
 percentage: 20
 variable_percentage: False
 sigma_noise: 0.  # set to positive to allow noise
-patch_size_cutout: 30
-patch_size_cutin: 30
-mask_constraint: False
+patch_size_cutout: [10,20]
+patch_size_cutin: [20,30]
+mask_constraint: True
 sigma_elastic: 2
 size_elastic: 3
 proba_trimedges: 0.5

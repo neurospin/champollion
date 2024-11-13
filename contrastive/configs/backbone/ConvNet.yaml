@@ -6,7 +6,7 @@ filters: [32,64,128]
 #filters: [64,128,256]
 initial_kernel_size: 7
 block_depth: 4
-backbone_output_size: 256
+backbone_output_size: 32
 #adaptive_pooling: !!null
 #adaptive_pooling: ['max', [3,3,3]]
 adaptive_pooling: ['average', [3,3,3]]

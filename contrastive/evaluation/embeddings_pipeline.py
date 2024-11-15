@@ -329,10 +329,10 @@ if __name__ == "__main__":
         verbose=False)
     """
     
-    """
+    
     embeddings_pipeline("/neurospin/dico/jlaval/Output/5_models_FIP_right_3_layer_proj",
                         dataset_localization="neurospin",
-                        datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
+                        datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_400_cv"],
                         idx_region_evaluation = None,
                         labels=['Right_FIP'],
                         classifier_name='logistic',
@@ -341,7 +341,7 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='custom', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
                         verbose=False)
-    """
+    
     """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/5_models_FIP_right_3_layer_proj",
                         dataset_localization="neurospin",
@@ -355,21 +355,21 @@ if __name__ == "__main__":
                         splits_basedir=None,
                         verbose=False)
     """
-    """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/FIP_left_40k_pooling",
+    
+
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/5_models_FIP_left_3_layer_proj",
                         dataset_localization="neurospin",
-                        datasets=["julien/MICCAI_2024/evaluation/FIP_left_hcp_custom"],
+                        datasets=["julien/MICCAI_2024/evaluation/FIP_left_hcp_400_cv"],
                         idx_region_evaluation = None,
                         labels=['Left_FIP'],
                         classifier_name='logistic',
                         short_name='FIP_left', overwrite=True, embeddings=True,
                         embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=range(0,110,10), split='custom', cv=3,
+                        subsets=['full'], epochs=[None], split='custom', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
                         verbose=False)
-
-    """
     
+
     """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/5_models_FIP_right_3_layer_proj",
                         dataset_localization="neurospin",
@@ -399,9 +399,10 @@ if __name__ == "__main__":
     """
 
     ## imagen
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/imagen_left",
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/imagen_polar_left",
                         dataset_localization="neurospin",
-                        datasets=["julien/MICCAI_2024/evaluation/deMatos_left_imagen_random"],
+                        datasets=["julien/MICCAI_2024/evaluation/deMatos_polar_left_imagen_random"],
                         idx_region_evaluation = None,
                         labels=['Left_Interrup_CS_OTS', 'Left_Interrup_RS_CS', 'Left_Interrup_RS_OTS'],
                         classifier_name='logistic',
@@ -410,7 +411,8 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='random', cv=5,
                         splits_basedir='',
                         verbose=False)
-    
+    """
+    """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/imagen_right",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/deMatos_right_imagen_random"],
@@ -422,7 +424,7 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='random', cv=5,
                         splits_basedir='',
                         verbose=False)
-    
+    """
     
     
     

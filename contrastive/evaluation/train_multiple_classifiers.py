@@ -113,6 +113,9 @@ def load_embeddings(dir_path, labels_path, config, subset='full'):
                          config.label_names, label_scaling)
     labels.rename(columns={config.label_names[0]: 'label'}, inplace=True)
     labels = labels[labels.Subject.isin(embeddings.index)]
+    # for unique IDs, add NaNs to labels when in embeddings only
+    #missing_labels = set(embeddings.index.tolist()).difference(set(labels.index.tolist()))
+    #missing_labels = 
     labels.sort_values(by='Subject', inplace=True, ignore_index=True)
     log.debug(f"sorted labels: {labels.head()}")
 
@@ -151,8 +154,12 @@ def compute_binary_indicators(Y, proba_pred):
         accuracy = max(accuracy_0, accuracy_1)
         if accuracy > max_accuracy:
             max_accuracy = accuracy
+            if accuracy_0 > accuracy_1:
+                labels_pred = labels_pred_0
+            else:
+                labels_pred = labels_pred_1
 
-    return curves, roc_auc, max_accuracy
+    return curves, roc_auc, max_accuracy, labels_pred.astype(int)
 
 
 def compute_multiclass_indicators(Y, proba_pred):
@@ -282,7 +289,7 @@ def train_one_classifier(config, inputs, subjects, i=0):
         else:
             root_dir = '/'.join(config.splits_basedir.split('/')[:-1])
             basedir = config.splits_basedir.split('/')[-1]
-            splits_dirs = [os.path.join(root_dir,f) for f in os.listdir(root_dir) if basedir in f and '.csv' in f]
+            splits_dirs = [os.path.join(root_dir,f) for f in os.listdir(root_dir) if f.startswith(basedir) and '.csv' in f]
             splits_subs = [pd.read_csv(file, header=None) for file in splits_dirs]
             labels = np.concatenate([[i] * len(K) for i, K in enumerate(splits_subs)])
             splits_subs_and_labels = pd.concat(splits_subs)
@@ -372,8 +379,9 @@ def train_one_classifier(config, inputs, subjects, i=0):
             outputs['roc_auc'] = roc_aucs
             outputs['balanced_accuracy'] = accuracies
         else:
-            curves, roc_auc, accuracy = compute_binary_indicators(Y, labels_proba)
+            curves, roc_auc, accuracy, labels_pred = compute_binary_indicators(Y, labels_proba)
             outputs['proba_of_1'] = labels_proba[:, 1]
+            outputs['label_pred'] = labels_pred
             outputs['roc_auc'] = roc_auc
             outputs['balanced_accuracy'] = accuracy
             outputs['curves'] = curves
@@ -431,6 +439,7 @@ def train_n_repeat_classifiers(config, subset='full'):
         else:
             test = pd.read_csv(os.path.join(config.embeddings_save_path, 'test_embeddings.csv'), usecols=['ID'])
             proba_matrix = np.zeros((test.shape[0], config.n_repeat)) # report only test samples
+        labels_pred_matrix = np.zeros(proba_matrix.shape, dtype=int)
 
     inputs = {}
     # rescale embeddings
@@ -553,19 +562,24 @@ def train_n_repeat_classifiers(config, subset='full'):
             # Put together the results
             for i, o in enumerate(outputs):
                 probas_pred = o['proba_of_1']
+                labels_pred = o['label_pred']
                 curves = o['curves']
                 roc_auc = o['roc_auc']
                 accuracy = o['balanced_accuracy']
                 proba_matrix[:, i] = probas_pred
+                labels_pred_matrix[:, i] = labels_pred
                 Curves['cross_val'].append(curves)
                 aucs['cross_val'].append(roc_auc)
                 accuracies['cross_val'].append(accuracy)
 
             # add the predictions to the df where the true values are
-            columns_names = ["svm_"+str(i) for i in range(config.n_repeat)]
+            columns_names = ["proba_pred_"+str(i) for i in range(config.n_repeat)]
             probas = pd.DataFrame(
                 proba_matrix, columns=columns_names, index=labels.index)
-            labels = pd.concat([labels, probas], axis=1)
+            columns_names_label_pred = ["label_pred_"+str(i) for i in range(config.n_repeat)]
+            labels_preds = pd.DataFrame(
+                labels_pred_matrix, columns=columns_names_label_pred, index=labels.index)
+            labels = pd.concat([labels, probas, labels_preds], axis=1)
 
             # post processing (mainly plotting graphs)
             values = {}

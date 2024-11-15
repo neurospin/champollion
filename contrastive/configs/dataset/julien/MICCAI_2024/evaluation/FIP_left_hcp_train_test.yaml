@@ -1,5 +1,5 @@
-# @package dataset.FIP_left_hcp_custom
-dataset_name: FIP_left_hcp_custom
+# @package dataset.FIP_left_hcp_train_test
+dataset_name: FIP_left_hcp_train_test
 numpy_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/F.I.P./mask/Lskeleton.npy
 subjects_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/F.I.P./mask/Lskeleton_subject.csv
 foldlabel_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/F.I.P./mask/Llabel.npy
@@ -8,10 +8,9 @@ crop_dir: /neurospin/dico/data/deep_folding/papers/miccai2023/Input/datasets/hcp
 crop_file_suffix: _cropped_skeleton.nii.gz
 foldlabel_dir: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/F.I.P./mask/Llabels
 pickle_benchmark: 
-train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/fake_train_val.csv
-#test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/hcp_1_test_without_headers.csv
-test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/union_splits.csv
-#splits_basedir: /neurospin/dico/data/deep_folding/current/datasets/hcp/hcp_subjects_train_split_
+train_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/train_split.csv
+val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/val_split.csv
+test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/test_split.csv
 subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/FIP_labels.csv
 subject_column_name: 'Subject'
 mask_path:

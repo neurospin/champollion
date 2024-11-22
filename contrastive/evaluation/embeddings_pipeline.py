@@ -307,13 +307,13 @@ if __name__ == "__main__":
     #                     splits_basedir='',
     #                     verbose=False)
     
-    embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V0",
+    embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V0/ScCal-SLi_left",
                         dataset_localization="neurospin",
-                        datasets_root="with_reskel_distbottom/2mm/abide2",
+                        datasets_root="with_reskel_distbottom/2mm/UKB/realigned",
                         datasets=["toto"],
                         labels=['IHI_left'],
                         classifier_name='logistic',
-                        short_name='abide2', overwrite=False, embeddings=True,
+                        short_name='ukb_realigned', overwrite=False, embeddings=True,
                         embeddings_only=True, use_best_model=False,
                         subsets=['full'], epochs=[None], split='random', cv=5,
                         splits_basedir='',

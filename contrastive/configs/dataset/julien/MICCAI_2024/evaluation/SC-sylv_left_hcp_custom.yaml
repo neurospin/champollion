@@ -15,4 +15,5 @@ test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/union_cust
 subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/hcp_isomap_labels.csv
 subject_column_name: 'Subject'
 mask_path:
+flip_dataset: False
 input_size: (1, 38, 36, 49)

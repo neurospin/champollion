@@ -110,14 +110,14 @@ class ConvNeXt(nn.Module):
         else:
             self.head = nn.Linear(dims[-1], num_classes)
 
-        self.apply(self._init_weights)
+        #self.apply(self._init_weights)
         self.head.weight.data.mul_(head_init_scale)
         self.head.bias.data.mul_(head_init_scale)
 
-    def _init_weights(self, m):
-        if isinstance(m, (nn.Conv3d, nn.Linear)):
-            trunc_normal_(m.weight, std=.02)
-            nn.init.constant_(m.bias, 0)
+    #def _init_weights(self, m):
+    #    if isinstance(m, (nn.Conv3d, nn.Linear)):
+    #        trunc_normal_(m.weight, std=.02)
+    #        nn.init.constant_(m.bias, 0)
 
     def forward_features(self, x):
         for i in range(self.nb_blocks):

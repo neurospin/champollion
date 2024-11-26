@@ -122,16 +122,19 @@ def transform_no_foldlabel(from_skeleton, input_size, config):
     return transforms.Compose(transforms_list)
 
 
-def transform_cutout(mask_path, input_size, flip_dataset, config):
+def transform_cutout(sample_foldlabel, mask_path, input_size, flip_dataset, config):
     mask = np.load(mask_path)
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
-                       PartialCutOutTensor_Roll(mask,
+                       PartialCutOutTensor_Roll(sample_foldlabel,
+                                                mask,
                                                 mask_constraint=config.mask_constraint,
                                                 from_skeleton=True,
                                                 input_size=input_size,
                                                 keep_extremity=config.keep_extremity,
+                                                keep_proba_per_branch=config.keep_proba_per_branch,
+                                                keep_proba_global=config.keep_proba_global,
                                                 patch_size=config.patch_size_cutout),
                        BinarizeTensor(),
                        TrimCropEdges(max_n_voxel=config.vx_crop_edges,
@@ -149,16 +152,19 @@ def transform_cutout(mask_path, input_size, flip_dataset, config):
     return transforms.Compose(transforms_list)
 
 
-def transform_cutin(mask_path, input_size, flip_dataset, config):
+def transform_cutin(sample_foldlabel, mask_path, input_size, flip_dataset, config):
     mask = np.load(mask_path)
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
-                       PartialCutOutTensor_Roll(mask,
+                       PartialCutOutTensor_Roll(sample_foldlabel,
+                                                mask,
                                                 mask_constraint=config.mask_constraint,
                                                 from_skeleton=False,
                                                 input_size=input_size,
                                                 keep_extremity=config.keep_extremity,
+                                                keep_proba_per_branch=config.keep_proba_per_branch,
+                                                keep_proba_global=config.keep_proba_global,
                                                 patch_size=config.patch_size_cutin),
                        BinarizeTensor(),
                        TrimCropEdges(max_n_voxel=config.vx_crop_edges,
@@ -369,9 +375,9 @@ def transform_random(sample_foldlabel,
                                    sample_foldlabel,
                                    input_size, flip_dataset, config)
     elif alpha < config.distribution[1]:
-        return transform_cutout(mask_path, input_size, flip_dataset, config)
+        return transform_cutout(sample_foldlabel, mask_path, input_size, flip_dataset, config)
     elif alpha < config.distribution[2]:
-        return transform_cutin(mask_path, input_size, flip_dataset, config)
+        return transform_cutin(sample_foldlabel, mask_path, input_size, flip_dataset, config)
     elif alpha < config.distribution[3]:
         return transform_highlightextremities(sample_extremities,
                                               sample_foldlabel,
@@ -425,11 +431,14 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                 patch_size = config.patch_size_cutin
             mask = np.load(mask_path)
             transforms_list.append(
-                PartialCutOutTensor_Roll(mask,
+                PartialCutOutTensor_Roll(sample_foldlabel,
+                                         mask,
                                          mask_constraint=config.mask_constraint,
                                          from_skeleton=from_skeleton,
                                          input_size=input_size,
                                          keep_extremity=config.keep_extremity,
+                                         keep_proba_per_branch=config.keep_proba_per_branch,
+                                         keep_proba_global=config.keep_proba_global,
                                          patch_size=patch_size)
             )
     transforms_list.append(BinarizeTensor())

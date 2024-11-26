@@ -455,8 +455,8 @@ class PartialCutOutTensor_Roll(object):
     We assume that the rectangle to be cut is inside the image.
     """
 
-    def __init__(self, mask, mask_constraint=False, from_skeleton=True, input_size=None,
-                 keep_extremity='bottom', patch_size=None,
+    def __init__(self, sample_foldlabel, mask, mask_constraint=False, from_skeleton=True, input_size=None,
+                 keep_extremity='bottom', keep_proba_per_branch=1., keep_proba_global=1., patch_size=None,
                  random_size=False, localization=None):
         """[summary]
         If from_skeleton==True,
@@ -483,11 +483,14 @@ class PartialCutOutTensor_Roll(object):
         else: # a crop size is given
             self.patch_size = rotate_list(patch_size)
         self.input_size = input_size
+        self.sample_foldlabel = sample_foldlabel
         self.random_size = random_size
         self.localization = localization
         self.from_skeleton = from_skeleton
         self.mask = mask
         self.mask_constraint = mask_constraint
+        self.keep_proba_per_branch = keep_proba_per_branch
+        self.keep_proba_global = keep_proba_global
         if keep_extremity=='random':
             np.random.seed()
             r = np.random.randint(3)
@@ -498,11 +501,17 @@ class PartialCutOutTensor_Roll(object):
             else:
                 self.keep_extremity=None
         else:
+            np.random.seed()
+            r = np.random.uniform()
+            # don't keep bottom/top with given probability
+            if r > self.keep_proba_global:
+                keep_extremity=None
             self.keep_extremity = keep_extremity
 
     def __call__(self, tensor):
 
         arr = tensor.numpy()
+        arr_foldlabel = self.sample_foldlabel.numpy()
         img_shape = np.array(arr.shape)
         if isinstance(self.patch_size, int):
             proportion = (1/100*self.patch_size)**(1/(len(img_shape)-1))
@@ -561,6 +570,18 @@ class PartialCutOutTensor_Roll(object):
         arr_inside = arr * mask_roll
         arr_outside = arr * (1 - mask_roll)
 
+        if self.keep_proba_per_branch < 1.:
+            # keep bottom with proba p for each branch
+            indexed_branches = np.mod(arr_foldlabel,
+                            np.full(arr_foldlabel.shape, fill_value=1000))
+            indexes =  np.unique(indexed_branches)
+            assert (len(indexes)>1), 'No branch in foldlabel'
+            indexes = indexes[1:] # remove background
+            select = np.random.rand(indexes.size) < self.keep_proba_per_branch
+            selected_indexes = indexes[select]
+            selected_branches = np.isin(indexed_branches, selected_indexes)
+            #print(np.sum(selected_branches!=0), np.sum(arr_foldlabel!=0), np.sum(arr!=0), np.sum(np.logical_and(arr!=0, selected_branches!=0)) / np.sum(arr!=0))
+
         # If self.from_skeleton == True:
         # This keeps the whole skeleton outside the cutout
         # and keeps only bottom value inside the cutout
@@ -571,6 +592,8 @@ class PartialCutOutTensor_Roll(object):
                 arr_inside = arr_inside * (arr_inside == 30)
             else:
                 arr_inside = arr_inside * (arr_inside == 0)
+            if self.keep_proba_per_branch < 1.:
+                arr_inside = arr_inside * selected_branches
 
         # If self.from_skeleton == False:
         # This keeps only bottom value outside the cutout
@@ -582,10 +605,14 @@ class PartialCutOutTensor_Roll(object):
                 arr_outside = arr_outside * (arr_outside == 30)
             else:
                 arr_outside = arr_outside * (arr_outside == 0)
+            if self.keep_proba_per_branch < 1.:
+                arr_outside = arr_outside * selected_branches
+        
+        trimmed_arr = arr_inside + arr_outside
 
-        #log.info(f"{self.from_skeleton},{np.sum(arr!=0)},{np.sum(np.logical_and(arr!=0, arr!=30))},{np.sum(np.logical_and((arr_inside+arr_outside)!=0,(arr_inside+arr_outside)!=30))}")
-
-        return torch.from_numpy(arr_inside + arr_outside)
+        #log.info(f"{self.from_skeleton},{np.sum(arr!=0)},{np.sum(trimmed_arr!=0)},{np.sum(np.logical_and(arr!=0, arr!=30))},{np.sum(np.logical_and(trimmed_arr!=0,trimmed_arr!=30))}")
+        #np.save('/volatile2/jl277509/visu_augmentations/sub_new/skel_trimdepth_extremities_cutout.npy', trimmed_arr)
+        return torch.from_numpy(trimmed_arr)
 
 
 class CheckerboardTensor(object):
@@ -980,6 +1007,7 @@ class TrimDepthTensor(object):
     def __call__(self, tensor_skel):
         log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
         arr_skel = tensor_skel.numpy()
+        #np.save('/volatile2/jl277509/visu_augmentations/sub_new/full_skel.npy', arr_skel)
         arr_distbottom = self.sample_distbottom.numpy()
         arr_foldlabel = self.sample_foldlabel.numpy()
 
@@ -1006,7 +1034,7 @@ class TrimDepthTensor(object):
                                       np.full(arr_foldlabel.shape, fill_value=1000))
             indexes =  np.unique(indexed_branches)
             assert (len(indexes)>1), 'No branch in foldlabel'
-            for index in indexes[1:]: # TODO: suboptimal. The whole array is masked every iteration.
+            for index in indexes[1:]:
                 arr_trimmed = arr_skel.copy()
                 mask_branch = indexed_branches==index
                 if self.binary:
@@ -1032,7 +1060,7 @@ class TrimDepthTensor(object):
 
         
         arr_trimmed = arr_trimmed.astype('float32')
-
+        #np.save('/volatile2/jl277509/visu_augmentations/sub_new/skel_trimdepth.npy', arr_trimmed)
         return torch.from_numpy(arr_trimmed)
     
 """
@@ -1219,7 +1247,7 @@ class HighlightExtremitiesTensor(object):
                 arr_trimmed_branches += trimmed_branch
             else:
                 arr_trimmed_branches += branch
-        #### binary here !! ## the augmentation should be used witout BinarizeTensor
+
         arr_trimmed = (arr_trimmed_branches != 0).astype('float64')
         trimmed_vx = (np.logical_xor(arr_skel, arr_trimmed)).astype('float64')
 
@@ -1227,10 +1255,13 @@ class HighlightExtremitiesTensor(object):
         pepper = (np.random.rand(*trimmed_vx.shape) > self.pepper).astype('float64')
 
         arr_trimmed += np.multiply(trimmed_vx, pepper)
+
+        # multiply by the topological values
+        arr_trimmed = np.multiply(arr_trimmed, arr_skel)
         
         arr_trimmed = arr_trimmed.astype('float32')
 
-
+        #np.save('/volatile2/jl277509/visu_augmentations/sub_new/skel_trimdepth_extremities.npy', arr_trimmed)
         return torch.from_numpy(arr_trimmed)
 
 

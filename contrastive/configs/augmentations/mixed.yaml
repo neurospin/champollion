@@ -17,6 +17,8 @@ max_translation: 1
 keep_extremity: 'bottom'
 patch_size_cutout: [10,20]
 patch_size_cutin: [20,30]
+keep_proba_per_branch: 1.
+keep_proba_global: 1.
 mask_constraint: True
 offset_proba_translation_only: 0. # offset to maintain a value if proba_augmentation is high.
 proba_augmentation: 0.3

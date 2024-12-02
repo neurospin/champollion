@@ -329,7 +329,7 @@ if __name__ == "__main__":
         verbose=False)
     """
     
-    
+    """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/5_models_FIP_right_3_layer_proj",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_400_cv"],
@@ -340,8 +340,47 @@ if __name__ == "__main__":
                         embeddings_only=False, use_best_model=False,
                         subsets=['full'], epochs=[None], split='custom', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
+                        verbose=False)  
+    """
+
+        
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/5_models_FIP_right_3_layer_proj/Conv_net_preV1",
+                        dataset_localization="neurospin",
+                        datasets=["julien/MICCAI_2024/training/FIP_right"],
+                        idx_region_evaluation = None,
+                        labels=['Right_FIP'],
+                        classifier_name='logistic',
+                        short_name='three_datasets_UKB', overwrite=True, embeddings=True,
+                        embeddings_only=True, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='random', cv=3,
+                        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
+                        verbose=False)    
+    
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/5_models_FIP_right_3_layer_proj/ResNet",
+                        dataset_localization="neurospin",
+                        datasets=["julien/MICCAI_2024/training/FIP_right"],
+                        idx_region_evaluation = None,
+                        labels=['Right_FIP'],
+                        classifier_name='logistic',
+                        short_name='three_datasets_UKB', overwrite=True, embeddings=True,
+                        embeddings_only=True, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='random', cv=3,
+                        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
                         verbose=False)
     
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/5_models_orbital_3_layer_proj/ConvNet_preV1",
+                        dataset_localization="neurospin",
+                        datasets=["julien/MICCAI_2024/training/orbital_left_UKB"],
+                        idx_region_evaluation = None,
+                        labels=['Left_OFC'],
+                        classifier_name='logistic',
+                        short_name='right_21045_UKB', overwrite=True, embeddings=True,
+                        embeddings_only=True, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='random', cv=3,
+                        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
+                        verbose=False)
+    """
     """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/5_models_FIP_right_3_layer_proj",
                         dataset_localization="neurospin",
@@ -357,6 +396,7 @@ if __name__ == "__main__":
     """
     
 
+    """    
     embeddings_pipeline("/neurospin/dico/jlaval/Output/5_models_FIP_left_3_layer_proj",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_left_hcp_400_cv"],
@@ -368,6 +408,7 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='custom', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
                         verbose=False)
+    """
     
 
     """

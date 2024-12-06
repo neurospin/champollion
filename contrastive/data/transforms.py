@@ -414,7 +414,7 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                                 redefine_bottom=config.redefine_bottom)
             )
         r = np.random.uniform()
-        if r < config.proba_augmentation:
+        if r < config.proba_trim:
             transforms_list.append(
                 HighlightExtremitiesTensor(sample_extremities=sample_extremities,
                             sample_foldlabel=sample_foldlabel,

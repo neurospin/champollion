@@ -399,7 +399,7 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
         pass
     else:
         r = np.random.uniform()
-        if r < config.proba_trim:
+        if r < config.proba_trimdepth:
             transforms_list.append(
                 TrimDepthTensor(sample_distbottom=sample_distbottom,
                                 sample_foldlabel=sample_foldlabel,
@@ -414,7 +414,7 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                                 redefine_bottom=config.redefine_bottom)
             )
         r = np.random.uniform()
-        if r < config.proba_trim:
+        if r < config.proba_trimextremities:
             transforms_list.append(
                 HighlightExtremitiesTensor(sample_extremities=sample_extremities,
                             sample_foldlabel=sample_foldlabel,
@@ -424,10 +424,10 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                             pepper=config.proba_pepper_trimedges)
             )
         r = np.random.uniform()
-        if r < 2*config.proba_cutout:
+        if r < config.proba_cutout + config.proba_cutin:
             r = np.random.uniform()
             # cutout and cutin are mutually exclusive
-            if r < 0.5:
+            if r < config.proba_cutout / (config.proba_cutout + config.proba_cutin):
                 from_skeleton=True
                 patch_size = config.patch_size_cutout
             else:

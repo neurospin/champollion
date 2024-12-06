@@ -17,8 +17,8 @@ subjects_extremity_all: /neurospin/dico/data/deep_folding/current/datasets/UkBio
 crop_file_suffix: _cropped_skeleton.nii.gz
 pickle_benchmark: null
 train_val_csv_file: ${dataset_folder}/UkBioBank40/L_subjects.csv
-subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank40/participants_labels.csv # doesn't exist
+subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank40/participants_labels.csv
 subject_column_name: Subject
 mask_path: ${dataset_folder}/UkBioBank40/crops/2mm/deMatos./Lmask.npy
-flip_dataset: False
+flip_dataset: false
 input_size: (1, 41, 65, 37)

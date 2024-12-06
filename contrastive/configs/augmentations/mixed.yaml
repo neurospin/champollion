@@ -23,6 +23,8 @@ keep_proba_per_branch: 0.7
 keep_proba_global: 1.
 mask_constraint: True
 offset_proba_translation_only: 0. # offset to maintain a value if proba_augmentation is high.
-proba_trim: 0.3
+proba_trimdepth: 0.3
+proba_trimextremities: 0.3
 proba_cutout: 0.3
+proba_cutin: 0.3
 redefine_bottom: True

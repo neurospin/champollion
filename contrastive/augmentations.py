@@ -984,8 +984,9 @@ class TrimDepthTensor(object):
     Then the scale is 100 = 2mm.
     """
 
-    def __init__(self, sample_distbottom, sample_foldlabel,
-                 max_distance, delta, input_size, keep_extremity, uniform, binary, binary_proba=0.5):
+    def __init__(self, sample_distbottom, sample_foldlabel, max_distance, delta,
+                 input_size, keep_extremity, uniform, binary, binary_proba=0.5,
+                 pepper=0.5, redefine_bottom=False):
         self.max_distance = max_distance
         self.delta = delta
         self.input_size = input_size
@@ -994,6 +995,8 @@ class TrimDepthTensor(object):
         self.uniform=uniform
         self.binary=binary
         self.binary_proba=binary_proba
+        self.pepper=pepper
+        self.redefine_bottom=redefine_bottom
         if keep_extremity=='random':
             np.random.seed()
             r = np.random.randint(2)
@@ -1054,10 +1057,16 @@ class TrimDepthTensor(object):
                     # define distbottom pour la branche !
                     arr_distbottom_branch = arr_distbottom * (arr_trimmed_branch != 0)
                     # get smallest distbottom value + delta margin and replace topological value
-                    arr_trimmed_branch[(arr_distbottom_branch <= threshold + self.delta)&(arr_distbottom_branch > threshold)]=30
+                    if self.redefine_bottom:
+                        arr_trimmed_branch[(arr_distbottom_branch <= threshold + self.delta)&(arr_distbottom_branch > threshold)]=30
                 arr_trimmed_branches += arr_trimmed_branch
             arr_trimmed = arr_trimmed_branches.copy()
 
+        trimmed_vx = np.logical_xor(arr_trimmed!=0, arr_skel!=0)
+        pepper = (np.random.rand(*trimmed_vx.shape) > self.pepper).astype('float64')
+        # add topological values to pepper before adding to trimmed skel
+        pepper = np.multiply(pepper, arr_skel)
+        arr_trimmed += np.multiply(trimmed_vx, pepper)
         
         arr_trimmed = arr_trimmed.astype('float32')
         #np.save('/volatile2/jl277509/visu_augmentations/sub_new/skel_trimdepth.npy', arr_trimmed)

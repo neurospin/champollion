@@ -213,10 +213,12 @@ def transform_trimdepth(sample_distbottom, sample_foldlabel,
                                        max_distance=config.max_distance,
                                        delta=config.trimdepth_delta,
                                        input_size=input_size,
-                                       keep_extremity=config.keep_extremity,
+                                       keep_extremity=config.keep_extremity_trimdepth,
                                        uniform=config.uniform_trim,
                                        binary=config.binary_trim,
-                                       binary_proba=config.binary_proba_trim),
+                                       binary_proba=config.binary_proba_trim,
+                                       pepper=config.proba_pepper_trimdepth,
+                                       redefine_bottom=config.redefine_bottom),
                        BinarizeTensor(),
                        TrimCropEdges(max_n_voxel=config.vx_crop_edges,
                                      ignore_axis=config.ignore_axis_trim),
@@ -268,7 +270,7 @@ def transform_highlightextremities(sample_extremities, sample_foldlabel,
                                                 input_size=input_size,
                                                 protective_structure=np.expand_dims(ball(config.ball_radius), axis=-1),
                                                 p=config.proba_trimedges,
-                                                pepper=config.proba_pepper),
+                                                pepper=config.proba_pepper_trimedges),
                        TrimCropEdges(max_n_voxel=config.vx_crop_edges,
                                      ignore_axis=config.ignore_axis_trim),
                        FlipTensor(ignore_axis=config.ignore_axis_flip,
@@ -397,17 +399,19 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
         pass
     else:
         r = np.random.uniform()
-        if r < config.proba_augmentation:
+        if r < config.proba_trim:
             transforms_list.append(
                 TrimDepthTensor(sample_distbottom=sample_distbottom,
                                 sample_foldlabel=sample_foldlabel,
                                 max_distance=config.max_distance,
                                 delta=config.trimdepth_delta,
                                 input_size=input_size,
-                                keep_extremity=config.keep_extremity,
+                                keep_extremity=config.keep_extremity_trimdepth,
                                 uniform=config.uniform_trim,
                                 binary=config.binary_trim,
-                                binary_proba=config.binary_proba_trim)
+                                binary_proba=config.binary_proba_trim,
+                                pepper=config.proba_pepper_trimdepth,
+                                redefine_bottom=config.redefine_bottom)
             )
         r = np.random.uniform()
         if r < config.proba_augmentation:
@@ -417,10 +421,10 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                             input_size=input_size,
                             protective_structure=np.expand_dims(ball(config.ball_radius), axis=-1),
                             p=config.proba_trimedges,
-                            pepper=config.proba_pepper)
+                            pepper=config.proba_pepper_trimedges)
             )
         r = np.random.uniform()
-        if r < 2*config.proba_augmentation:
+        if r < 2*config.proba_cutout:
             r = np.random.uniform()
             # cutout and cutin are mutually exclusive
             if r < 0.5:

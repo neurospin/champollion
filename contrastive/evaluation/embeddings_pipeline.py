@@ -247,9 +247,31 @@ if __name__ == "__main__":
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
                         verbose=False)  
     """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ABLATION_FIP",
+                        dataset_localization="neurospin",
+                        datasets=["with_reskel_distbottom/UKB40/FIP_right"],
+                        idx_region_evaluation = None,
+                        labels=['Left_PCS'],
+                        classifier_name='logistic',
+                        short_name='42433_ukb_FIP_right', overwrite=False, embeddings=True,
+                        embeddings_only=True, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='random', cv=3,
+                        splits_basedir='',
+                        verbose=False)
 
-    
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ALL_REGIONS/62_regions_1_epoch/logs/model_weights_evolution",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ABLATION_orbital",
+                        dataset_localization="neurospin",
+                        datasets=["with_reskel_distbottom/UKB40/ORBITAL_left"],
+                        idx_region_evaluation = None,
+                        labels=['Left_OFC'],
+                        classifier_name='logistic',
+                        short_name='42433_ukb_ORBITAL_left', overwrite=False, embeddings=True,
+                        embeddings_only=True, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='random', cv=3,
+                        splits_basedir='',
+                        verbose=False)
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ALL_REGIONS",
                         dataset_localization="neurospin",
                         datasets=["with_reskel_distbottom/UKB40/FIP_right"],
                         idx_region_evaluation = None,
@@ -260,8 +282,9 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='random', cv=3,
                         splits_basedir='',
                         verbose=False)
-    
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ALL_REGIONS/62_regions_1_epoch/logs/model_weights_evolution",
+    """
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ALL_REGIONS",
                         dataset_localization="neurospin",
                         datasets=["with_reskel_distbottom/UKB40/ORBITAL_left"],
                         idx_region_evaluation = None,
@@ -272,8 +295,9 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='random', cv=3,
                         splits_basedir='',
                         verbose=False)
-    
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/SOr_with_pretrain_all_regions/16-04-16_159/logs/model_weights_evolution",
+    """
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/SOr_with_pretrain_all_regions",
                         dataset_localization="neurospin",
                         datasets=["with_reskel_distbottom/UKB40/ORBITAL_left"],
                         idx_region_evaluation = None,
@@ -284,6 +308,20 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='random', cv=3,
                         splits_basedir='',
                         verbose=False)
+    """
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/4_regions_pretrain",
+                        dataset_localization="neurospin",
+                        datasets=["with_reskel_distbottom/UKB40/FIP_right"],
+                        idx_region_evaluation = None,
+                        labels=['Left_PCS'],
+                        classifier_name='logistic',
+                        short_name='42433_ukb_FIP_right', overwrite=True, embeddings=True,
+                        embeddings_only=True, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='random', cv=3,
+                        splits_basedir='',
+                        verbose=False)
+    """
     
     
     """embeddings_pipeline("/neurospin/dico/jlaval/Output/5_models_orbital_3_layer_proj",

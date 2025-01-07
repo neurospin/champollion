@@ -133,8 +133,8 @@ def transform_cutout(sample_foldlabel, mask_path, input_size, flip_dataset, conf
                                                 from_skeleton=True,
                                                 input_size=input_size,
                                                 keep_extremity=config.keep_extremity,
-                                                keep_proba_per_branch=config.keep_proba_per_branch,
-                                                keep_proba_global=config.keep_proba_global,
+                                                keep_proba_per_branch=config.keep_proba_per_branch_cutout,
+                                                keep_proba_global=config.keep_proba_global_cutout,
                                                 patch_size=config.patch_size_cutout),
                        BinarizeTensor(),
                        TrimCropEdges(max_n_voxel=config.vx_crop_edges,
@@ -163,8 +163,8 @@ def transform_cutin(sample_foldlabel, mask_path, input_size, flip_dataset, confi
                                                 from_skeleton=False,
                                                 input_size=input_size,
                                                 keep_extremity=config.keep_extremity,
-                                                keep_proba_per_branch=config.keep_proba_per_branch,
-                                                keep_proba_global=config.keep_proba_global,
+                                                keep_proba_per_branch=config.keep_proba_per_branch_cutin,
+                                                keep_proba_global=config.keep_proba_global_cutin,
                                                 patch_size=config.patch_size_cutin),
                        BinarizeTensor(),
                        TrimCropEdges(max_n_voxel=config.vx_crop_edges,
@@ -430,9 +430,13 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
             if r < config.proba_cutout / (config.proba_cutout + config.proba_cutin):
                 from_skeleton=True
                 patch_size = config.patch_size_cutout
+                keep_proba_per_branch=config.keep_proba_per_branch_cutout
+                keep_proba_global=config.keep_proba_global_cutout
             else:
                 from_skeleton=False
                 patch_size = config.patch_size_cutin
+                keep_proba_per_branch=config.keep_proba_per_branch_cutin
+                keep_proba_global=config.keep_proba_global_cutin
             mask = np.load(mask_path)
             transforms_list.append(
                 PartialCutOutTensor_Roll(sample_foldlabel,
@@ -441,8 +445,8 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                                          from_skeleton=from_skeleton,
                                          input_size=input_size,
                                          keep_extremity=config.keep_extremity,
-                                         keep_proba_per_branch=config.keep_proba_per_branch,
-                                         keep_proba_global=config.keep_proba_global,
+                                         keep_proba_per_branch=keep_proba_per_branch,
+                                         keep_proba_global=keep_proba_global,
                                          patch_size=patch_size)
             )
     transforms_list.append(BinarizeTensor())

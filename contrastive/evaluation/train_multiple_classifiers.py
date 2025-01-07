@@ -329,7 +329,7 @@ def train_one_classifier(config, inputs, subjects, i=0):
         r2 = r2_score(Y, val_pred)
         mse = mean_squared_error(Y, val_pred)
         mae = mean_absolute_error(Y, val_pred)
-        reg_auc = regression_roc_auc_score(Y, val_pred, num_rounds=50000)
+        reg_auc = regression_roc_auc_score(Y, val_pred, num_rounds=1000) # ignore this score
         pred_vs_true = np.vstack((Y,val_pred)).T
         outputs['pred_vs_true'] = pred_vs_true
         outputs['MSE'] = mse
@@ -447,7 +447,7 @@ def train_n_repeat_classifiers(config, subset='full'):
     X[X.columns] = scaler.fit_transform(X)
     if 'label_type' in config.keys() and config['label_type']=='continuous':
         Y= Y.to_numpy().reshape(-1, 1)
-        Y = scaler.fit_transform(Y)
+        #Y = scaler.fit_transform(Y) # do not normalize, so that MAE is interpretable
         Y = Y.reshape(-1)
         Y = pd.Series(Y)
     inputs['X'] = X

@@ -415,10 +415,11 @@ class ContrastiveDatasetFusion():
         else:
             regs = range(len(filenames))
             input_sizes = [self.config.data[reg].input_size for reg in regs]
-            mask_paths = [self.config.data[reg].mask_path for reg in regs]
+            cutout_mask_paths = [self.config.data[reg].cutout_mask_path for reg in regs]
+            cutin_mask_paths = [self.config.data[reg].cutin_mask_path for reg in regs]
             flips = [self.config.data[reg].flip_dataset for reg in regs]
         # compute the transforms
-        for reg, mask_path, input_size, flip in zip(regs, mask_paths, input_sizes, flips):
+        for reg, cutout_mask_path, cutin_mask_path, input_size, flip in zip(regs, cutout_mask_paths, cutin_mask_paths, input_sizes, flips):
             if self.transform:
                 # mix of branch clipping, cutout, cutin, trimdepth, and trimextremities
                 if self.config.random_choice:
@@ -426,7 +427,8 @@ class ContrastiveDatasetFusion():
                         sample_foldlabels[reg],
                         sample_distbottoms[reg],
                         sample_extremities[reg],
-                        mask_path=mask_path,
+                        cutout_mask_path=cutout_mask_path,
+                        cutin_mask_path=cutin_mask_path,
                         input_size=input_size,
                         flip_dataset=flip,
                         config=self.config)
@@ -434,7 +436,8 @@ class ContrastiveDatasetFusion():
                         sample_foldlabels[reg],
                         sample_distbottoms[reg],
                         sample_extremities[reg],
-                        mask_path=mask_path,
+                        cutout_mask_path=cutout_mask_path,
+                        cutin_mask_path=cutin_mask_path,
                         input_size=input_size,
                         flip_dataset=flip,
                         config=self.config)
@@ -443,14 +446,16 @@ class ContrastiveDatasetFusion():
                         sample_foldlabels[reg],
                         sample_distbottoms[reg],
                         sample_extremities[reg],
-                        mask_path=mask_path,
+                        cutout_mask_path=cutout_mask_path,
+                        cutin_mask_path=cutin_mask_path,
                         input_size=input_size,
                         config=self.config)
                     transform2 = transform_mixed(
                         sample_foldlabels[reg],
                         sample_distbottoms[reg],
                         sample_extremities[reg],
-                        mask_path=mask_path,
+                        cutout_mask_path=cutout_mask_path,
+                        cutin_mask_path=cutin_mask_path,
                         input_size=input_size,
                         config=self.config)
                 # branch clipping

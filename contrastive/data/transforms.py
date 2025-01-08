@@ -369,7 +369,7 @@ def transform_translation(input_size, flip_dataset, config):
 
 def transform_random(sample_foldlabel,
                      sample_distbottom, sample_extremities,
-                     mask_path, input_size, flip_dataset, config):
+                     cutout_mask_path, cutin_mask_path, input_size, flip_dataset, config):
     np.random.seed()
     alpha = np.random.uniform()
     if alpha < config.distribution[0]:
@@ -377,9 +377,9 @@ def transform_random(sample_foldlabel,
                                    sample_foldlabel,
                                    input_size, flip_dataset, config)
     elif alpha < config.distribution[1]:
-        return transform_cutout(sample_foldlabel, mask_path, input_size, flip_dataset, config)
+        return transform_cutout(sample_foldlabel, cutout_mask_path, input_size, flip_dataset, config)
     elif alpha < config.distribution[2]:
-        return transform_cutin(sample_foldlabel, mask_path, input_size, flip_dataset, config)
+        return transform_cutin(sample_foldlabel, cutin_mask_path, input_size, flip_dataset, config)
     elif alpha < config.distribution[3]:
         return transform_highlightextremities(sample_extremities,
                                               sample_foldlabel,
@@ -389,7 +389,7 @@ def transform_random(sample_foldlabel,
     
 
 def transform_mixed(sample_foldlabel, sample_distbottom,
-                    sample_extremities, mask_path, input_size, config):
+                    sample_extremities, cutout_mask_path, cutin_mask_path, input_size, config):
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value)]
@@ -429,19 +429,22 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
             # cutout and cutin are mutually exclusive
             if r < config.proba_cutout / (config.proba_cutout + config.proba_cutin):
                 from_skeleton=True
-                patch_size = config.patch_size_cutout
+                patch_size=config.patch_size_cutout
                 keep_proba_per_branch=config.keep_proba_per_branch_cutout
                 keep_proba_global=config.keep_proba_global_cutout
+                mask_constraint=False
+                mask=None
             else:
                 from_skeleton=False
-                patch_size = config.patch_size_cutin
+                patch_size=config.patch_size_cutin
                 keep_proba_per_branch=config.keep_proba_per_branch_cutin
                 keep_proba_global=config.keep_proba_global_cutin
-            mask = np.load(mask_path)
+                mask_constraint=config.mask_constraint
+                mask=np.load(cutin_mask_path)
             transforms_list.append(
                 PartialCutOutTensor_Roll(sample_foldlabel,
                                          mask,
-                                         mask_constraint=config.mask_constraint,
+                                         mask_constraint=mask_constraint,
                                          from_skeleton=from_skeleton,
                                          input_size=input_size,
                                          keep_extremity=config.keep_extremity,

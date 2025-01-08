@@ -248,8 +248,8 @@ if __name__ == "__main__":
     
     """
     
-    
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/orbital_left_v1_keep_bottom",
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/2024-12-01",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
                         idx_region_evaluation = None,
@@ -257,10 +257,50 @@ if __name__ == "__main__":
                         classifier_name='logistic',
                         short_name='troiani', overwrite=True, embeddings=True,
                         embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='custom', cv=3,
+                        subsets=['full'], epochs=range(0,60,10), split='custom', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
                         verbose=False)
-    
+    """
+
+    """    
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/test_01_08",
+                    dataset_localization="neurospin",
+                    datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
+                    idx_region_evaluation = None,
+                    labels=['Left_OFC'],
+                    classifier_name='logistic',
+                    short_name='troiani', overwrite=True, embeddings=True,
+                    embeddings_only=False, use_best_model=False,
+                    subsets=['full'], epochs=[None], split='custom', cv=3,
+                    splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
+                    verbose=False)
+    """
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/orbital_no_domain_specific_augm",
+                    dataset_localization="neurospin",
+                    datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
+                    idx_region_evaluation = None,
+                    labels=['Left_OFC'],
+                    classifier_name='logistic',
+                    short_name='troiani', overwrite=True, embeddings=True,
+                    embeddings_only=False, use_best_model=False,
+                    subsets=['full'], epochs=[None], split='custom', cv=3,
+                    splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
+                    verbose=False)
+    """
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/4_regions_pretrain",
+                    dataset_localization="neurospin",
+                    datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
+                    idx_region_evaluation = None,
+                    labels=['Left_OFC'],
+                    classifier_name='logistic',
+                    short_name='troiani', overwrite=True, embeddings=True,
+                    embeddings_only=False, use_best_model=False,
+                    subsets=['full'], epochs=[None], split='custom', cv=3,
+                    splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
+                    verbose=False)
+    """
     """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/10_regions_flip_acc3",
                         dataset_localization="neurospin",
@@ -290,7 +330,7 @@ if __name__ == "__main__":
     """
 
     """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/CINGULATE_40k",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/CINGULATE_regular_augm",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/cingulate_right_ACCpatterns_custom"],
         idx_region_evaluation = None,
@@ -301,7 +341,6 @@ if __name__ == "__main__":
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/ACCpatterns_subjects_train_split_',
         verbose=False)
     """
-
     
     """
     embeddings_pipeline('/neurospin/dico/jlaval/Output/CINGULATE_40k',
@@ -330,21 +369,8 @@ if __name__ == "__main__":
     """
 
     # custom cv (80%)
-    
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/FIP_right_v1_keep_bottom",
-                        dataset_localization="neurospin",
-                        datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
-                        idx_region_evaluation = None,
-                        labels=['Right_FIP'],
-                        classifier_name='logistic',
-                        short_name='FIP_right', overwrite=True, embeddings=True,
-                        embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='custom', cv=3,
-                        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
-                        verbose=False)
-    
     """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/FIP_right_v1_keep_bottom",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/FIP_test_12_16",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
                         idx_region_evaluation = None,
@@ -356,6 +382,44 @@ if __name__ == "__main__":
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
                         verbose=False)
     """
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/FIP_cutin_and_trim",
+                        dataset_localization="neurospin",
+                        datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
+                        idx_region_evaluation = None,
+                        labels=['Right_FIP'],
+                        classifier_name='logistic',
+                        short_name='FIP_right', overwrite=True, embeddings=True,
+                        embeddings_only=False, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='custom', cv=3,
+                        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
+                        verbose=False)
+    """
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ABLATION_FIP",
+                        dataset_localization="neurospin",
+                        datasets=["julien/UKB40/sparse_load/FIP_right_UKB40_sparse_load"],
+                        idx_region_evaluation = None,
+                        labels=['Age'],
+                        classifier_name='logistic',
+                        short_name='42433_ukb_FIP_right', overwrite=True, embeddings=True,
+                        embeddings_only=False, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='random', cv=5,
+                        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
+                        verbose=False)
+    """
+    
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/test_01_08",
+                        dataset_localization="neurospin",
+                        datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
+                        idx_region_evaluation = None,
+                        labels=['Right_FIP'],
+                        classifier_name='logistic',
+                        short_name='FIP_right', overwrite=True, embeddings=True,
+                        embeddings_only=False, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='custom', cv=3,
+                        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
+                        verbose=False)
     
     # full FIP dataset (390)
     """
@@ -441,18 +505,30 @@ if __name__ == "__main__":
     """
 
     """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/SC-sylv_left_v1",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/SC-sylv_left",
         dataset_localization="neurospin",
-        datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_hcp_custom"],
+        datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_isomap"],
         idx_region_evaluation=None,
         labels=[f'Isomap_central_left_dim{k}' for k in range(1,7)],
+        short_name='hcp_isomap', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
+        subsets=['full'], epochs=[None], split='random', cv=5,
+        splits_basedir='',
+        verbose=False)
+    """
+
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/SC-sylv_12-16",
+        dataset_localization="neurospin",
+        datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_ukb_morpho"],
+        idx_region_evaluation=None,
+        labels=['Mean_depth_talairach'],
         short_name='troiani', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['full'], epochs=[None], split='custom', cv=3,
+        subsets=['full'], epochs=[None], split='random', cv=3,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
         verbose=False)
-
-
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/SC-sylv_left_v1",
+    """
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/SC-sylv_left",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_hcp_train_test"],
         idx_region_evaluation=None,
@@ -462,9 +538,22 @@ if __name__ == "__main__":
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
         verbose=False)
     """
+    
+    ## SC-sylv_right UKB
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/SC-sylv_right",
+        dataset_localization="neurospin",
+        datasets=["julien/MICCAI_2024/training/SC-sylv_right_40k"],
+        idx_region_evaluation=None,
+        labels=['Sex'],
+        short_name='ukb40', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
+        subsets=['full'], epochs=[None], split='random', cv=3,
+        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
+        verbose=False)
+    """
     ## imagen
     """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/imagen_polar_left",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/4_regions_pretrain",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/deMatos_polar_left_imagen_random"],
                         idx_region_evaluation = None,

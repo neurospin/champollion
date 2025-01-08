@@ -512,6 +512,7 @@ class PartialCutOutTensor_Roll(object):
 
         arr = tensor.numpy()
         arr_foldlabel = self.sample_foldlabel.numpy()
+        # TODO: mask foldlabel with arr
         img_shape = np.array(arr.shape)
         if isinstance(self.patch_size, int):
             proportion = (1/100*self.patch_size)**(1/(len(img_shape)-1))
@@ -522,7 +523,7 @@ class PartialCutOutTensor_Roll(object):
             
         else:
             size = np.copy(self.patch_size)
-        assert len(size) == len(img_shape), "Incorrect patch dimension."
+        assert len(size) == len(img_shape), f"Incorrect patch dimension : {size}"
         for ndim in range(len(img_shape)):
             if size[ndim] > img_shape[ndim] or size[ndim] < 0:
                 size[ndim] = img_shape[ndim]
@@ -537,18 +538,24 @@ class PartialCutOutTensor_Roll(object):
         else:
             np.random.seed()
             if self.mask_constraint:
-                boolean = True
+                #boolean = True
                 # loop until the center of the crop is inside the mask
-                while boolean or not self.mask[tuple(middle_cutout)]:
-                    boolean = False
-                    start_cutout = []
-                    middle_cutout = []
-                    for ndim in range(len(img_shape)):
-                        delta_before = np.random.randint(0, img_shape[ndim])
-                        start_cutout.append(delta_before)
+                #while boolean or not self.mask[tuple(middle_cutout)]:
+                #    boolean = False
+                #    start_cutout = []
+                #    middle_cutout = []
+                #    for ndim in range(len(img_shape)):
+                #        delta_before = np.random.randint(0, img_shape[ndim])
+                #        start_cutout.append(delta_before)
                         # define middle of cutout, taking roll into account
-                        middle_pos = int((delta_before + size[ndim] // 2)%img_shape[ndim])
-                        middle_cutout.append(middle_pos)       
+                #        middle_pos = int((delta_before + size[ndim] // 2)%img_shape[ndim])
+                #        middle_cutout.append(middle_pos)
+                # alt : use mask as proba sampling # TODO : implement properly and distinguish cutin and cutout
+                # normalize the mask
+                mask = self.mask / np.sum(self.mask)
+                i = np.random.choice(np.arange(mask.size), p=mask.ravel())
+                middle_pos = np.unravel_index(i, mask.shape)
+                start_cutout = [(middle_pos[ndim] - size[ndim] // 2)%img_shape[ndim] for ndim in range(len(img_shape))]
             else:
                 start_cutout = []
                 for ndim in range(len(img_shape)):
@@ -1218,6 +1225,10 @@ class HighlightExtremitiesTensor(object):
         indexes =  np.unique(indexed_branches)
         assert (len(indexes)>1), 'No branch in foldlabel'
         # loop over branches
+        # TODO: compute intersection between arr_extremities and foldlabel
+        # here to loop only on selected idxs.
+        # this would avoid computing arr_equal too many times
+        # find unique indexes in np.multiply(indexed_branches, arr_extremities)
         for index in indexes[1:]:
             mask_branch = indexed_branches==index
             branch = arr_skel * mask_branch

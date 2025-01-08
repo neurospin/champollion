@@ -20,7 +20,8 @@ test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/union_cust
 #splits_basedir: /neurospin/dico/data/deep_folding/current/datasets/hcp/hcp_subjects_train_split_
 subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/hcp_OFC_labels.csv
 subject_column_name: 'Subject'
-mask_path: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/S.Or./mask/Lmask.npy
+cutout_mask_path: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/S.Or./mask/Lmask.npy
+cutin_mask_path: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/S.Or./mask/Lmask.npy
 flip_dataset: False
 input_size: (1, 30, 38, 22)
 #input_size: (1, 39, 32, 17)

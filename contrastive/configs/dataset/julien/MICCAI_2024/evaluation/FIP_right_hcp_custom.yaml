@@ -14,6 +14,7 @@ test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/union_
 #splits_basedir: /neurospin/dico/data/deep_folding/current/datasets/hcp/hcp_subjects_train_split_
 subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/FIP_labels.csv
 subject_column_name: 'Subject'
-mask_path:
+cutout_mask_path:
+cutin_mask_path:
 flip_dataset: False
 input_size: (1, 39, 45, 44)

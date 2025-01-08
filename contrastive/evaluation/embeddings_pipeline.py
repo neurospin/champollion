@@ -221,7 +221,7 @@ if __name__ == "__main__":
     #                     subsets=['full'], epochs=[None], split='custom', cv=3,
     #                     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
     #                     verbose=False)
-
+    """
     embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Output/2024-08-13",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
@@ -232,7 +232,17 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='custom', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
                         verbose=False)
-
+    """
+    embeddings_pipeline("/volatile/jl277509/Runs/02_STS_babies/Program/Output/ISOMAP_CENTRAL",
+                            dataset_localization="neurospin",
+                            datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_hcp_isomap"],
+                            labels=[f'Isomap_central_left_dim{k}' for k in range(1,7)],
+                            classifier_name='svm',
+                            short_name='hcp_isomap', overwrite=True, embeddings=True,
+                            embeddings_only=False, use_best_model=False,
+                            subsets=['full'], epochs=[None], split='random', cv=5,
+                            splits_basedir='',
+                            verbose=False)
     # embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/ORBITAL_BT",
     #                     dataset_localization="neurospin",
     #                     datasets=["with_reskel_distbottom/2mm/schiz_extended/ORBITAL_left"],

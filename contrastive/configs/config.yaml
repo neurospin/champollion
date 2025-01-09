@@ -3,7 +3,7 @@ defaults:
   - augmentations: random # translation_only
   - backbone: ConvNet
   - classifier: svm
-  - dataset_localization: kraken_Run70
+  - dataset_localization: neurospin
   # - dataset/with_reskel_distbottom/2mm/UKB/STs_left
   # - dataset/with_reskel_distbottom/2mm/UKB/SC-sylv_left
   # - dataset/with_reskel_distbottom/2mm/UKB/FIP_right

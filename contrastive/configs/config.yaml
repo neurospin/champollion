@@ -3,7 +3,8 @@ defaults:
   - augmentations: random # translation_only
   - backbone: ConvNet
   - classifier: svm
-  - dataset_localization: neurospin
+  - dataset_localization: joel_Run70
+  - dataset/with_reskel_distbottom/2mm/imagen/FIP_right
   # - dataset/with_reskel_distbottom/2mm/UKB/STs_left
   # - dataset/with_reskel_distbottom/2mm/UKB/SC-sylv_left
   # - dataset/with_reskel_distbottom/2mm/UKB/FIP_right
@@ -29,7 +30,7 @@ defaults:
   - model: SimCLR_fusion
   - platform: cuda_not_brainvisa
   - projection_head: relu
-  - trainer: default
+  - trainer: test
   - wandb: identity
   - override hydra/job_logging: custom
 

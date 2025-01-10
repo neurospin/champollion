@@ -50,6 +50,7 @@ import wandb
 import omegaconf
 from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
+from time import time
 
 from contrastive.data.datamodule import DataModule_Learning
 from contrastive.models.contrastive_learner_fusion import ContrastiveLearnerFusion
@@ -80,6 +81,8 @@ def get_train_seed():
 
 @hydra.main(config_name='config', version_base="1.1", config_path="configs")
 def train(config):
+    
+    t_start = time()
     config = process_config(config)
 
     # set the number of working cpus
@@ -180,8 +183,10 @@ def train(config):
         #auto_lr_find=True
         )
 
+    t_config = time()
     # start training
     trainer.fit(model, data_module, ckpt_path=config.checkpoint_path)
+    t_end = time()
     log.info("Fitting is done")
 
     # Not used and take far too much disk space:
@@ -191,7 +196,8 @@ def train(config):
     # print(f"Full model successfully saved at {os.path.abspath(save_path)}.")
 
     print(f"End of training for model {os.path.abspath('./')}")
-
+    print(f"Config time: {t_config - t_start}")
+    print(f"Training time: {t_end - t_config}")
 
 if __name__ == "__main__":
     omegaconf.OmegaConf.register_new_resolver("get_train_seed", get_train_seed)

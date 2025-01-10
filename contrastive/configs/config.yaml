@@ -24,7 +24,7 @@ defaults:
   #- dataset/local_julien/old/STs_UkBioBank.yaml
   # - dataset/occipital_schiz_L_strat_bis_threshold1
   - embeddings: embeddings
-  - hydra: local
+  - hydra: tmp
   - label: diagnosis
   - mode: encoder
   - model: SimCLR_fusion

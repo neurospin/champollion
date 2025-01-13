@@ -60,7 +60,7 @@ from contrastive.utils.logs import set_root_logger_level, \
     set_file_log_handler, set_file_logger
 
 tb_logger = pl_loggers.TensorBoardLogger('logs')
-writer = SummaryWriter()
+writer = SummaryWriter(log_dir="/tmp/runs")
 log = set_file_logger(__file__)
 
 """

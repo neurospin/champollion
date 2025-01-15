@@ -11,5 +11,5 @@ hydra:
     dir: ${sweep_dir}/${run_time}_${get_train_seed:}
   sweep:
     dir: ${sweep_dir}
-    subdir: ${run_time}_${hydra.job.num}
+    subdir: ${run_time}_${get_train_seed:}_${hydra.job.num}
 checkpoint_dir: output_dir

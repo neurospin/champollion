@@ -92,7 +92,7 @@ class ConvNet(pl.LightningModule):
     def __init__(self, in_channels=1, encoder_depth=3, block_depth=2,
                  num_representation_features=256, linear=True,
                  adaptive_pooling=None, filters=[16,32,64], initial_kernel_size=3,
-                 drop_rate=0.1, memory_efficient=False,
+                 initial_stride=1, max_pool=False, drop_rate=0.1, memory_efficient=False,
                  in_shape=None):
 
         super(ConvNet, self).__init__()
@@ -107,6 +107,8 @@ class ConvNet(pl.LightningModule):
         self.filters = filters
         self.block_depth = block_depth
         self.initial_kernel_size = initial_kernel_size
+        self.initial_stride = initial_stride
+        self.max_pool = max_pool
         assert len(self.filters) >= encoder_depth, "Incomplete filters list given."
 
         if adaptive_pooling is None:
@@ -125,16 +127,19 @@ class ConvNet(pl.LightningModule):
                 name = layer_name[depth]
                 in_channels = 1 if (step == 0 and depth==0) else out_channels
                 kernel_size = self.initial_kernel_size if (step == 0 and depth==0) else 3
+                stride = self.initial_stride if (step==0 and depth==0) else 1
                 out_channels = filters[step]
                 #out_channels = 16 if step == 0 else 16 * (2**step)
                 modules_encoder.append(
                     (f'conv{step}{name}',
                     nn.Conv3d(in_channels, out_channels,
-                            kernel_size=kernel_size, stride=1, padding=kernel_size//2)
+                            kernel_size=kernel_size, stride=stride, padding=kernel_size//2)
                     ))
                 modules_encoder.append(
                     (f'norm{step}{name}', nn.BatchNorm3d(out_channels)))
                 modules_encoder.append((f'LeakyReLU{step}{name}', nn.LeakyReLU()))
+                if (self.max_pool and step == 0 and depth==0):
+                    modules_encoder.append(('MaxPool', nn.MaxPool3d((2,2,2))))
                 modules_encoder.append(
                     (f'DropOut{step}{name}', nn.Dropout3d(p=drop_rate)))
 

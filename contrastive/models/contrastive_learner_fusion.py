@@ -106,6 +106,8 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     filters=config.filters,
                     block_depth=config.block_depth,
                     initial_kernel_size=config.initial_kernel_size,
+                    initial_stride=config.initial_stride,
+                    max_pool=config.max_pool,
                     num_representation_features=config.backbone_output_size,
                     linear = config.linear_in_backbone,
                     adaptive_pooling=config.adaptive_pooling,

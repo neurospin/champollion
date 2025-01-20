@@ -7,7 +7,8 @@ initial_stride: 1
 initial_kernel_size: 7
 kernel_size: 3
 nb_blocks: 4
-adaptive_pooling: ['average', [3,3,3]]
+adaptive_pooling: !!null
+#adaptive_pooling: ['average', [3,3,3]]
 #original config
 #depth: [3,3,9,3]
 #dims: [96,192,384,768]

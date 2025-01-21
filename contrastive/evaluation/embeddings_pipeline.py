@@ -222,7 +222,7 @@ if __name__ == "__main__":
     #                     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
     #                     verbose=False)
 
-    embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V0/SFint-FCMant_left",
+    embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V0/SFint-FCMant_left/trained_on_UKB40",
                         dataset_localization="neurospin",
                         datasets=["with_reskel_distbottom/2mm/UKB40/SFint-FCMant_left"],
                         labels=['Left_PCS'],
@@ -233,6 +233,7 @@ if __name__ == "__main__":
                         splits_basedir='',
                         verbose=False)
 
+    """
     embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V0/SFint-FCMant_right",
                         dataset_localization="neurospin",
                         datasets=["with_reskel_distbottom/2mm/UKB40/SFint-FCMant_right"],
@@ -243,6 +244,7 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='random', cv=3,
                         splits_basedir='',
                         verbose=False)
+    """
 
     # embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/ORBITAL_BT",
     #                     dataset_localization="neurospin",

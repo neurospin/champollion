@@ -307,7 +307,7 @@ if __name__ == "__main__":
     #                     splits_basedir='',
     #                     verbose=False)
     
-    embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V0/SC-sylv_right",
+    embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V0",
                         dataset_localization="neurospin",
                         datasets_root="with_reskel_distbottom/2mm/UKB40",
                         datasets=["toto"],
@@ -315,7 +315,7 @@ if __name__ == "__main__":
                         classifier_name='logistic',
                         short_name='ukb40', overwrite=False, embeddings=True,
                         embeddings_only=True, use_best_model=False,
-                        subsets=['full'], epochs=range(0, 120, 10), split='random', cv=5,
+                        subsets=['full'], epochs=[None], split='random', cv=5,
                         splits_basedir='',
                         verbose=False)
     

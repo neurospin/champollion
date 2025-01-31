@@ -22,4 +22,6 @@ subject_column_name: Subject
 cutout_mask_path:
 cutin_mask_path: ${dataset_folder}/UkBioBank40/crops/2mm/S.Or./Lmask.npy
 flip_dataset: false
+mean: 0.02611 # TODO redo it with left !!
+std: 0.15946
 input_size: (1, 30, 38, 22)

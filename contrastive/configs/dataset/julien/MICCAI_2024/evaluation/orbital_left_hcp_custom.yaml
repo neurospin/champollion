@@ -23,5 +23,7 @@ subject_column_name: 'Subject'
 cutout_mask_path: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/S.Or./mask/Lmask.npy
 cutin_mask_path: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/crops/2mm/S.Or./mask/Lmask.npy
 flip_dataset: False
+mean: 0.02611
+std: 0.15946
 input_size: (1, 30, 38, 22)
 #input_size: (1, 39, 32, 17)

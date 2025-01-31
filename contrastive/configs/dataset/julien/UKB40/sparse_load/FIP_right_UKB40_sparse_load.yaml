@@ -22,4 +22,6 @@ subject_column_name: Subject
 cutout_mask_path:
 cutin_mask_path: ${dataset_folder}/UkBioBank40/crops/2mm/F.I.P./Rmask.npy # uniform proba
 flip_dataset: False
+mean: 0.02478
+std: 0.15546
 input_size: (1, 39, 45, 44)

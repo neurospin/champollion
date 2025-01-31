@@ -18,6 +18,7 @@ pickle_benchmark:
 train_val_csv_file: ${dataset_folder}/UkBioBank/subjects_full.csv
 subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank/sulcal_morphometry/UKB_21045_S.C.sylvian._left.csv ## TO CHANGE !!
 subject_column_name: 'Subject'
-mask_path:
+cutin_mask_path:
+cutout_mask_path:
 flip_dataset: False
 input_size: (1, 38, 36, 49)

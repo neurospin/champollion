@@ -148,6 +148,13 @@ def compute_embeddings(config, subsets=None):
                 model_dict[name].copy_(param)
 
         model.eval()
+        # TEMP : PRINT P
+        if 'backbones.0.encoder.GeneralizedAvgPoolPerMap_Mix.p' in model.state_dict().keys():
+            print(model.state_dict()['backbones.0.encoder.GeneralizedAvgPoolPerMap_Mix.p'])
+        if 'backbones.0.encoder.GeneralizedAvgPoolPerMap_LNP.p' in model.state_dict().keys():
+            print(model.state_dict()['backbones.0.encoder.GeneralizedAvgPoolPerMap_LNP.p'])
+        if 'backbones.0.encoder.GeneralizedAvgPoolPerMap_Atten.p' in model.state_dict().keys():
+            print(model.state_dict()['backbones.0.encoder.GeneralizedAvgPoolPerMap_Atten.p'])
 
         # create folder where to save the embeddings
         embeddings_path = config.embeddings_save_path

@@ -51,6 +51,8 @@ from sklearn.metrics import roc_auc_score, r2_score
 from contrastive.augmentations import ToPointnetTensor
 from contrastive.backbones.densenet import DenseNet
 from contrastive.backbones.convnet import ConvNet
+from contrastive.backbones.convnet_test import ConvNet_Test
+from contrastive.backbones.convnet_transformer import ConvNet_Transformer
 from contrastive.backbones.resnet import ResNet, BasicBlock
 from contrastive.backbones.convnext import ConvNeXt
 #from contrastive.backbones.pointnet import PointNetCls
@@ -108,6 +110,41 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     initial_kernel_size=config.initial_kernel_size,
                     initial_stride=config.initial_stride,
                     max_pool=config.max_pool,
+                    num_representation_features=config.backbone_output_size,
+                    linear = config.linear_in_backbone,
+                    adaptive_pooling=config.adaptive_pooling,
+                    drop_rate=config.drop_rate,
+                    in_shape=config.data[i].input_size))
+        elif config.backbone_name == "convnet_test":
+            for i in range(n_datasets):
+                self.backbones.append(ConvNet_Test(
+                    encoder_depth=config.encoder_depth,
+                    filters=config.filters,
+                    block_depth=config.block_depth,
+                    initial_kernel_size=config.initial_kernel_size,
+                    initial_stride=config.initial_stride,
+                    max_pool=config.max_pool,
+                    num_representation_features=config.backbone_output_size,
+                    linear = config.linear_in_backbone,
+                    adaptive_pooling=config.adaptive_pooling,
+                    drop_rate=config.drop_rate,
+                    in_shape=config.data[i].input_size,
+                    init_min=config.init_min,
+                    init_max=config.init_max,
+                    coordconv_out_channels=config.coordconv_out_channels,
+                    scaling=config.scaling,
+                    with_r=config.with_r))
+        elif config.backbone_name == "convnet_transformer":
+            for i in range(n_datasets):
+                self.backbones.append(ConvNet_Transformer(
+                    encoder_depth=config.encoder_depth,
+                    filters=config.filters,
+                    block_depth=config.block_depth,
+                    initial_kernel_size=config.initial_kernel_size,
+                    initial_stride=config.initial_stride,
+                    max_pool=config.max_pool,
+                    nhead=config.nhead,
+                    num_transformer_layers=config.num_transformer_layers,
                     num_representation_features=config.backbone_output_size,
                     linear = config.linear_in_backbone,
                     adaptive_pooling=config.adaptive_pooling,

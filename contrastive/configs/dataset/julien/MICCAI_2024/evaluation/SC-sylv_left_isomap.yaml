@@ -14,4 +14,6 @@ subject_column_name: 'Subject'
 cutout_mask_path:
 cutin_mask_path:
 flip_dataset: False
+mean: 0.01759
+std: 0.13146
 input_size: (1, 38, 36, 49)

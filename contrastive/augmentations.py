@@ -183,6 +183,19 @@ class BinarizeTensor(object):
         arr[arr > 0] = 1
         return torch.from_numpy(arr)
     
+class NormalizeTensor(object):
+    """Brings mean to 0 and std to 1 (globally on the dataset)
+    """
+
+    def __init__(self, mean, std):
+        self.mean = mean
+        self.std = std
+    
+    def __call__(self, tensor):
+        arr = tensor.numpy()
+        arr = (arr - self.mean) / self.std
+        return torch.from_numpy(arr)
+    
 
 class FlipTensor(object):
     """

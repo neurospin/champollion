@@ -22,4 +22,6 @@ subject_column_name: Subject
 cutout_mask_path:
 cutin_mask_path: ${dataset_folder}/UkBioBank40/crops/2mm/S.C.-sylv./Lmask.npy
 flip_dataset: false
+mean: 0.01759
+std: 0.13146
 input_size: (1, 38, 36, 49)

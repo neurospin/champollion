@@ -307,8 +307,10 @@ def train_one_classifier(config, inputs, subjects, i=0):
 
     if 'label_type' in config.keys() and config['label_type']=='continuous':
         if config.classifier_name == 'logistic':
+            print('Using LinearRegression')
             model = LinearRegression()    
         else:
+            print('Using SVR')
             model = SVR(kernel='linear',max_iter=config.class_max_epochs,
                         C=0.01)
         if config.split=='train_test':

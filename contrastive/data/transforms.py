@@ -57,7 +57,8 @@ def transform_only_padding(input_size, flip_dataset, config):
                 SimplifyTensor(),
                 PaddingTensor(shape=input_size,
                               fill_value=config.fill_value),
-                BinarizeTensor()]
+                NormalizeTensor(config.data[0].mean, config.data[0].std)]
+                #BinarizeTensor()]
         if flip_dataset:
             transforms_list.append(FlipFirstAxisTensor())
         transforms_list.append(EndTensor())
@@ -452,7 +453,9 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                                          keep_proba_global=keep_proba_global,
                                          patch_size=patch_size)
             )
-    transforms_list.append(BinarizeTensor())
+    #transforms_list.append(BinarizeTensor())
+    transforms_list.append(NormalizeTensor(mean=config.data[0].mean, ## TODO: make it compatible with multiple datasets like cutin_mask
+                                           std=config.data[0].std))
     transforms_list.append(TranslateTensor(config.max_translation))
     
     return transforms.Compose(transforms_list)

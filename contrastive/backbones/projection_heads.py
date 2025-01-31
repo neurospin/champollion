@@ -26,7 +26,7 @@ class ProjectionHead(pl.LightningModule):
             if i == len(layers_shapes)-2:
                 pass
             else:
-                #layers.append((f'BatchNorm{i}', nn.BatchNorm1d(output_size)))
+                #layers.append((f'BatchNorm{i}', nn.BatchNorm1d(output_size))) # NB : batchnorm degrades perf
                 if activation == 'linear':
                     pass
                 elif activation == 'relu':
@@ -36,7 +36,7 @@ class ProjectionHead(pl.LightningModule):
                 else:
                     raise ValueError(f"The given activation '{activation}' is not \
     handled. Choose between 'linear', 'relu' or 'sigmoid'.")
-                layers.append((f'DropOut{i}', nn.Dropout(p=drop_rate)))
+                layers.append((f'DropOut{i}', nn.Dropout(p=drop_rate))) # TODO: use dropout only in supervised setting ?
             
             input_size = output_size
         

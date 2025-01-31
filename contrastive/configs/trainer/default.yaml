@@ -19,7 +19,7 @@ verbose: 1
 checking: False
 # Data split and subject choice
 seed: 1
-partition: [0.9, 0.1]
+partition: [0.99, 0.01]
 nb_subjects: -1
 random: False
 random_state: 25

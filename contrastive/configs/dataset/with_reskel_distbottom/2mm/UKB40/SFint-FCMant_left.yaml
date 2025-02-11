@@ -12,7 +12,7 @@ distbottom_all: ${dataset_folder}/UkBioBank40/crops/2mm/S.F.int.-F.C.M.ant./mask
 subjects_distbottom_all: ${dataset_folder}/UkBioBank40/crops/2mm/S.F.int.-F.C.M.ant./mask/Ldistbottom_subject.csv
 crop_file_suffix: _cropped_skeleton.nii.gz
 pickle_benchmark: 
-train_val_csv_file: ${dataset_folder}/UkBioBank40/42433_subjects.csv
+train_val_csv_file: ${dataset_folder}/UkBioBank40/21425_new_subjects.csv
 subject_labels_file: ${dataset_folder}/UkBioBank/participants.csv
 subject_column_name: 'participant_id'
 input_size: (1, 16, 55, 52)

@@ -222,17 +222,51 @@ if __name__ == "__main__":
     #                     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
     #                     verbose=False)
 
-    embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V0/SFint-FCMant_left/trained_on_UKB40",
+    # embeddings_pipeline("/neurospin/dico/adufournet/mycode/Output/CINGULATE_left",
+    #                     dataset_localization="neurospin",
+    #                     datasets=["antoine/cingulate_ACCpatterns_left"],
+    #                     labels=['Left_PCS'],
+    #                     classifier_name='svm',
+    #                     short_name='acc', overwrite=True, embeddings=True,
+    #                     embeddings_only=False, use_best_model=False,
+    #                     subsets=['full'], epochs=[None], split='train_test', cv=5,
+    #                     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/ACCpatterns_subjects_train_split_',
+    #                     verbose=False)
+
+    embeddings_pipeline("/neurospin/dico/adufournet/mycode/Output/CINGULATE_right",
                         dataset_localization="neurospin",
-                        datasets=["with_reskel_distbottom/2mm/UKB40/SFint-FCMant_left"],
-                        labels=['Left_PCS'],
+                        datasets=["antoine/cingulate_ACCpatterns_right"],
+                        labels=['Right_PCS'],
+                        classifier_name='svm',
+                        short_name='acc', overwrite=True, embeddings=True,
+                        embeddings_only=False, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='train_test', cv=5,
+                        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/ACCpatterns_subjects_train_split_',
+                        verbose=False)
+
+    """
+    embeddings_pipeline("/neurospin/dico/adufournet/mycode/Output/ORBITAL_right",
+                        dataset_localization="neurospin",
+                        datasets=["with_reskel_distbottom/2mm/UKB40/ORBITAL_right"],
+                        labels=['Right_PCS'],
                         classifier_name='logistic',
-                        short_name='random_embeddings_UKB', overwrite=False, embeddings=True,
+                        short_name='trained_on_UKB36WBA', overwrite=False, embeddings=True,
                         embeddings_only=True, use_best_model=False,
                         subsets=['full'], epochs=[None], split='random', cv=3,
                         splits_basedir='',
                         verbose=False)
 
+    embeddings_pipeline("/neurospin/dico/adufournet/mycode/Output/ORBITAL_left",
+                        dataset_localization="neurospin",
+                        datasets=["with_reskel_distbottom/2mm/UKB40/ORBITAL_left"],
+                        labels=['Left_OFC'],
+                        classifier_name='logistic',
+                        short_name='trained_on_UKB36WBA', overwrite=False, embeddings=True,
+                        embeddings_only=True, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='random', cv=3,
+                        splits_basedir='',
+                        verbose=False)
+    """
     """
     embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V0/SFint-FCMant_right",
                         dataset_localization="neurospin",

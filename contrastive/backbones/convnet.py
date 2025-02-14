@@ -7,6 +7,42 @@ import torch.nn.functional as F
 from torch import Tensor
 import numpy as np
 
+def ComputeOutputDim(dimension, depth):
+    """Compute the output resolution
+    """
+    if depth==0:
+        return dimension
+    else:
+        return(ComputeOutputDim(dimension//2+dimension%2, depth-1))
+
+class Conv3dSame(nn.Conv3d):
+
+    def calc_same_pad(self, i: int, k: int, s: int, d: int) -> int:
+        return max((np.ceil(i / s) - 1) * s + (k - 1) * d + 1 - i, 0)
+
+    def forward(self, x: Tensor) -> Tensor:
+        ih, iw, id = x.size()[-3:]
+
+        pad_h = self.calc_same_pad(i=ih, k=self.kernel_size[0], s=self.stride[0], d=self.dilation[0])
+        pad_w = self.calc_same_pad(i=iw, k=self.kernel_size[1], s=self.stride[1], d=self.dilation[1])
+        pad_d = self.calc_same_pad(i=id, k=self.kernel_size[2], s=self.stride[2], d=self.dilation[2])
+
+        if pad_h > 0 or pad_w > 0 or pad_d > 0:
+            x = F.pad(
+                x, [int(pad_d // 2), int(pad_d - pad_d // 2),
+                    int(pad_w // 2), int(pad_w - pad_w // 2),
+                    int(pad_h // 2), int(pad_h - pad_h // 2)]
+            )
+        return F.conv3d(
+            x,
+            self.weight,
+            self.bias,
+            self.stride,
+            self.padding,
+            self.dilation,
+            self.groups,
+        )
+
 
 class _DropoutNd(nn.Module):
     __constants__ = ['p', 'inplace']
@@ -113,9 +149,12 @@ class ConvNet(pl.LightningModule):
 
         if adaptive_pooling is None:
             # receptive field downsampled
-            self.z_dim_h = h//2**self.encoder_depth
-            self.z_dim_w = w//2**self.encoder_depth
-            self.z_dim_d = d//2**self.encoder_depth
+            #self.z_dim_h = h//2**self.encoder_depth
+            #self.z_dim_w = w//2**self.encoder_depth
+            #self.z_dim_d = d//2**self.encoder_depth
+            self.z_dim_h = ComputeOutputDim(h, self.encoder_depth)
+            self.z_dim_w = ComputeOutputDim(w, self.encoder_depth)
+            self.z_dim_d = ComputeOutputDim(d, self.encoder_depth)
             self.out_dim = self.z_dim_h*self.z_dim_w*self.z_dim_d
         else:
             self.out_dim = np.prod(adaptive_pooling[1])
@@ -146,8 +185,8 @@ class ConvNet(pl.LightningModule):
             name=layer_name[block_depth-1]
             modules_encoder.append(
                 (f'conv{step}{name}',
-                nn.Conv3d(out_channels, out_channels,
-                        kernel_size=4, stride=2, padding=1)
+                Conv3dSame(in_channels=out_channels, out_channels=out_channels,
+                        kernel_size=(3,3,3), stride=(2,2,2), groups=1, bias=True) ## TODO : kernel size 3, si pair, padding = 1, si impair padding = 0, mais il y a un biais car on prend + à gauche qu'à droite ??
                 ))
             modules_encoder.append(
                 (f'norm{step}{name}', nn.BatchNorm3d(out_channels)))

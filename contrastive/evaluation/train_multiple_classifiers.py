@@ -20,7 +20,7 @@ from functools import partial
 
 from sklearn.preprocessing import StandardScaler
 # from contrastive.models.binary_classifier import BinaryClassifier
-from sklearn.linear_model import LogisticRegression, LinearRegression
+from sklearn.linear_model import LogisticRegression, LinearRegression, ElasticNet
 from sklearn.svm import SVC, SVR
 from sklearn.neural_network import MLPClassifier
 
@@ -60,10 +60,10 @@ def load_embeddings(dir_path, labels_path, config, subset='full'):
         on. Usually either 'train', 'val', 'train_val', 'test' or 'test_intra'.
     """
     # load embeddings
-    if config.split=='custom':
+    if config.split is not None and config.split=='custom':
         embeddings = pd.read_csv(
                 dir_path+f'/custom_cross_val_embeddings.csv', index_col=0)
-    elif config.split=='random' or config.split=='train_test':
+    elif config.split is None or config.split=='random' or config.split=='train_test':
         # if targeting directly the target csv file
         if not os.path.isdir(dir_path):
             embeddings = pd.read_csv(dir_path, index_col=0)
@@ -121,6 +121,9 @@ def load_embeddings(dir_path, labels_path, config, subset='full'):
 
     embeddings = embeddings[embeddings.index.isin(labels.Subject)]
     embeddings.sort_index(inplace=True)
+    #drop duplicates here in case
+    embeddings = embeddings.reset_index().drop_duplicates(subset='ID', keep='first').set_index('ID')
+    labels = labels.drop_duplicates(subset='Subject', keep='first')
     if not embeddings.reset_index().ID.equals(labels.Subject):
         raise ValueError("Embeddings and labels do not have the same list of subjects")
     log.debug(f"sorted embeddings: {embeddings.head()}")
@@ -281,7 +284,9 @@ def train_one_classifier(config, inputs, subjects, i=0):
     outputs = {}
 
     #cv stratification
-    if config.split=='random':
+    if config.split is None or config.split=='train_test':
+        pass
+    elif config.split=='random':
         cv=config.cv
     elif config.split=='custom':
         if 'splits_basedir' not in config.keys():
@@ -300,18 +305,20 @@ def train_one_classifier(config, inputs, subjects, i=0):
             groups, X, Y = df['labels'], np.vstack(df['X'].values), df['Y']
             logo = LeaveOneGroupOut()
             cv = logo.split(X, Y, groups=groups)
-    elif config.split=='train_test':
-        pass
     else:
         raise ValueError("Wrong split config specified")
 
     if 'label_type' in config.keys() and config['label_type']=='continuous':
-        if config.classifier_name == 'logistic':
-            model = LinearRegression()    
+        if config.classifier_name == 'logistic': # TODO: change the parameter name for Elastic
+            model = LinearRegression() # TODO: ElasticNet instead + add gridsearch     
+            #model = ElasticNet(l1_ratio=0.5, alpha=1)
         else:
             model = SVR(kernel='linear',max_iter=config.class_max_epochs,
                         C=0.01)
-        if config.split=='train_test':
+        if config.split is None:
+            model.fit(X,Y)
+            val_pred = model.predict(X)
+        elif config.split=='train_test':
             train = pd.read_csv(os.path.join(config.embeddings_save_path, 'train_embeddings.csv'), usecols=['ID'])
             test = pd.read_csv(os.path.join(config.embeddings_save_path, 'test_embeddings.csv'), usecols=['ID'])
             subs_embeddings = pd.DataFrame({'ID': subjects, 'X': list(X.values), 'Y': Y})
@@ -357,7 +364,7 @@ def train_one_classifier(config, inputs, subjects, i=0):
                                Choose a classifier type that exists in configs/classifier.")
         
         # create function to avoid copy paste ?
-        if config.split=='train_test':
+        if config.split is not None and config.split=='train_test':
             train = pd.read_csv(os.path.join(config.embeddings_save_path, 'train_embeddings.csv'), usecols=['ID'])
             test = pd.read_csv(os.path.join(config.embeddings_save_path, 'test_embeddings.csv'), usecols=['ID'])
             subs_embeddings = pd.DataFrame({'ID': subjects, 'X': list(X.values), 'Y': Y})
@@ -368,10 +375,14 @@ def train_one_classifier(config, inputs, subjects, i=0):
             model.fit(X_train, Y_train)
             labels_proba = model.predict_proba(X_test)
             X,Y = X_test, Y_test
-        else:
+        elif config.split is not None and (config.split=='random' or config.split=='custom'):
             labels_proba = cross_val_predict(model, X, Y, cv=cv, method='predict_proba')
             #scores = cross_validate(model, X, Y, cv=cv, scoring='roc_auc')
             #print(scores['test_score']) # TO GET THE INTER SPLIT VARIABILITY
+        else: # no split, simply use all data to fit
+            model.fit(X,Y)
+            labels_proba = model.predict_proba(X)
+
 
         if 'label_type' in config.keys() and config['label_type']=='multiclass':
             roc_aucs, accuracies = compute_multiclass_indicators(Y, labels_proba)
@@ -421,6 +432,13 @@ def train_n_repeat_classifiers(config, subset='full'):
     names_col = 'ID' if 'ID' in embeddings.columns else 'Subject' # issue here ?
     X = embeddings.loc[:, embeddings.columns != names_col]
     Y = labels.label
+    # make sur X and labels have the same subjects
+    #common_ids = X.index.intersection(labels['Subject'])
+    # Filter both DataFrames
+    #X = X.loc[common_ids].reset_index().drop_duplicates(subset='ID', keep='first').set_index('ID')
+    #Y = labels[labels['Subject'].isin(common_ids)].label
+    print(f'Total number of subjects considered : {X.shape[0]}')
+
     subjects = embeddings.index.tolist()
     # Builds objects where the results are saved
     # Depending on label type
@@ -614,7 +632,7 @@ def train_classifiers(config, subsets=None):
 
     set_root_logger_level(config.verbose)
 
-    if config.split=='random':
+    if config.split is None or config.split=='random':
         for subset in subsets:
             print("\n")
             log.info(f"USING SUBSET {subset}")

@@ -126,7 +126,11 @@ def embeddings_pipeline(dir_path, dataset_localization, datasets, idx_region_eva
                 # check if embeddings and ROC already computed
                 # if already computed and don't want to overwrite, then pass
                 # else apply the normal process
-                folder_name = get_save_folder_name(datasets=datasets, short_name=short_name+'_'+split)
+                if split is not None:
+                    folder_name = get_save_folder_name(datasets=datasets, short_name=short_name+'_'+split)
+                else:
+                    folder_name = get_save_folder_name(datasets=datasets, short_name=short_name)
+
                 if (
                     os.path.exists(sub_dir + f"/{folder_name}_embeddings")
                     and (not overwrite)
@@ -262,8 +266,8 @@ if __name__ == "__main__":
                         verbose=False)
     """
 
-    """    
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/test_01_08",
+    
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/orbital_kernel5",
                     dataset_localization="neurospin",
                     datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
                     idx_region_evaluation = None,
@@ -274,7 +278,7 @@ if __name__ == "__main__":
                     subsets=['full'], epochs=[None], split='custom', cv=3,
                     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
                     verbose=False)
-    """
+    
     """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/orbital_no_domain_specific_augm",
                     dataset_localization="neurospin",
@@ -370,7 +374,7 @@ if __name__ == "__main__":
 
     # custom cv (80%)
     """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/FIP_test_12_16",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/option1/FIP_right_UKB40",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
                         idx_region_evaluation = None,
@@ -378,7 +382,7 @@ if __name__ == "__main__":
                         classifier_name='logistic',
                         short_name='FIP_right', overwrite=True, embeddings=True,
                         embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='custom', cv=3,
+                        subsets=['full'], epochs=[None], split=None, cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
                         verbose=False)
     """
@@ -409,7 +413,8 @@ if __name__ == "__main__":
                         verbose=False)
     """
     
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/test_01_08",
+    
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/FIP_kernel5",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
                         idx_region_evaluation = None,
@@ -423,7 +428,7 @@ if __name__ == "__main__":
     
     # full FIP dataset (390)
     """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/5_models_FIP_right_3_layer_proj",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/V1_FIP_right",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_400_cv"],
                         idx_region_evaluation = None,
@@ -431,7 +436,7 @@ if __name__ == "__main__":
                         classifier_name='logistic',
                         short_name='FIP_right', overwrite=True, embeddings=True,
                         embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='custom', cv=3,
+                        subsets=['full'], epochs=[None], split=None, cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
                         verbose=False)
     """
@@ -505,11 +510,12 @@ if __name__ == "__main__":
     """
 
     """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/SC-sylv_left",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/SC-sylv_left_kernel3",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_isomap"],
         idx_region_evaluation=None,
         labels=[f'Isomap_central_left_dim{k}' for k in range(1,7)],
+        classifier_name='logistic',
         short_name='hcp_isomap', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
         subsets=['full'], epochs=[None], split='random', cv=5,
         splits_basedir='',

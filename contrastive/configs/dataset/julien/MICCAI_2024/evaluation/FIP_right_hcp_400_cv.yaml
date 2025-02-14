@@ -9,9 +9,9 @@ crop_file_suffix: _cropped_skeleton.nii.gz
 foldlabel_dir: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/F.I.P./mask/Rlabels
 pickle_benchmark: 
 train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/all_subs.csv
-test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/all_subs.csv
 subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/FIP_labels.csv
 subject_column_name: 'Subject'
-mask_path:
+cutin_mask_path:
+cutout_mask_path:
 flip_dataset: False
 input_size: (1, 39, 45, 44)

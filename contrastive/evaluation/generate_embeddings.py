@@ -156,7 +156,7 @@ def compute_embeddings(config, subsets=None):
         if not os.path.exists(embeddings_path):
             os.makedirs(embeddings_path)
 
-        if config.split=='random' or config.split=='train_test' or config.split=='train_val_test_intra_test' :
+        if config.split is None or config.split=='random' or config.split=='train_test' or config.split=='train_val_test_intra_test' :
             # calculate embeddings for training set and save them somewhere
             if 'train' in subsets or 'train_val' in subsets or 'full' in subsets:
                 print("TRAIN SET")

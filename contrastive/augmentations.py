@@ -597,6 +597,8 @@ class PartialCutOutTensor_Roll(object):
                 arr_inside = arr_inside * (arr_inside == 35)
             elif self.keep_extremity=='bottom':
                 arr_inside = arr_inside * (arr_inside == 30)
+            elif self.keep_extremity=='all': # protect whole branch !
+                arr_inside = arr_inside != 0
             else:
                 arr_inside = arr_inside * (arr_inside == 0)
             if self.keep_proba_per_branch < 1.:
@@ -610,6 +612,8 @@ class PartialCutOutTensor_Roll(object):
                 arr_outside = arr_outside * (arr_outside == 35)
             elif self.keep_extremity=='bottom':
                 arr_outside = arr_outside * (arr_outside == 30)
+            elif self.keep_extremity=='all': # protect whole branch !
+                arr_outside = arr_outside != 0
             else:
                 arr_outside = arr_outside * (arr_outside == 0)
             if self.keep_proba_per_branch < 1.:

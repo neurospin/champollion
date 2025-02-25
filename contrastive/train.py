@@ -140,11 +140,10 @@ def train(config):
     #      {model.state_dict()['backbones.0.encoder.Linear.weight'].shape}")
     input_size = tuple([1] + list(config.data[0].input_size))
     if config.backbone_name != 'pointnet':
-        if (len(config.dataset.keys()) == 1): # if one region
-            print(config.data[0].input_size)
-            summary(model, input_data=input_size, batch_dim=0, device=config.device, depth=6)
-        else:
-            summary(model, device=config.device, depth=6) # TODO : why 16 ?
+        #if (len(config.dataset.keys()) == 1): # if one region
+        #    print(config.data[0].input_size)
+        #    summary(model, input_data=input_size, batch_dim=0, device=config.device, depth=6)
+        summary(model, device=config.device, depth=6)
     else:
         summary(model, device='cpu')
 

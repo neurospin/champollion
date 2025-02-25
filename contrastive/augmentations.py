@@ -141,7 +141,8 @@ class EndTensor(object):
 
     def __call__(self, tensor):
         arr = tensor.numpy()
-        arr = np.reshape(arr, (1,) + arr.shape[:-1])
+        #arr = np.reshape(arr, (1,) + arr.shape[:-1])
+        arr = np.transpose(arr, (3, 0, 1, 2)) # should work whatever the number of input channels
         return torch.from_numpy(arr)
 
 
@@ -922,7 +923,8 @@ class TranslateTensor(object):
         translated_arr = translated_arr[tuple(slc)]
         pad_width = [(0, translation) if sign else (translation, 0) for sign, translation in zip(sign_translation, absolute_translation_xyz)] + [(0,0)]
         translated_arr = np.pad(translated_arr, pad_width, mode='constant', constant_values=0)
-        translated_arr = np.expand_dims(translated_arr[..., 0], axis=0)
+        #translated_arr = np.expand_dims(translated_arr[..., 0], axis=0)
+        translated_arr = np.transpose(translated_arr, (3, 0, 1, 2)) # should work whatever the number of input channels
 
         return torch.from_numpy(translated_arr)
 
@@ -1287,7 +1289,44 @@ class HighlightExtremitiesTensor(object):
 
         #np.save('/volatile2/jl277509/visu_augmentations/sub_new/skel_trimdepth_extremities.npy', arr_trimmed)
         return torch.from_numpy(arr_trimmed)
+    
 
+class AddChannelExtremitiesTensor(object):
+    """
+    Add a channel containing the extremities.
+    The extremities are masked with the current state of the skeleton.
+    """
+
+    def __init__(self, sample_extremities):
+        self.sample_extremities = sample_extremities
+    
+    def __call__(self, tensor_skel):
+        log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
+        arr_skel = tensor_skel.numpy()
+        arr_extremities = self.sample_extremities.numpy()
+        # mask extremities with skeleton
+        arr_extremities = mask_array_with_skeleton(arr_extremities, arr_skel, cval=0).astype('float32')
+        arr_stacked = np.stack((arr_skel, arr_extremities), axis=-1)
+        arr_stacked = arr_stacked.squeeze()
+        return torch.from_numpy(arr_stacked)
+
+
+class AddChannelEmptyTensor(object):
+    """
+    Add an empty channel.
+    """
+
+    def __init__(self):
+        None
+    
+    def __call__(self, tensor_skel):
+        log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
+        arr_skel = tensor_skel.numpy()
+        empty_channel = np.zeros(arr_skel.shape, dtype='float32')
+        arr_stacked = np.stack((arr_skel, empty_channel), axis=-1)
+        arr_stacked = arr_stacked.squeeze()
+        return torch.from_numpy(arr_stacked)
+    
 
 class TrimCropEdges(object):
 

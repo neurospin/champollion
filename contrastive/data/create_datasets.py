@@ -331,14 +331,16 @@ def create_sets_without_labels(config):
         distbottom_all.append(distbottom_output)
 
         # same with extremity # TODO: reduce to single sanity check function
-        if config.apply_augmentations and (config.random_choice or config.mixed):
-            extremity_output = sanity_checks_extremities_without_labels(config,
+        #if config.apply_augmentations and (config.random_choice or config.mixed):
+        #    extremity_output = sanity_checks_extremities_without_labels(config,
+        #                                                    skeleton_output,
+        #                                                    reg)
+        #else:
+        #    extremity_output = None
+        #    log.info("extremity data NOT requested. extremity data NOT loaded")
+        extremity_output = sanity_checks_extremities_without_labels(config,
                                                             skeleton_output,
                                                             reg)
-        else:
-            extremity_output = None
-            log.info("extremity data NOT requested. extremity data NOT loaded")
-        
         extremity_all.append(extremity_output)
             
 
@@ -384,13 +386,14 @@ def create_sets_without_labels(config):
         extremity_arrays = []
         for extremity_output in extremity_all:
             # select the augmentation method
-            if config.apply_augmentations:
-                if config.random_choice or config.mixed:
-                    extremity_array = extremity_output[subset_name][1]
-                else:  # cutout
-                    extremity_array = None  # no need of fold labels
-            else:  # no augmentation
-                extremity_array = None
+            #if config.apply_augmentations:
+            #    if config.random_choice or config.mixed:
+            #        extremity_array = extremity_output[subset_name][1]
+            #    else:  # cutout
+            #        extremity_array = None  # no need of fold labels
+            #else:  # no augmentation
+            #    extremity_array = None
+            extremity_array = extremity_output[subset_name][1]
             extremity_arrays.append(extremity_array)
 
         # Checks if equality of filenames and labels

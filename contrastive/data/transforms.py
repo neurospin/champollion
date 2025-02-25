@@ -51,12 +51,14 @@ def transform_nothing_done():
         ])
 
 
-def transform_only_padding(input_size, flip_dataset, config):
+def transform_only_padding(input_size, sample_extremities, flip_dataset, config):
     if config.backbone_name != 'pointnet':
         transforms_list = [
                 SimplifyTensor(),
                 PaddingTensor(shape=input_size,
                               fill_value=config.fill_value),
+                AddChannelEmptyTensor(),
+                #AddChannelExtremitiesTensor(sample_extremities),
                 BinarizeTensor()]
         if flip_dataset:
             transforms_list.append(FlipFirstAxisTensor())
@@ -452,6 +454,12 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                                          keep_proba_global=keep_proba_global,
                                          patch_size=patch_size)
             )
+    r = np.random.uniform()
+    if r < 0.7:
+    #if r < 1.:
+        transforms_list.append(AddChannelExtremitiesTensor(sample_extremities))
+    else:
+        transforms_list.append(AddChannelEmptyTensor())
     transforms_list.append(BinarizeTensor())
     transforms_list.append(TranslateTensor(config.max_translation))
     

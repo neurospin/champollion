@@ -125,7 +125,7 @@ class ConvNet(pl.LightningModule):
             See `"paper" <https://arxiv.org/pdf/1707.06990.pdf>`_
     """
 
-    def __init__(self, in_channels=1, encoder_depth=3, block_depth=2,
+    def __init__(self, in_channels=2, encoder_depth=3, block_depth=2,
                  num_representation_features=256, linear=True,
                  adaptive_pooling=None, filters=[16,32,64], initial_kernel_size=3,
                  initial_stride=1, max_pool=False, drop_rate=0.1, memory_efficient=False,
@@ -164,7 +164,7 @@ class ConvNet(pl.LightningModule):
         for step in range(encoder_depth):
             for depth in range(block_depth-1):
                 name = layer_name[depth]
-                in_channels = 1 if (step == 0 and depth==0) else out_channels
+                in_channels = 2 if (step == 0 and depth==0) else out_channels
                 kernel_size = self.initial_kernel_size if (step == 0 and depth==0) else 3
                 stride = self.initial_stride if (step==0 and depth==0) else 1
                 out_channels = filters[step]

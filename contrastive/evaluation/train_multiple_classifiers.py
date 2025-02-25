@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from sklearn.metrics import auc, roc_curve, roc_auc_score, balanced_accuracy_score, \
                             mean_absolute_error, mean_squared_error
 from sklearn.model_selection import cross_val_predict, train_test_split, cross_validate, \
-                                    LeaveOneGroupOut, cross_val_score
+                                    LeaveOneGroupOut, cross_val_score, GridSearchCV
 from scipy.stats import pearsonr
 
 from pqdm.processes import pqdm
@@ -310,8 +310,8 @@ def train_one_classifier(config, inputs, subjects, i=0):
 
     if 'label_type' in config.keys() and config['label_type']=='continuous':
         if config.classifier_name == 'logistic': # TODO: change the parameter name for Elastic
-            model = LinearRegression() # TODO: ElasticNet instead + add gridsearch     
-            #model = ElasticNet(l1_ratio=0.5, alpha=1)
+            #model = LinearRegression() # TODO: ElasticNet instead + add gridsearch     
+            model = ElasticNet(l1_ratio=0.5, alpha=0.01)
         else:
             model = SVR(kernel='linear',max_iter=config.class_max_epochs,
                         C=0.01)
@@ -357,8 +357,12 @@ def train_one_classifier(config, inputs, subjects, i=0):
                                 batch_size=config.class_batch_size,
                                 max_iter=config.class_max_epochs, random_state=i)
         elif config.classifier_name == 'logistic':
-            model = LogisticRegression(max_iter=config.class_max_epochs,
+            model = LogisticRegression(C=0.01, solver='liblinear', penalty='l2',
+                                       max_iter=config.class_max_epochs,
                                        random_state=i)
+            #parameters={'C': [10**k for k in range(-3,4)]}
+            #model = LogisticRegression(solver='liblinear', penalty='l2',
+            #                           max_iter=config.class_max_epochs,random_state=i)
         else:
             raise ValueError(f"The chosen classifier ({config.classifier_name}) is not handled by the pipeline. \
                                Choose a classifier type that exists in configs/classifier.")
@@ -377,9 +381,14 @@ def train_one_classifier(config, inputs, subjects, i=0):
             X,Y = X_test, Y_test
         elif config.split is not None and (config.split=='random' or config.split=='custom'):
             labels_proba = cross_val_predict(model, X, Y, cv=cv, method='predict_proba')
-            #scores = cross_validate(model, X, Y, cv=cv, scoring='roc_auc')
-            #print(scores['test_score']) # TO GET THE INTER SPLIT VARIABILITY
-        else: # no split, simply use all data to fit
+            #clf = GridSearchCV(model, parameters, cv=cv, scoring='roc_auc')
+            #clf.fit(X,Y)
+            #print(f'best params : {clf.best_params_}')
+            #print(f'best score : {clf.best_score_}')
+            #md = clf.best_estimator_
+            #md.fit(X,Y)
+            #labels_proba = cross_val_predict(md, X, Y, cv=cv) # method='predict_proba' : remove because it is for regression ...
+        else: # no split, simply use all data to fit # DON'T USE IT
             model.fit(X,Y)
             labels_proba = model.predict_proba(X)
 

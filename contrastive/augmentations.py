@@ -1058,7 +1058,8 @@ class TrimDepthTensor(object):
                     else:
                         threshold = self.max_distance
                 else: # OBSOLETE, is scaling by 100 correct ?
-                    threshold = np.random.randint(-1, (self.max_distance+1)//100)*100
+                    #threshold = np.random.randint(-1, (self.max_distance+1)//100)*100
+                    threshold = np.random.choice(np.array([0, 71, 100]))
                 if self.keep_extremity=='top':
                     arr_trimmed[np.logical_and(arr_distbottom<=threshold, arr_skel!=35)]=0
                 else:

@@ -252,8 +252,8 @@ if __name__ == "__main__":
     
     """
     
-
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/2_single_augm_ablation/SOr_left_UKB40",
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/2025-03-03",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
                         idx_region_evaluation = None,
@@ -264,7 +264,7 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='custom', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
                         verbose=False)
-
+    """
 
     """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/orbital_kernel5",
@@ -373,7 +373,7 @@ if __name__ == "__main__":
     """
 
     # custom cv (80%)
-    
+    """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/2_single_augm_ablation/FIP_right_UKB40",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
@@ -385,7 +385,7 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='custom', cv=3,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/split_',
                         verbose=False)
-    
+    """
     """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/FIP_cutin_and_trim",
                         dataset_localization="neurospin",
@@ -509,7 +509,7 @@ if __name__ == "__main__":
                         verbose=False)
     """
 
-    
+    """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/2_single_augm_ablation/SC-sylv_left_UKB40",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_isomap"],
@@ -520,7 +520,7 @@ if __name__ == "__main__":
         subsets=['full'], epochs=[None], split='random', cv=5,
         splits_basedir='',
         verbose=False)
-    
+    """
 
     """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/SC-sylv_12-16",
@@ -547,7 +547,7 @@ if __name__ == "__main__":
     
     ## SC-sylv_right UKB
     """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/SC-sylv_right",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/SC-sylv_right_V1",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/training/SC-sylv_right_40k"],
         idx_region_evaluation=None,
@@ -569,14 +569,14 @@ if __name__ == "__main__":
         verbose=False)
     """
     
-    """
+    
     embeddings_pipeline("/neurospin/dico/jlaval/Output/5_trimextremities_SC_right/1_all_augmentations/2025-02-26",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/SC-sylv_right_interruption_UKB40"],
         idx_region_evaluation=None,
         labels=['Interruption_SC_right'],
         short_name='ukb40_interrupted', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['train_val'], epochs=range(0,40,10), split='random', cv=5,
+        subsets=['train_val'], epochs=[None], split='random', cv=5,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
         verbose=False)
     
@@ -586,7 +586,7 @@ if __name__ == "__main__":
         idx_region_evaluation=None,
         labels=['Interruption_SC_right'],
         short_name='ukb40_interrupted', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['train_val'], epochs=range(0,40,10), split='random', cv=5,
+        subsets=['train_val'], epochs=[None], split='random', cv=5,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
         verbose=False)
     
@@ -596,10 +596,10 @@ if __name__ == "__main__":
         idx_region_evaluation=None,
         labels=['Interruption_SC_right'],
         short_name='ukb40_interrupted', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['train_val'], epochs=range(0,40,10), split='random', cv=5,
+        subsets=['train_val'], epochs=[None], split='random', cv=5,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
         verbose=False)
-    """
+    
     ## imagen
     """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/4_regions_pretrain",

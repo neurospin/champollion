@@ -399,59 +399,63 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
         pass
     else:
         r = np.random.uniform()
-        if r < config.proba_trimdepth:
-            transforms_list.append(
-                TrimDepthTensor(sample_distbottom=sample_distbottom,
-                                sample_foldlabel=sample_foldlabel,
-                                max_distance=config.max_distance,
-                                delta=config.trimdepth_delta,
-                                input_size=input_size,
-                                keep_extremity=config.keep_extremity_trimdepth,
-                                uniform=config.uniform_trim,
-                                binary=config.binary_trim,
-                                binary_proba=config.binary_proba_trim,
-                                pepper=config.proba_pepper_trimdepth,
-                                redefine_bottom=config.redefine_bottom)
-            )
-        r = np.random.uniform()
-        if r < config.proba_trimextremities:
-            transforms_list.append(
-                HighlightExtremitiesTensor(sample_extremities=sample_extremities,
-                            sample_foldlabel=sample_foldlabel,
-                            input_size=input_size,
-                            protective_structure=np.expand_dims(ball(config.ball_radius), axis=-1),
-                            p=config.proba_trimedges,
-                            pepper=config.proba_pepper_trimedges)
-            )
-        r = np.random.uniform()
-        if r < config.proba_cutout + config.proba_cutin:
+        if r < config.proba_contour:
+            transforms_list.append(ContourTensor(sample_foldlabel=sample_foldlabel))
+        else:
             r = np.random.uniform()
-            # cutout and cutin are mutually exclusive
-            if r < config.proba_cutout / (config.proba_cutout + config.proba_cutin):
-                from_skeleton=True
-                patch_size=config.patch_size_cutout
-                keep_proba_per_branch=config.keep_proba_per_branch_cutout
-                keep_proba_global=config.keep_proba_global_cutout
-                mask_constraint=False
-                mask=None
-            else:
-                from_skeleton=False
-                patch_size=config.patch_size_cutin
-                keep_proba_per_branch=config.keep_proba_per_branch_cutin
-                keep_proba_global=config.keep_proba_global_cutin
-                mask_constraint=config.mask_constraint
-                mask=np.load(cutin_mask_path)
-            transforms_list.append(
-                PartialCutOutTensor_Roll(sample_foldlabel,
-                                         mask,
-                                         mask_constraint=mask_constraint,
-                                         from_skeleton=from_skeleton,
-                                         input_size=input_size,
-                                         keep_extremity=config.keep_extremity,
-                                         keep_proba_per_branch=keep_proba_per_branch,
-                                         keep_proba_global=keep_proba_global,
-                                         patch_size=patch_size)
-            )
+            if r < config.proba_trimdepth:
+                transforms_list.append(
+                    TrimDepthTensor(sample_distbottom=sample_distbottom,
+                                    sample_foldlabel=sample_foldlabel,
+                                    max_distance=config.max_distance,
+                                    delta=config.trimdepth_delta,
+                                    input_size=input_size,
+                                    keep_extremity=config.keep_extremity_trimdepth,
+                                    uniform=config.uniform_trim,
+                                    binary=config.binary_trim,
+                                    binary_proba=config.binary_proba_trim,
+                                    pepper=config.proba_pepper_trimdepth,
+                                    redefine_bottom=config.redefine_bottom)
+                )
+            r = np.random.uniform()
+            if r < config.proba_trimextremities:
+                transforms_list.append(
+                    HighlightExtremitiesTensor(sample_extremities=sample_extremities,
+                                sample_foldlabel=sample_foldlabel,
+                                input_size=input_size,
+                                protective_structure=np.expand_dims(ball(config.ball_radius), axis=-1),
+                                p=config.proba_trimedges,
+                                pepper=config.proba_pepper_trimedges)
+                )
+            r = np.random.uniform()
+            if r < config.proba_cutout + config.proba_cutin:
+                r = np.random.uniform()
+                # cutout and cutin are mutually exclusive
+                if r < config.proba_cutout / (config.proba_cutout + config.proba_cutin):
+                    from_skeleton=True
+                    patch_size=config.patch_size_cutout
+                    keep_proba_per_branch=config.keep_proba_per_branch_cutout
+                    keep_proba_global=config.keep_proba_global_cutout
+                    mask_constraint=False
+                    mask=None
+                else:
+                    from_skeleton=False
+                    patch_size=config.patch_size_cutin
+                    keep_proba_per_branch=config.keep_proba_per_branch_cutin
+                    keep_proba_global=config.keep_proba_global_cutin
+                    mask_constraint=config.mask_constraint
+                    mask=np.load(cutin_mask_path)
+                transforms_list.append(
+                    PartialCutOutTensor_Roll(sample_foldlabel,
+                                            mask,
+                                            mask_constraint=mask_constraint,
+                                            from_skeleton=from_skeleton,
+                                            input_size=input_size,
+                                            keep_extremity=config.keep_extremity,
+                                            keep_proba_per_branch=keep_proba_per_branch,
+                                            keep_proba_global=keep_proba_global,
+                                            patch_size=patch_size)
+                )
     transforms_list.append(BinarizeTensor())
     transforms_list.append(TranslateTensor(config.max_translation))
     

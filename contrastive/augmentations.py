@@ -597,6 +597,8 @@ class PartialCutOutTensor_Roll(object):
                 arr_inside = arr_inside * (arr_inside == 35)
             elif self.keep_extremity=='bottom':
                 arr_inside = arr_inside * (arr_inside == 30)
+            elif self.keep_extremity=='bottom_top':
+                arr_inside = arr_inside * (np.logical_or(arr_inside == 30, arr_inside == 35))
             elif self.keep_extremity=='all': # protect whole branch !
                 arr_inside = arr_inside != 0
             else:
@@ -612,6 +614,8 @@ class PartialCutOutTensor_Roll(object):
                 arr_outside = arr_outside * (arr_outside == 35)
             elif self.keep_extremity=='bottom':
                 arr_outside = arr_outside * (arr_outside == 30)
+            elif self.keep_extremity=='bottom_top':
+                arr_outside = arr_outside * (np.logical_or(arr_outside == 30, arr_outside == 35))
             elif self.keep_extremity=='all': # protect whole branch !
                 arr_outside = arr_outside != 0
             else:
@@ -1387,6 +1391,28 @@ class AddBranchTensor(object):
         data = np.ones(nb_coords)
         branch = convert_sparse_to_numpy(data, coords_branch, self.input_size[1:], 'float32')
         arr = arr + branch
+
+        arr = arr.astype('float32')
+
+        return torch.from_numpy(arr)
+    
+
+class ContourTensor(object):
+
+    """
+    Keep solely the contours of the folds.
+    """
+
+    def __init__(self, sample_foldlabel):
+        self.sample_foldlabel = sample_foldlabel
+    
+    def __call__(self, tensor):
+        arr = tensor.numpy()
+        contours = np.logical_or(arr==30, arr==35) # 79%
+        #contours = arr != 60 # terrible
+        #arr_foldlabel = self.sample_foldlabel.numpy()
+        #contours = np.logical_and(arr_foldlabel>=6000, arr_foldlabel<8000)
+        arr = arr * contours
 
         arr = arr.astype('float32')
 

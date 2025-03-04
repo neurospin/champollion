@@ -21,7 +21,7 @@ patch_size_cutout: [10,20]
 patch_size_cutin: [30,50]
 keep_proba_per_branch_cutout: 0.7
 keep_proba_global_cutout: 1.
-keep_proba_per_branch_cutin: 0.7
+keep_proba_per_branch_cutin: 0.5
 keep_proba_global_cutin: 1.
 mask_constraint: True
 offset_proba_translation_only: 0. # offset to maintain a value if proba_augmentation is high.
@@ -30,3 +30,4 @@ proba_trimextremities: 0.3
 proba_cutout: 0.3
 proba_cutin: 0.3
 redefine_bottom: True
+proba_contour: 0.

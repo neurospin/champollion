@@ -1209,13 +1209,14 @@ class HighlightExtremitiesTensor(object):
     """
 
     def __init__(self, sample_extremities, sample_foldlabel,
-                 input_size, protective_structure, p=0.5, pepper=0.5):
+                 input_size, protective_structure, p=0.5, pepper=0.5, keep_extremity=None):
         self.input_size = input_size
         self.protective_structure = protective_structure
         self.p = p
         self.pepper=pepper
         self.sample_foldlabel = sample_foldlabel
         self.sample_extremities = sample_extremities
+        self.keep_extremity=keep_extremity
     
     def __call__(self, tensor_skel):
         log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
@@ -1244,34 +1245,35 @@ class HighlightExtremitiesTensor(object):
             r = np.random.uniform()
             if r < self.p:
                 trimmed_branch = (1-arr_extremities) * branch
-                if np.array_equal(branch!=0, trimmed_branch!=0): # nothing to trim
-                    pass
-                else:
-                    # find mass center
-                    coords = np.nonzero(branch)
-                    center = [np.mean(coords[i]) for i in range(len(coords)-1)]
-                    center = (np.round(center)).astype(int)
-                    # branch center is protected using given structure
-                    mask_protection = np.zeros(branch.shape)
-                    slc = [slice(max(0, c-s//2),
-                                 min(arr_skel.shape[i], c+s//2 +1))
-                           for i,(c,s) in enumerate(zip(center, self.protective_structure.shape))]
-                    slc.append(slice(1))
-                    # need to slice the protective structure if it reaches an edge
-                    # the slice depends on which edge is reached
-                    # the mass center and the protective structure center must remain aligned
-                    slc_struct = []
-                    for i,(c,s) in enumerate(zip(center, self.protective_structure.shape)):
-                        if c-s//2 < 0:
-                            sl = slice(-(c-s//2), None)
-                        elif c+s//2+1 > arr_skel.shape[i]:
-                            sl = slice(None, -(c+s//2+1 - arr_skel.shape[i]))
-                        else:
-                            sl = slice(None)
-                        slc_struct.append(sl)
-                    slc_struct.append(slice(1))
-                    mask_protection[tuple(slc)]=self.protective_structure[tuple(slc_struct)]
-                    trimmed_branch = branch * np.logical_or(mask_protection, 1-arr_extremities)
+                if self.protective_structure is not None:
+                    if np.array_equal(branch!=0, trimmed_branch!=0): # nothing to trim
+                        pass
+                    else:
+                        # find mass center
+                        coords = np.nonzero(branch)
+                        center = [np.mean(coords[i]) for i in range(len(coords)-1)]
+                        center = (np.round(center)).astype(int)
+                        # branch center is protected using given structure
+                        mask_protection = np.zeros(branch.shape)
+                        slc = [slice(max(0, c-s//2),
+                                    min(arr_skel.shape[i], c+s//2 +1))
+                            for i,(c,s) in enumerate(zip(center, self.protective_structure.shape))]
+                        slc.append(slice(1))
+                        # need to slice the protective structure if it reaches an edge
+                        # the slice depends on which edge is reached
+                        # the mass center and the protective structure center must remain aligned
+                        slc_struct = []
+                        for i,(c,s) in enumerate(zip(center, self.protective_structure.shape)):
+                            if c-s//2 < 0:
+                                sl = slice(-(c-s//2), None)
+                            elif c+s//2+1 > arr_skel.shape[i]:
+                                sl = slice(None, -(c+s//2+1 - arr_skel.shape[i]))
+                            else:
+                                sl = slice(None)
+                            slc_struct.append(sl)
+                        slc_struct.append(slice(1))
+                        mask_protection[tuple(slc)]=self.protective_structure[tuple(slc_struct)]
+                        trimmed_branch = branch * np.logical_or(mask_protection, 1-arr_extremities)
 
                 arr_trimmed_branches += trimmed_branch
             else:
@@ -1284,6 +1286,19 @@ class HighlightExtremitiesTensor(object):
         pepper = (np.random.rand(*trimmed_vx.shape) > self.pepper).astype('float64')
 
         arr_trimmed += np.multiply(trimmed_vx, pepper)
+
+        # add bottoms / top if keep
+        if self.keep_extremity is None:
+            extremity = np.zeros(arr_skel.shape)
+        elif self.keep_extremity=='bottom':
+            extremity = arr_skel==30
+        elif self.keep_extremity=='top':
+            extremity = arr_skel==35
+        elif self.keep_extremity=='bottom_top':
+            extremity = np.logical_or(arr_skel==30, arr_skel==35)
+            
+        
+        arr_trimmed = np.logical_or(arr_trimmed, extremity)
 
         # multiply by the topological values
         arr_trimmed = np.multiply(arr_trimmed, arr_skel)

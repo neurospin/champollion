@@ -465,6 +465,7 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
             r = np.random.uniform()
             if r < config.proba_translation:
                 transforms_list.append(TranslateTensor(config.max_translation))
+            transforms_list.append(TransposeTensor())
     
     return transforms.Compose(transforms_list)
 

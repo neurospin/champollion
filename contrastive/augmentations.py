@@ -903,6 +903,19 @@ class GaussianNoiseTensor(object):
         noise = torch.randn(tensor.shape)
         return tensor + self.sigma * noise
     
+class TransposeTensor(object):
+    """
+    Permute first and last dimension.
+    """
+
+    def __init__(self):
+        None
+    def __call__(self, tensor):
+        arr = tensor.numpy()
+        arr_t = np.transpose(arr, (3, 0, 1, 2))
+
+        return(torch.from_numpy(arr_t))
+    
 
 class TranslateTensor(object):
     """
@@ -926,7 +939,7 @@ class TranslateTensor(object):
         translated_arr = translated_arr[tuple(slc)]
         pad_width = [(0, translation) if sign else (translation, 0) for sign, translation in zip(sign_translation, absolute_translation_xyz)] + [(0,0)]
         translated_arr = np.pad(translated_arr, pad_width, mode='constant', constant_values=0)
-        translated_arr = np.expand_dims(translated_arr[..., 0], axis=0)
+        #translated_arr = np.expand_dims(translated_arr[..., 0], axis=0)
 
         return torch.from_numpy(translated_arr)
 

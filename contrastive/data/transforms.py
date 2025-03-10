@@ -430,7 +430,7 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                                 protective_structure=protective_structure,
                                 p=config.proba_trimedges,
                                 pepper=config.proba_pepper_trimedges,
-                                keep_extremity=config.keep_extremity)
+                                keep_extremity=None)
                 )
             r = np.random.uniform()
             if r < config.proba_cutout + config.proba_cutin:

@@ -395,11 +395,11 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                                      fill_value=config.fill_value)]
     np.random.seed()
     r = np.random.uniform()
-    if r < config.offset_proba_translation_only:
-        pass
+    if r < config.offset_proba_no_augm:
+        transforms_list.append(BinarizeTensor())
     else:
         r = np.random.uniform()
-        if r < config.proba_contour:
+        if r < config.proba_contour: # do not combine with other transformations
             transforms_list.append(ContourTensor(sample_foldlabel=sample_foldlabel))
         else:
             r = np.random.uniform()
@@ -419,13 +419,18 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                 )
             r = np.random.uniform()
             if r < config.proba_trimextremities:
+                if config.ball_radius==0:
+                    protective_structure=None
+                else:
+                    protective_structure=np.expand_dims(ball(config.ball_radius), axis=-1)
                 transforms_list.append(
                     HighlightExtremitiesTensor(sample_extremities=sample_extremities,
                                 sample_foldlabel=sample_foldlabel,
                                 input_size=input_size,
-                                protective_structure=np.expand_dims(ball(config.ball_radius), axis=-1),
+                                protective_structure=protective_structure,
                                 p=config.proba_trimedges,
-                                pepper=config.proba_pepper_trimedges)
+                                pepper=config.proba_pepper_trimedges,
+                                keep_extremity=config.keep_extremity)
                 )
             r = np.random.uniform()
             if r < config.proba_cutout + config.proba_cutin:
@@ -456,8 +461,10 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                                             keep_proba_global=keep_proba_global,
                                             patch_size=patch_size)
                 )
-    transforms_list.append(BinarizeTensor())
-    transforms_list.append(TranslateTensor(config.max_translation))
+            transforms_list.append(BinarizeTensor())
+            r = np.random.uniform()
+            if r < config.proba_translation:
+                transforms_list.append(TranslateTensor(config.max_translation))
     
     return transforms.Compose(transforms_list)
 

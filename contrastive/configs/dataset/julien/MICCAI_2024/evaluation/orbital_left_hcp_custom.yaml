@@ -14,9 +14,11 @@ extremity_dir: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/
 extremity_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/ORBITAL/mask/Lextremities.npy
 subjects_extremity_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/ORBITAL/mask/Lextremities_subject.csv
 pickle_benchmark: 
-train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/fake_train_val.csv
+#train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/fake_train_val.csv
+train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/Left/union/fake_train_val.csv
 #test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/hcp_1_test_without_headers.csv
-test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/union_custom_splits_train_val.csv
+#test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/union_custom_splits_train_val.csv
+test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/Left/union/union_custom_splits_train_val.csv
 #splits_basedir: /neurospin/dico/data/deep_folding/current/datasets/hcp/hcp_subjects_train_split_
 subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/hcp_OFC_labels.csv
 subject_column_name: 'Subject'

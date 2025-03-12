@@ -186,7 +186,7 @@ class ConvNet(pl.LightningModule):
             modules_encoder.append(
                 (f'conv{step}{name}',
                 Conv3dSame(in_channels=out_channels, out_channels=out_channels,
-                        kernel_size=(3,3,3), stride=(2,2,2), groups=1, bias=True) ## TODO : kernel size 3, si pair, padding = 1, si impair padding = 0, mais il y a un biais car on prend + à gauche qu'à droite ??
+                        kernel_size=(3,3,3), stride=(2,2,2), groups=1, bias=True)
                 ))
             modules_encoder.append(
                 (f'norm{step}{name}', nn.BatchNorm3d(out_channels)))

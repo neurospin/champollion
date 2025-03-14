@@ -23,6 +23,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression, LinearRegression, ElasticNet
 from sklearn.svm import SVC, SVR
 from sklearn.neural_network import MLPClassifier
+from sklearn.neighbors import KNeighborsClassifier
 
 from contrastive.data.utils import read_labels
 
@@ -283,7 +284,7 @@ def train_one_classifier(config, inputs, subjects, i=0):
     Y = inputs['Y']
     outputs = {}
 
-    #cv stratification
+    # cv stratification
     if config.split is None or config.split=='train_test':
         pass
     elif config.split=='random':
@@ -304,17 +305,25 @@ def train_one_classifier(config, inputs, subjects, i=0):
             df = subs_embeddings.merge(splits_subs_and_labels, on='ID')
             groups, X, Y = df['labels'], np.vstack(df['X'].values), df['Y']
             logo = LeaveOneGroupOut()
-            cv = logo.split(X, Y, groups=groups)
+            cv = [*(logo.split(X, Y, groups=groups))]
     else:
         raise ValueError("Wrong split config specified")
 
+    # train and predict
+    # regression
     if 'label_type' in config.keys() and config['label_type']=='continuous':
         if config.classifier_name == 'logistic': # TODO: change the parameter name for Elastic
-            #model = LinearRegression() # TODO: ElasticNet instead + add gridsearch     
-            model = ElasticNet(l1_ratio=0.5, alpha=0.01)
+            #model = LinearRegression() # TODO: ElasticNet instead + add gridsearch  
+            parameters={'l1_ratio': np.linspace(0,1,11), 'alpha': [10**k for k in range(-4,3)]}   
+            model = ElasticNet()
         else:
             model = SVR(kernel='linear',max_iter=config.class_max_epochs,
                         C=0.01)
+            
+        # Initialize GridSearch  
+        clf = GridSearchCV(model, parameters, cv=cv, scoring='r2', refit=True, n_jobs=define_njobs())
+        print(f'Parameters for GridSearch: {parameters}')
+
         if config.split is None:
             model.fit(X,Y)
             val_pred = model.predict(X)
@@ -326,11 +335,22 @@ def train_one_classifier(config, inputs, subjects, i=0):
             X_train, Y_train = np.vstack(subs_embeddings_train['X'].to_numpy()), subs_embeddings_train['Y']
             subs_embeddings_test = subs_embeddings.merge(test, on='ID')
             X_test, Y_test = np.vstack(subs_embeddings_test['X'].to_numpy()), subs_embeddings_test['Y']
-            model.fit(X_train, Y_train)
-            val_pred = model.predict(X_test)
+            #model.fit(X_train, Y_train)
+            #val_pred = model.predict(X_test)
+            #X,Y = X_test, Y_test
+            clf.fit(X_train, Y_train)
+            print(f'best params : {clf.best_params_}')
+            print(f'best score : {clf.best_score_}')
+            md = clf.best_estimator_
+            labels_proba = md.predict_proba(X_test)
             X,Y = X_test, Y_test
         else:
-            val_pred = cross_val_predict(model, X, Y, cv=cv)
+            clf.fit(X,Y)
+            print(f'best params : {clf.best_params_}')
+            print(f'best score : {clf.best_score_}')
+            md = clf.best_estimator_
+            val_pred = cross_val_predict(md, X, Y, cv=cv)
+            #val_pred = cross_val_predict(model, X, Y, cv=cv)
         print(f'True label mean: {np.mean(Y):.3f}, std: {np.std(Y):.3f}')
         print(f'Predicted label mean: {np.mean(val_pred):.3f}, std: {np.std(val_pred):.3f}')
         r2 = r2_score(Y, val_pred)
@@ -344,29 +364,37 @@ def train_one_classifier(config, inputs, subjects, i=0):
         outputs['r2'] = r2
         outputs['reg_auc'] = reg_auc
 
+    # classification
     else:
         # choose the classifier type
         # /!\ The chosen classifier must have a predict_proba method.
         if config.classifier_name == 'svm':
+            parameters={'C': [10**k for k in range(-3,3)]}
             model = SVC(kernel='linear', probability=True,
                         max_iter=config.class_max_epochs, random_state=i,
-                        C=0.01, class_weight='balanced', decision_function_shape='ovr')
+                        class_weight='balanced', decision_function_shape='ovr')
         elif config.classifier_name == 'neural_network': # DEPRECATED ?
             model = MLPClassifier(hidden_layer_sizes=config.classifier_hidden_layers,
                                 activation=config.classifier_activation,
                                 batch_size=config.class_batch_size,
                                 max_iter=config.class_max_epochs, random_state=i)
         elif config.classifier_name == 'logistic':
-            model = LogisticRegression(C=0.01, solver='liblinear', penalty='l2',
-                                       max_iter=config.class_max_epochs,
-                                       random_state=i)
-            #parameters={'C': [10**k for k in range(-3,4)]}
-            #model = LogisticRegression(solver='liblinear', penalty='l2',
-            #                           max_iter=config.class_max_epochs,random_state=i)
+            #model = LogisticRegression(C=0.01, solver='liblinear', penalty='l2',
+            #                           max_iter=config.class_max_epochs,
+            #                           random_state=i)
+            parameters={'l1_ratio': np.linspace(0,1,11), 'C': [10**k for k in range(-3,3)]}
+            model = LogisticRegression(solver='saga', penalty='elasticnet',
+                                       max_iter=config.class_max_epochs, random_state=i)
+            #parameters={'n_neighbors': [30,40,50,60,70], 'weights': ['distance'], 'leaf_size': [1,2], 'metric': ['chebyshev', 'cosine']}
+            #model = KNeighborsClassifier() # LogisticRegression is better
         else:
             raise ValueError(f"The chosen classifier ({config.classifier_name}) is not handled by the pipeline. \
                                Choose a classifier type that exists in configs/classifier.")
         
+        # Initialize GridSearch
+        clf = GridSearchCV(model, parameters, cv=cv, scoring='roc_auc_ovr_weighted', refit=True, n_jobs=define_njobs())
+        print(f'Parameters for GridSearch: {parameters}')
+
         # create function to avoid copy paste ?
         if config.split is not None and config.split=='train_test':
             train = pd.read_csv(os.path.join(config.embeddings_save_path, 'train_embeddings.csv'), usecols=['ID'])
@@ -376,21 +404,25 @@ def train_one_classifier(config, inputs, subjects, i=0):
             X_train, Y_train = np.vstack(subs_embeddings_train['X'].to_numpy()), subs_embeddings_train['Y']
             subs_embeddings_test = subs_embeddings.merge(test, on='ID')
             X_test, Y_test = np.vstack(subs_embeddings_test['X'].to_numpy()), subs_embeddings_test['Y']
-            model.fit(X_train, Y_train)
-            labels_proba = model.predict_proba(X_test)
+            clf.fit(X_train, Y_train)
+            print(f'best params : {clf.best_params_}')
+            print(f'best score : {clf.best_score_}')
+            md = clf.best_estimator_
+            labels_proba = md.predict_proba(X_test)
             X,Y = X_test, Y_test
         elif config.split is not None and (config.split=='random' or config.split=='custom'):
-            labels_proba = cross_val_predict(model, X, Y, cv=cv, method='predict_proba')
-            #clf = GridSearchCV(model, parameters, cv=cv, scoring='roc_auc')
-            #clf.fit(X,Y)
-            #print(f'best params : {clf.best_params_}')
-            #print(f'best score : {clf.best_score_}')
-            #md = clf.best_estimator_
-            #md.fit(X,Y)
-            #labels_proba = cross_val_predict(md, X, Y, cv=cv) # method='predict_proba' : remove because it is for regression ...
+            #labels_proba = cross_val_predict(model, X, Y, cv=cv, method='predict_proba')
+            clf.fit(X,Y)
+            print(f'best params : {clf.best_params_}')
+            print(f'best score : {clf.best_score_}')
+            md = clf.best_estimator_
+            labels_proba = cross_val_predict(md, X, Y, cv=cv, method='predict_proba') # why does it give slightly diff results ??
         else: # no split, simply use all data to fit # DON'T USE IT
-            model.fit(X,Y)
-            labels_proba = model.predict_proba(X)
+            clf.fit(X,Y)
+            print(f'best params : {clf.best_params_}')
+            print(f'best score : {clf.best_score_}')
+            md = clf.best_estimator_
+            labels_proba = md.predict_proba(X)
 
 
         if 'label_type' in config.keys() and config['label_type']=='multiclass':

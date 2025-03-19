@@ -116,9 +116,13 @@ def load_embeddings(dir_path, labels_path, config, subset='full'):
     log.debug(f"sorted labels: {labels.head()}")
 
     embeddings = embeddings[embeddings.index.isin(labels.Subject)]
+    # labels = labels[labels.Subject.isin(embeddings.index)]
     embeddings.sort_index(inplace=True)
+    # labels.sort_values(by="Subject", inplace=True)
+    
     if not embeddings.reset_index().ID.equals(labels.Subject):
         raise ValueError("Embeddings and labels do not have the same list of subjects")
+        
     log.debug(f"sorted embeddings: {embeddings.head()}")
 
     # /!\ multiple labels is not handled

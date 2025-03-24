@@ -40,6 +40,7 @@ import numpy as np
 import torch
 from scipy.ndimage import rotate, zoom, binary_erosion
 from sklearn.preprocessing import OneHotEncoder
+from kornia.augmentation import RandomRotation3D
 #import elasticdeform
 
 from contrastive.utils import logs
@@ -440,7 +441,7 @@ class RotateTensor(object):
                                mode='constant',
                                cval=0)
 
-        rot_array = np.expand_dims(rot_array[..., 0], axis=0)
+        #rot_array = np.expand_dims(rot_array[..., 0], axis=0)
 
         log.debug("Values in the array after rotation", np.unique(rot_array))
 
@@ -942,7 +943,22 @@ class TranslateTensor(object):
         #translated_arr = np.expand_dims(translated_arr[..., 0], axis=0)
 
         return torch.from_numpy(translated_arr)
+    
+"""
+class RotateTensor(object):
+    ""
+    Apply rotation using Kornia.
+    ""
 
+    def __init__(self, degrees):
+        self.degrees = tuple(degrees)
+
+    def __call__(self, tensor):
+        aug = RandomRotation3D(self.degrees, p=1., resample='nearest', keepdim=True)
+        rotated_tensor = aug(tensor)
+
+        return rotated_tensor
+"""
 
 class NoisyEdgesTensor(object):
 

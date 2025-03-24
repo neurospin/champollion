@@ -32,3 +32,5 @@ proba_cutout: 0.3
 proba_cutin: 0.3
 redefine_bottom: True
 proba_contour: 0.
+proba_rotation: 0.
+max_angle: 6

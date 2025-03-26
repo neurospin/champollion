@@ -453,6 +453,7 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                                     keep_proba_global=keep_proba_global,
                                     patch_size=patch_size)
         )
+    transforms_list.append(ScaleTensor(config.offset_ccdist))
     r = np.random.uniform()
     if r < config.proba_binarize:
         transforms_list.append(BinarizeTensor())

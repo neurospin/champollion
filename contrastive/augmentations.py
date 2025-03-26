@@ -1468,15 +1468,20 @@ class ScaleTensor(object):
 
     """
     Scales a ccdist image from offset 0.5 to any 1 > offset > 0.
+    Can be fixed or random if a range is given.
     """
 
     def __init__(self, offset):
         self.offset = offset
     
-    def __call__(self, tensor):
+    def __call__(self, tensor): 
         arr = tensor.numpy()
+        if isinstance(self.offset, tuple) or isinstance(self.offset, list):
+            offset = np.random.uniform(self.offset[0], self.offset[1])
+        else:
+            offset = self.offset
         mask = arr!=0
-        arr = (arr-1) * (1-self.offset) / 0.5 + 1
+        arr = (arr-1) * (1-offset) / 0.5 + 1
         arr = arr * mask
 
         arr = arr.astype('float32')

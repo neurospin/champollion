@@ -8,7 +8,9 @@ crop_dir: /neurospin/dico/data/deep_folding/papers/miccai2023/Input/datasets/hcp
 crop_file_suffix: _cropped_skeleton.nii.gz
 foldlabel_dir: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/LARGE_CINGULATE./mask/Rlabels
 pickle_benchmark: 
-train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/hcp_isomap_subjects.csv
+#train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/hcp_isomap_subjects.csv
+test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/Isomap/splits/union/union_custom_splits_train_val.csv
+train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/Isomap/splits/union/fake_train_val.csv
 subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/hcp_isomap_labels_cingulate_right.csv
 subject_column_name: 'Subject'
 cutout_mask_path:

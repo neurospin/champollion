@@ -208,7 +208,7 @@ def get_average_model(labels_df):
     return (aucs.index[0])
 
 
-def post_processing_results(labels, embeddings, Curves, aucs, accuracies,
+def post_processing_results(cv_scores, cv_stds, splits_scores, labels, embeddings, Curves, aucs, accuracies,
                             values, columns_names, mode, subset, results_save_path):
     """Get the mean and the median AUC and accuracy, plot the ROC curves and 
     the generated files."""
@@ -259,6 +259,9 @@ def post_processing_results(labels, embeddings, Curves, aucs, accuracies,
     values[f'{subset}_total_balanced_accuracy'] = \
         [np.mean(accuracies[mode]), np.std(accuracies[mode])]
     values[f'{subset}_auc'] = [np.mean(aucs[mode]), np.std(aucs[mode])]
+    values['cv_score'] = np.mean(cv_scores)
+    values['cv_std'] = np.mean(cv_stds) # TODO : doesn't make sens to take mean here, to apply only one there is one iteration
+    values['splits_score']=splits_scores[0]
 
     # save predicted labels
     labels.to_csv(results_save_path+f"/{subset}_predicted_probas.csv",
@@ -314,8 +317,8 @@ def train_one_classifier(config, inputs, subjects, i=0):
     if 'label_type' in config.keys() and config['label_type']=='continuous':
         if config.classifier_name == 'logistic': # TODO: change the parameter name for Elastic
             #model = LinearRegression() # TODO: ElasticNet instead + add gridsearch  
-            parameters={'l1_ratio': np.linspace(0,1,11), 'alpha': [10**k for k in range(-4,3)]}   
-            model = ElasticNet()
+            parameters={'l1_ratio': np.linspace(0,1,11), 'alpha': [10**k for k in range(-3,4)]}   
+            model = ElasticNet() # TODO : change the number of iterations ?
         else:
             model = SVR(kernel='linear',max_iter=config.class_max_epochs,
                         C=0.01)
@@ -369,7 +372,7 @@ def train_one_classifier(config, inputs, subjects, i=0):
         # choose the classifier type
         # /!\ The chosen classifier must have a predict_proba method.
         if config.classifier_name == 'svm':
-            parameters={'C': [10**k for k in range(-3,3)]}
+            parameters={'C': [10**k for k in range(-3,4)]}
             model = SVC(kernel='linear', probability=True,
                         max_iter=config.class_max_epochs, random_state=i,
                         class_weight='balanced', decision_function_shape='ovr')
@@ -382,9 +385,9 @@ def train_one_classifier(config, inputs, subjects, i=0):
             #model = LogisticRegression(C=0.01, solver='liblinear', penalty='l2',
             #                           max_iter=config.class_max_epochs,
             #                           random_state=i)
-            parameters={'l1_ratio': np.linspace(0,1,11), 'C': [10**k for k in range(-3,3)]}
+            parameters={'l1_ratio': np.linspace(0,1,11), 'C': [10**k for k in range(-3,4)]}
             model = LogisticRegression(solver='saga', penalty='elasticnet',
-                                       max_iter=config.class_max_epochs, random_state=i)
+                                       max_iter=1000000, random_state=i)
             #parameters={'n_neighbors': [30,40,50,60,70], 'weights': ['distance'], 'leaf_size': [1,2], 'metric': ['chebyshev', 'cosine']}
             #model = KNeighborsClassifier() # LogisticRegression is better
         else:
@@ -392,7 +395,7 @@ def train_one_classifier(config, inputs, subjects, i=0):
                                Choose a classifier type that exists in configs/classifier.")
         
         # Initialize GridSearch
-        clf = GridSearchCV(model, parameters, cv=cv, scoring='roc_auc_ovr_weighted', refit=True, n_jobs=define_njobs())
+        clf = GridSearchCV(model, parameters, cv=cv, scoring='roc_auc_ovr_weighted', refit=True, n_jobs=define_njobs()) # TODO : GridSearch won't be good for preterms
         print(f'Parameters for GridSearch: {parameters}')
 
         # create function to avoid copy paste ?
@@ -423,8 +426,7 @@ def train_one_classifier(config, inputs, subjects, i=0):
             print(f'best score : {clf.best_score_}')
             md = clf.best_estimator_
             labels_proba = md.predict_proba(X)
-
-
+    
         if 'label_type' in config.keys() and config['label_type']=='multiclass':
             roc_aucs, accuracies = compute_multiclass_indicators(Y, labels_proba)
             outputs['proba_of_1'] = labels_proba
@@ -438,9 +440,19 @@ def train_one_classifier(config, inputs, subjects, i=0):
             outputs['balanced_accuracy'] = accuracy
             outputs['curves'] = curves
 
+    # Add the GridSearchCV results
+    ## TODO : remove compute indicators, just use cv_results_
+    # TODO : get the proba predictions etc ..., all from GridSearchCV
+    cv_score = clf.cv_results_['mean_test_score'][clf.best_index_]
+    cv_std = clf.cv_results_['std_test_score'][clf.best_index_]
+    splits_score = [clf.cv_results_[f'split{k}_test_score'][clf.best_index_] for k in range(0,5)] ## TODO : NOT ASSUME 5 CV HERE
+
+    outputs['cv_score'] = cv_score
+    outputs['cv_std'] = cv_std
+    outputs['splits_score']=splits_score
 
     return outputs
-
+    
 
 @ignore_warnings(category=ConvergenceWarning)
 def train_n_repeat_classifiers(config, subset='full'):
@@ -489,10 +501,16 @@ def train_n_repeat_classifiers(config, subset='full'):
         aucs = {'cross_val': []}
         accuracies = {'cross_val': []}
         proba_pred_list = []
+        cv_scores = []
+        cv_stds = []
+        splits_scores = []
     else:
         Curves = {'cross_val': []}
         aucs = {'cross_val': []}
         accuracies = {'cross_val': []}
+        cv_scores = []
+        cv_stds = []
+        splits_scores = []
         if config.split!='train_test':
             proba_matrix = np.zeros((labels.shape[0], config.n_repeat))
         else:
@@ -525,7 +543,7 @@ def train_n_repeat_classifiers(config, subset='full'):
     repeats = range(config.n_repeat)
 
     ## Train classifiers
-        
+    ## TODO : simplified outputs
     if 'label_type' in config.keys() and config['label_type']=='continuous':
         outputs = train_one_classifier(config, inputs, subjects) # perform once since it's deterministic
         #labels_preds = outputs['labels_pred']
@@ -535,12 +553,18 @@ def train_n_repeat_classifiers(config, subset='full'):
         mae = outputs['MAE']
         r2 = outputs['r2']
         pred_vs_true = outputs['pred_vs_true']
+        cv_score = outputs['cv_score']
+        cv_std = outputs['cv_std']
+        splits_score = outputs['splits_score']
         
         values = {}
         values[f'{subset}_auc'] = reg_auc
         values[f'{subset}_mse'] = mse
         values[f'{subset}_mae'] = mae
         values[f'{subset}_r2'] = r2
+        values[f'cv_score'] = cv_score
+        values[f'cv_std'] = cv_std
+        values[f'splits_score']=splits_score
         # save results
         print(f"results_save_path = {results_save_folder}")
         filename = f"{subset}_values.json"
@@ -578,9 +602,16 @@ def train_n_repeat_classifiers(config, subset='full'):
                 roc_auc = o['roc_auc']
                 accuracy = o['balanced_accuracy']
                 probas_pred = o['proba_of_1']
+                cv_score = o['cv_score']
+                cv_std = o['cv_std']
+                splits_score = o['splits_score']
+
                 aucs['cross_val'].append(roc_auc)
                 accuracies['cross_val'].append(accuracy)
                 proba_pred_list.append(probas_pred)
+                cv_scores.append(cv_score)
+                cv_stds.append(cv_std)
+                splits_scores.append(splits_score)
             
             #save proba matrix
             columns_names = [str(int(i)) for i in np.unique(labels.label)]
@@ -617,6 +648,9 @@ def train_n_repeat_classifiers(config, subset='full'):
             values[f'{subset}_auc']=\
                 [np.mean(aucs), np.mean(values[target][1])]
             values[f'{subset}_weighted_auc']=weighted_auc
+            values['cv_score']=np.mean(cv_scores) # TODO : no reason to take mean
+            values['cv_std']=np.mean(cv_stds)
+            values['splits_score']=splits_score
         else:
             # Put together the results
             for i, o in enumerate(outputs):
@@ -625,11 +659,18 @@ def train_n_repeat_classifiers(config, subset='full'):
                 curves = o['curves']
                 roc_auc = o['roc_auc']
                 accuracy = o['balanced_accuracy']
+                cv_score = o['cv_score']
+                cv_std = o['cv_std']
+                splits_score = o['splits_score']
+
                 proba_matrix[:, i] = probas_pred
                 labels_pred_matrix[:, i] = labels_pred
                 Curves['cross_val'].append(curves)
                 aucs['cross_val'].append(roc_auc)
                 accuracies['cross_val'].append(accuracy)
+                cv_scores.append(cv_score)
+                cv_stds.append(cv_std)
+                splits_scores.append(splits_score)
 
             # add the predictions to the df where the true values are
             columns_names = ["proba_pred_"+str(i) for i in range(config.n_repeat)]
@@ -644,7 +685,8 @@ def train_n_repeat_classifiers(config, subset='full'):
             values = {}
             mode = 'cross_val'
 
-            post_processing_results(labels, embeddings, Curves, aucs,
+            ### TODO : add cv_scores in post_processing !!
+            post_processing_results(cv_scores, cv_stds, splits_scores, labels, embeddings, Curves, aucs,
                                     accuracies, values, columns_names,
                                     mode, subset, results_save_folder)
             

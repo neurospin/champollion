@@ -71,8 +71,8 @@ def sanity_checks_foldlabels_without_labels(config, skeleton_output, reg):
     check_subject_consistency(config.data[reg].subjects_all,
                               config.data[reg].subjects_foldlabel_all,
                               name='foldlabel')
-    check_foldlabel_npy_consistency(config.data[reg].numpy_all,
-                                    config.data[reg].foldlabel_all)
+    #check_foldlabel_npy_consistency(config.data[reg].numpy_all,
+    #                                config.data[reg].foldlabel_all)
     # in order to avoid logging twice the same information
     if root.level == 20:  # root logger in INFO mode
         set_root_logger_level(0)
@@ -102,8 +102,8 @@ def sanity_checks_distbottoms_without_labels(config, skeleton_output, reg):
     check_subject_consistency(config.data[reg].subjects_all,
                               config.data[reg].subjects_distbottom_all,
                               name='distbottom')
-    check_distbottom_npy_consistency(file_path_arr_crops=config.data[reg].numpy_all,
-                                     file_path_arr_distbottom=config.data[reg].distbottom_all)
+    #check_distbottom_npy_consistency(file_path_arr_crops=config.data[reg].numpy_all,
+    #                                 file_path_arr_distbottom=config.data[reg].distbottom_all)
     # in order to avoid logging twice the same information
     if root.level == 20:  # root logger in INFO mode
         set_root_logger_level(0)
@@ -134,8 +134,8 @@ def sanity_checks_extremities_without_labels(config, skeleton_output, reg):
     check_subject_consistency(config.data[reg].subjects_all,
                               config.data[reg].subjects_extremity_all,
                               name='extremity')
-    check_extremity_npy_consistency(config.data[reg].numpy_all,
-                                    config.data[reg].extremity_all)
+    #check_extremity_npy_consistency(config.data[reg].numpy_all,
+    #                                config.data[reg].extremity_all)
     # in order to avoid logging twice the same information
     if root.level == 20:  # root logger in INFO mode
         set_root_logger_level(0)

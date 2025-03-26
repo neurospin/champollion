@@ -914,6 +914,7 @@ class TransposeTensor(object):
     def __call__(self, tensor):
         arr = tensor.numpy()
         arr_t = np.transpose(arr, (3, 0, 1, 2))
+        arr_t = arr_t.astype('float32')
 
         return(torch.from_numpy(arr_t))
     

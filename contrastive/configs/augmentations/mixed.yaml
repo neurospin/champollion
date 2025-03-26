@@ -34,3 +34,4 @@ redefine_bottom: True
 proba_contour: 0.
 proba_rotation: 0.
 max_angle: 6
+proba_binarize: 1

@@ -56,8 +56,8 @@ def transform_only_padding(input_size, flip_dataset, config):
         transforms_list = [
                 SimplifyTensor(),
                 PaddingTensor(shape=input_size,
-                              fill_value=config.fill_value),
-                BinarizeTensor()]
+                              fill_value=config.fill_value)]
+                #BinarizeTensor()] ## TODO : THIS IS TEMPORARY !!!
         if flip_dataset:
             transforms_list.append(FlipFirstAxisTensor())
         transforms_list.append(EndTensor())
@@ -453,7 +453,9 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                                     keep_proba_global=keep_proba_global,
                                     patch_size=patch_size)
         )
-    transforms_list.append(BinarizeTensor())
+    r = np.random.uniform()
+    if r < config.proba_binarize:
+        transforms_list.append(BinarizeTensor())
     r = np.random.uniform()
     if r < config.proba_translation:
         transforms_list.append(TranslateTensor(config.max_translation))

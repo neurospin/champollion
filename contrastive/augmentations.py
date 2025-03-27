@@ -1476,12 +1476,12 @@ class ScaleTensor(object):
     
     def __call__(self, tensor): 
         arr = tensor.numpy()
-        if isinstance(self.offset, tuple) or isinstance(self.offset, list):
-            offset = np.random.uniform(self.offset[0], self.offset[1])
+        if not isinstance(self.offset, (float, int)):
+            alpha = np.random.uniform(self.offset[0], self.offset[1])
         else:
-            offset = self.offset
+            alpha = self.offset
         mask = arr!=0
-        arr = (arr-1) * (1-offset) / 0.5 + 1
+        arr = (arr-1) * (1-alpha) / 0.5 + 1
         arr = arr * mask
 
         arr = arr.astype('float32')

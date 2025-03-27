@@ -56,7 +56,8 @@ def transform_only_padding(input_size, flip_dataset, config):
         transforms_list = [
                 SimplifyTensor(),
                 PaddingTensor(shape=input_size,
-                              fill_value=config.fill_value)]
+                              fill_value=config.fill_value),
+                ScaleTensor(config.offset_ccdist)]
                 #BinarizeTensor()] ## TODO : THIS IS TEMPORARY !!!
         if flip_dataset:
             transforms_list.append(FlipFirstAxisTensor())

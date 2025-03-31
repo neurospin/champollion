@@ -252,7 +252,33 @@ if __name__ == "__main__":
     
     """
     
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models/7_translation/SOr_left_UKB40",
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_full/8_trimdepth_translation_3/SOr_left_UKB40",
+                        dataset_localization="neurospin",
+                        datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
+                        idx_region_evaluation = None,
+                        labels=['Left_OFC'],
+                        classifier_name='logistic',
+                        short_name='troiani', overwrite=True, embeddings=True,
+                        embeddings_only=False, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='custom', cv=5,
+                        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/Left/train_val_split_',
+                        verbose=False)
+    
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_full/9_trimextremities_translation_3/SOr_left_UKB40",
+                        dataset_localization="neurospin",
+                        datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
+                        idx_region_evaluation = None,
+                        labels=['Left_OFC'],
+                        classifier_name='logistic',
+                        short_name='troiani', overwrite=True, embeddings=True,
+                        embeddings_only=False, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='custom', cv=5,
+                        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/Left/train_val_split_',
+                        verbose=False)
+    """
+                        
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_full/11_cutout_translation_3/SOr_left_UKB40",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
                         idx_region_evaluation = None,
@@ -260,7 +286,7 @@ if __name__ == "__main__":
                         classifier_name='logistic',
                         short_name='troiani', overwrite=False, embeddings=True,
                         embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='custom', cv=3,
+                        subsets=['full'], epochs=[None], split='custom', cv=5,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/Left/train_val_split_',
                         verbose=False)
     
@@ -394,17 +420,16 @@ if __name__ == "__main__":
                         verbose=False)
     """
     
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models/7_translation/LARGE_CINGULATE_right_UKB40",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_full/11_cutout_translation_3/LARGE_CINGULATE_right_UKB40",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/LARGE_CINGULATE_right_ACCpatterns_custom"],
         idx_region_evaluation = None,
         labels=['Right_PCS'],
         classifier_name='logistic',
-        short_name='ACC', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['full'], epochs=[None], split='custom', cv=3,
+        short_name='ACC', overwrite=False, embeddings=True, embeddings_only=False, use_best_model=False,
+        subsets=['full'], epochs=[None], split='custom', cv=5,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/splits/Right/train_val_split_',
         verbose=False)
-    
     
     """
     embeddings_pipeline('/neurospin/dico/jlaval/Output/CINGULATE_40k',
@@ -433,7 +458,7 @@ if __name__ == "__main__":
     """
 
     # custom cv (80%)
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models/7_translation/FIP_right_UKB40/",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_full/11_cutout_translation_3/FIP_right_UKB40/",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
                         idx_region_evaluation = None,
@@ -603,7 +628,8 @@ if __name__ == "__main__":
                         splits_basedir='',
                         verbose=False)
     """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models/7_translation/SC-sylv_left_UKB40",
+    
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_full/11_cutout_translation_3/SC-sylv_left_UKB40",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_isomap"],
         idx_region_evaluation=None,
@@ -755,14 +781,14 @@ if __name__ == "__main__":
                         verbose=False)
     """
 
-    # Isomap cingulate
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models/7_translation/LARGE_CINGULATE_right_UKB40",
+    # Isomap cingulate    
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_full/11_cutout_translation_3/LARGE_CINGULATE_right_UKB40",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/LARGE_CINGULATE_right_isomap"],
         idx_region_evaluation=None,
         labels=[f'Isomap_cingulate_right_dim{k}' for k in range(1,7)],
         classifier_name='logistic',
-        short_name='hcp_isomap', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
+        short_name='hcp_isomap', overwrite=False, embeddings=True, embeddings_only=False, use_best_model=False,
         subsets=['full'], epochs=[None], split='custom', cv=5,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/Isomap/splits/train_val_split_',
         verbose=False)

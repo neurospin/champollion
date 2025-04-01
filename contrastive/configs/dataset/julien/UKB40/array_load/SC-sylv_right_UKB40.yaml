@@ -1,7 +1,7 @@
-# @package dataset.SC-sylv_right_UKB40
-dataset_name: SC-sylv_right_UKB40
+# @package dataset.SC-sylv_right_distmaps_UKB40
+dataset_name: SC-sylv_right_distmaps_UKB40
 pickle_normal: ${dataset_folder}/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rskeleton.pkl
-numpy_all: ${dataset_folder}/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rskeleton.npy
+numpy_all: ${dataset_folder}/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rccdistmaps.npy
 subjects_all: ${dataset_folder}/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rskeleton_subject.csv
 crop_dir: ${dataset_folder}/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rcrops
 foldlabel_dir: ${dataset_folder}/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rlabels

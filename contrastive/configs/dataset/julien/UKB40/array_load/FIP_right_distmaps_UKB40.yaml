@@ -1,5 +1,5 @@
-# @package dataset.FIP_right_UKB40
-dataset_name: FIP_right_UKB40
+# @package dataset.FIP_right_distmaps_UKB40
+dataset_name: FIP_right_distmaps_UKB40
 pickle_normal: ${dataset_folder}/UkBioBank40/crops/2mm/F.I.P./mask/Rskeleton.pkl
 numpy_all: ${dataset_folder}/UkBioBank40/crops/2mm/F.I.P./mask/Rccdistmaps.npy
 subjects_all: ${dataset_folder}/UkBioBank40/crops/2mm/F.I.P./mask/Rskeleton_subject.csv

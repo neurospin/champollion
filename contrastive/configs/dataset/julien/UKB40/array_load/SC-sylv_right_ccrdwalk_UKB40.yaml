@@ -2,7 +2,7 @@
 dataset_name: SC-sylv_right_ccrdwalk_UKB40
 pickle_normal: ${dataset_folder}/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rskeleton.pkl
 numpy_all: ${dataset_folder}/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rccrdwalk.npy
-subjects_all: ${dataset_folder}/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rskeleton_subject.csv
+subjects_all: ${dataset_folder}/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rccrdwalks_subjects.csv
 crop_dir: ${dataset_folder}/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rcrops
 foldlabel_dir: ${dataset_folder}/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rlabels
 foldlabel_all: ${dataset_folder}/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rlabel.npy

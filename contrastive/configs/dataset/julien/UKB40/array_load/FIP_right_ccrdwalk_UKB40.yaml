@@ -2,7 +2,7 @@
 dataset_name: FIP_right_ccrdwalk_UKB40
 pickle_normal: ${dataset_folder}/UkBioBank40/crops/2mm/F.I.P./mask/Rskeleton.pkl
 numpy_all: ${dataset_folder}/UkBioBank40/crops/2mm/F.I.P./mask/Rccrdwalks.npy
-subjects_all: ${dataset_folder}/UkBioBank40/crops/2mm/F.I.P./mask/Rskeleton_subject.csv
+subjects_all: ${dataset_folder}/UkBioBank40/crops/2mm/F.I.P./mask/Rccrdwalks_subjects.csv
 crop_dir: ${dataset_folder}/UkBioBank40/crops/2mm/F.I.P./mask/Rcrops
 foldlabel_dir: ${dataset_folder}/UkBioBank40/crops/2mm/F.I.P./mask/Rlabels
 foldlabel_all: ${dataset_folder}/UkBioBank40/crops/2mm/F.I.P./mask/Rlabel.npy

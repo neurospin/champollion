@@ -43,7 +43,7 @@ from torch.utils.tensorboard import SummaryWriter
 import torch.nn as nn
 
 from beta_vae import *
-from deep_folding.utils.pytorchtools import EarlyStopping
+from utils.pytorchtools import EarlyStopping
 
 from postprocess import plot_loss
 
@@ -69,7 +69,7 @@ def train_vae(config, trainloader, valloader, root_dir=None):
     if torch.cuda.is_available():
         device = "cuda:0"
     vae.to(device)
-    summary(vae, config.in_shape)
+    summary(vae, list(config.in_shape))
 
     weights = [1, 2]
     class_weights = torch.FloatTensor(weights).to(device)

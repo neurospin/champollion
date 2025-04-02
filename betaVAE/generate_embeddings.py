@@ -41,34 +41,48 @@ import torch
 import torch.nn as nn
 
 from beta_vae import VAE, ModelTester
-from load_data import create_test_subset
-from configs.config import Config
+from load_data import create_subset
+import hydra
+from utils.config import process_config
 
 
-def generate_embedding_sets(embedding, config, dataset='cingulate_ACCpatterns'):
+def adjust_in_shape(config):
+
+    dims=[]
+    for idx in range(1, 4):
+        dim = config.in_shape[idx]
+        r = dim%(2**config.depth)
+        if r!=0:
+            dim+=(2**config.depth-r)
+        dims.append(dim)
+    return((1, dims[0]+4, dims[1], dims[2]))
+
+
+def generate_embedding_sets(embedding, config, dataset='SC-sylv_right_hcp'):
     """
     From a dataframe of encoded subjects, generate csv files:
     full_embeddings.csv, train_embeddings.csv etc.
     """
-    subjects_dir = '/neurospin/dico/lguillon/collab_joel_aymeric_cingulate/data'
+    subjects_dir = '/neurospin/dico/data/deep_folding/current/datasets/hcp/'
     save_dir = config.test_model_dir + f'/{dataset}_embeddings'
-    os.mkdir(save_dir)
+    if not(os.path.exists(save_dir)):
+        os.mkdir(save_dir)
 
     # Loading of data subsets
     full = pd.read_csv(os.path.join(subjects_dir, 'full_subjects.csv'),
-                header=None, usecols=[1], names=['ID'])
+                header=None, usecols=[0], names=['ID'])
     full['ID'] = full['ID'].astype('str')
 
     train = pd.read_csv(os.path.join(subjects_dir, 'train_subjects.csv'),
-                header=None, usecols=[1], names=['ID'])
+                header=None, usecols=[0], names=['ID'])
     train['ID'] = train['ID'].astype('str')
 
     val = pd.read_csv(os.path.join(subjects_dir, 'val_subjects.csv'),
-                header=None, usecols=[1], names=['ID'])
+                header=None, usecols=[0], names=['ID'])
     val['ID'] = val['ID'].astype('str')
 
     test = pd.read_csv(os.path.join(subjects_dir, 'test_subjects.csv'),
-                header=None, usecols=[1], names=['ID'])
+                header=None, usecols=[0], names=['ID'])
     test['ID'] = test['ID'].astype('str')
 
     embedding['ID'] = embedding["ID"].astype('str')
@@ -86,11 +100,13 @@ def generate_embedding_sets(embedding, config, dataset='cingulate_ACCpatterns'):
     test_embeddings.to_csv(os.path.join(save_dir, 'test_embeddings.csv'), index=False)
 
 
-def main(dataset='cingulate_ACCpatterns'):
+@hydra.main(config_name='config', config_path="configs")
+def main(config):
     """
     Infer a trained model on test data and saves the embeddings as csv
     """
-    config = Config()
+
+    config=process_config(config)
 
     torch.manual_seed(0)
     device = 'cpu'
@@ -98,6 +114,10 @@ def main(dataset='cingulate_ACCpatterns'):
         device = "cuda:0"
         if torch.cuda.device_count() > 1:
             vae = nn.DataParallel(vae)
+
+    config.in_shape = adjust_in_shape(config)
+
+    config.test_model_dir = "/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-03-31/16-49-44/"
 
     model_dir = os.path.join(config.test_model_dir, 'checkpoint.pt')
     model = VAE(config.in_shape, config.n, depth=3)
@@ -108,7 +128,7 @@ def main(dataset='cingulate_ACCpatterns'):
     class_weights = torch.FloatTensor(weights).to(device)
     criterion = nn.CrossEntropyLoss(weight=class_weights, reduction='sum')
 
-    subset_test = create_test_subset(config)
+    subset_test = create_subset(config)
     testloader = torch.utils.data.DataLoader(
               subset_test,
               batch_size=config.batch_size,
@@ -118,15 +138,17 @@ def main(dataset='cingulate_ACCpatterns'):
 
     tester = ModelTester(model=model, dico_set_loaders=dico_set_loaders,
                          kl_weight=config.kl, loss_func=criterion,
-                         n_latent=config.n, depth=3)
+                         n_latent=config.n, depth=config.depth)
 
-    results = tester.test()
+    results = tester.test()[0]
+    for k in results['test']:
+        results['test'][k] = results['test'][k][1]
     embedding = pd.DataFrame(results['test']).T.reset_index()
     embedding = embedding.rename(columns={"index":"ID"})
     embedding = embedding.rename(columns={k:f"dim{k+1}" for k in range(config.n)})
     print(embedding.head())
 
-    generate_embedding_sets(embedding, config, dataset=dataset)
+    generate_embedding_sets(embedding, config)
 
 if __name__ == '__main__':
-    main(dataset='cingulate_ACCpatterns')
+    main()

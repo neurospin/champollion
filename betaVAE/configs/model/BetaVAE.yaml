@@ -2,3 +2,4 @@
 kl: 2
 embedding_size: 10
 depth: 3
+n: 75

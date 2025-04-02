@@ -1,0 +1,6 @@
+# @package _global_
+dataset_name: STs-sylv_right_HCP
+data_dir: "/neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/S.C.-sylv./mask/Rskeleton.pkl"
+subject_dir: "/neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/S.C.-sylv./mask/Rskeleton_subject.csv"
+save_dir: "/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output"
+in_shape: [1, 42, 34, 49]

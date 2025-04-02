@@ -265,10 +265,10 @@ if __name__ == "__main__":
                         verbose=False)
     """
 
-    """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/6_no_augm/SOr_left_UKB40",
+    
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/test_ccrdwalk/SOr_left_UKB40",
                         dataset_localization="neurospin",
-                        datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
+                        datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom_ccrdwalk"],
                         idx_region_evaluation = None,
                         labels=['Left_OFC'],
                         classifier_name='logistic',
@@ -278,7 +278,7 @@ if __name__ == "__main__":
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/Left/train_val_split_',
                         verbose=False)
     
-    
+    """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models/7_translation/SOr_left_UKB40",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
@@ -472,6 +472,7 @@ if __name__ == "__main__":
     """
 
     # custom cv (80%)
+    """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/test_distmaps/FIP_right_UKB40/",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom_distmaps"],
@@ -483,6 +484,7 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='custom', cv=5,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/Right/train_val_split_',
                         verbose=False)
+    """
     """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/6_no_augm/FIP_right_UKB40/",
                         dataset_localization="neurospin",

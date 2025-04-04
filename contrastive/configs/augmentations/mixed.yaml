@@ -26,10 +26,10 @@ keep_proba_per_branch_cutin: 0.5
 keep_proba_global_cutin: 1.
 mask_constraint: True
 offset_proba_no_augm: 0. # offset to maintain a value if proba_augmentation is high.
-proba_trimdepth: 0.3
-proba_trimextremities: 0.3
-proba_cutout: 0.3
-proba_cutin: 0.3
+proba_trimdepth: 0.
+proba_trimextremities: 0.
+proba_cutout: 0.
+proba_cutin: 0.
 redefine_bottom: True
 proba_contour: 0.
 proba_rotation: 0.

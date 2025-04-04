@@ -278,7 +278,7 @@ if __name__ == "__main__":
                         verbose=False)
     """
                         
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_full/11_cutout_translation_3/SOr_left_UKB40",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations/SOr_left_UKB40",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
                         idx_region_evaluation = None,
@@ -420,7 +420,8 @@ if __name__ == "__main__":
                         verbose=False)
     """
     
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_full/11_cutout_translation_3/LARGE_CINGULATE_right_UKB40",
+
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations/LARGE_CINGULATE_right_UKB40",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/LARGE_CINGULATE_right_ACCpatterns_custom"],
         idx_region_evaluation = None,
@@ -430,7 +431,7 @@ if __name__ == "__main__":
         subsets=['full'], epochs=[None], split='custom', cv=5,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/splits/Right/train_val_split_',
         verbose=False)
-    
+
     """
     embeddings_pipeline('/neurospin/dico/jlaval/Output/CINGULATE_40k',
         dataset_localization="neurospin",
@@ -458,7 +459,8 @@ if __name__ == "__main__":
     """
 
     # custom cv (80%)
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_full/11_cutout_translation_3/FIP_right_UKB40/",
+
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations/FIP_right_UKB40/",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
                         idx_region_evaluation = None,
@@ -469,6 +471,7 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='custom', cv=5,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/Right/train_val_split_',
                         verbose=False)
+
     """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/9_trimextremities/FIP_right_UKB40/",
                         dataset_localization="neurospin",
@@ -628,8 +631,8 @@ if __name__ == "__main__":
                         splits_basedir='',
                         verbose=False)
     """
-    
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_full/11_cutout_translation_3/SC-sylv_left_UKB40",
+
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations/SC-sylv_left_UKB40",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_isomap"],
         idx_region_evaluation=None,
@@ -782,7 +785,7 @@ if __name__ == "__main__":
     """
 
     # Isomap cingulate    
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_full/11_cutout_translation_3/LARGE_CINGULATE_right_UKB40",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations/LARGE_CINGULATE_right_UKB40",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/LARGE_CINGULATE_right_isomap"],
         idx_region_evaluation=None,
@@ -792,7 +795,6 @@ if __name__ == "__main__":
         subsets=['full'], epochs=[None], split='custom', cv=5,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/Isomap/splits/train_val_split_',
         verbose=False)
-    
     
 
     

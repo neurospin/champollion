@@ -15,7 +15,7 @@ proba_pepper_trimdepth: 1. # no pepper noise, fully removed
 ball_radius: 2
 fill_value: 0
 max_translation: 1
-proba_translation: 1
+proba_translation: 0.
 keep_extremity: 'bottom'
 keep_extremity_trimdepth: 'top'
 patch_size_cutout: [10,20]

@@ -278,13 +278,13 @@ if __name__ == "__main__":
                         verbose=False)
     """
                         
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations/SOr_left_UKB40",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/test_rotation_first/SOr_left_UKB40",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
                         idx_region_evaluation = None,
                         labels=['Left_OFC'],
                         classifier_name='logistic',
-                        short_name='troiani', overwrite=False, embeddings=True,
+                        short_name='troiani', overwrite=True, embeddings=True,
                         embeddings_only=False, use_best_model=False,
                         subsets=['full'], epochs=[None], split='custom', cv=5,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/Left/train_val_split_',
@@ -420,7 +420,7 @@ if __name__ == "__main__":
                         verbose=False)
     """
     
-
+    """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations/LARGE_CINGULATE_right_UKB40",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/LARGE_CINGULATE_right_ACCpatterns_custom"],
@@ -431,7 +431,7 @@ if __name__ == "__main__":
         subsets=['full'], epochs=[None], split='custom', cv=5,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/splits/Right/train_val_split_',
         verbose=False)
-
+    """
     """
     embeddings_pipeline('/neurospin/dico/jlaval/Output/CINGULATE_40k',
         dataset_localization="neurospin",
@@ -459,7 +459,7 @@ if __name__ == "__main__":
     """
 
     # custom cv (80%)
-
+    """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations/FIP_right_UKB40/",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
@@ -471,7 +471,7 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='custom', cv=5,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/Right/train_val_split_',
                         verbose=False)
-
+    """
     """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/9_trimextremities/FIP_right_UKB40/",
                         dataset_localization="neurospin",
@@ -631,7 +631,7 @@ if __name__ == "__main__":
                         splits_basedir='',
                         verbose=False)
     """
-
+    """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations/SC-sylv_left_UKB40",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_isomap"],
@@ -642,7 +642,7 @@ if __name__ == "__main__":
         subsets=['full'], epochs=[None], split='custom', cv=5,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/Isomap/splits/train_val_split_',
         verbose=False)
-
+    """
     """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/9_trimextremities/SC-sylv_left_UKB40",
         dataset_localization="neurospin",
@@ -784,7 +784,8 @@ if __name__ == "__main__":
                         verbose=False)
     """
 
-    # Isomap cingulate    
+    # Isomap cingulate
+    """ 
     embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations/LARGE_CINGULATE_right_UKB40",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/LARGE_CINGULATE_right_isomap"],
@@ -795,7 +796,7 @@ if __name__ == "__main__":
         subsets=['full'], epochs=[None], split='custom', cv=5,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/Isomap/splits/train_val_split_',
         verbose=False)
-    
+    """    
 
     
 

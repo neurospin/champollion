@@ -392,22 +392,22 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                     sample_extremities, cutout_mask_path, cutin_mask_path, input_size, config):
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
-                                     fill_value=config.fill_value)]
+                                     fill_value=config.fill_value),
+                       ConcatTensor(sample_foldlabel, sample_distbottom, sample_extremities)]
     np.random.seed()
     r = np.random.uniform()
     if r < config.proba_trimdepth:
         transforms_list.append(
-            TrimDepthTensor(sample_distbottom=sample_distbottom,
-                            sample_foldlabel=sample_foldlabel,
-                            max_distance=config.max_distance,
-                            delta=config.trimdepth_delta,
-                            input_size=input_size,
-                            keep_extremity=config.keep_extremity_trimdepth,
-                            uniform=config.uniform_trim,
-                            binary=config.binary_trim,
-                            binary_proba=config.binary_proba_trim,
-                            pepper=config.proba_pepper_trimdepth,
-                            redefine_bottom=config.redefine_bottom)
+            TrimDepthTensor(
+                max_distance=config.max_distance,
+                delta=config.trimdepth_delta,
+                input_size=input_size,
+                keep_extremity=config.keep_extremity_trimdepth,
+                uniform=config.uniform_trim,
+                binary=config.binary_trim,
+                binary_proba=config.binary_proba_trim,
+                pepper=config.proba_pepper_trimdepth,
+                redefine_bottom=config.redefine_bottom)
         )
     r = np.random.uniform()
     if r < config.proba_trimextremities:
@@ -416,14 +416,16 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
         else:
             protective_structure=np.expand_dims(ball(config.ball_radius), axis=-1)
         transforms_list.append(
-            HighlightExtremitiesTensor(sample_extremities=sample_extremities,
-                        sample_foldlabel=sample_foldlabel,
-                        input_size=input_size,
-                        protective_structure=protective_structure,
-                        p=config.proba_trimedges,
-                        pepper=config.proba_pepper_trimedges,
-                        keep_extremity=None)
+            HighlightExtremitiesTensor(
+                                    input_size=input_size,
+                                    protective_structure=protective_structure,
+                                    p=config.proba_trimedges,
+                                    pepper=config.proba_pepper_trimedges,
+                                    keep_extremity=None)
         )
+    r = np.random.uniform()    
+    if r < config.proba_rotation:
+        transforms_list.append(RotateTensor(config.max_angle))
     r = np.random.uniform()
     if r < config.proba_cutout + config.proba_cutin:
         r = np.random.uniform()
@@ -443,7 +445,7 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
             mask_constraint=config.mask_constraint
             mask=np.load(cutin_mask_path)
         transforms_list.append(
-            PartialCutOutTensor_Roll(sample_foldlabel,
+            PartialCutOutTensor_Roll(
                                     mask,
                                     mask_constraint=mask_constraint,
                                     from_skeleton=from_skeleton,
@@ -453,10 +455,10 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                                     keep_proba_global=keep_proba_global,
                                     patch_size=patch_size)
         )
+
+    ## Reduce to one modality
+    transforms_list.append(ReduceTensor())
     transforms_list.append(BinarizeTensor())
-    r = np.random.uniform()    
-    if r < config.proba_rotation:
-        transforms_list.append(RotateTensor(config.max_angle))
     r = np.random.uniform()
     if r < config.proba_translation:
         transforms_list.append(TranslateTensor(config.max_translation))

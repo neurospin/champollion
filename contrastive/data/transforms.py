@@ -389,11 +389,12 @@ def transform_random(sample_foldlabel,
     
 
 def transform_mixed(sample_foldlabel, sample_distbottom,
-                    sample_extremities, cutout_mask_path, cutin_mask_path, input_size, config):
+                    sample_extremities, cutin_mask_path, input_size, config):
+    mask=np.load(cutin_mask_path)
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
-                       ConcatTensor(sample_foldlabel, sample_distbottom, sample_extremities)]
+                       ConcatTensor(sample_foldlabel, sample_distbottom, sample_extremities, mask)]
     np.random.seed()
     r = np.random.uniform()
     if r < config.proba_trimdepth:
@@ -436,17 +437,14 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
             keep_proba_per_branch=config.keep_proba_per_branch_cutout
             keep_proba_global=config.keep_proba_global_cutout
             mask_constraint=False
-            mask=None
         else:
             from_skeleton=False
             patch_size=config.patch_size_cutin
             keep_proba_per_branch=config.keep_proba_per_branch_cutin
             keep_proba_global=config.keep_proba_global_cutin
             mask_constraint=config.mask_constraint
-            mask=np.load(cutin_mask_path)
         transforms_list.append(
             PartialCutOutTensor_Roll(
-                                    mask,
                                     mask_constraint=mask_constraint,
                                     from_skeleton=from_skeleton,
                                     input_size=input_size,

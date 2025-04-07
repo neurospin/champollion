@@ -202,17 +202,19 @@ class ConcatTensor(object):
     """Concat skeleton with foldlabel, distbottom and edges.
     """
 
-    def __init__(self, sample_foldlabel, sample_distbottom, sample_extremities):
+    def __init__(self, sample_foldlabel, sample_distbottom, sample_extremities, mask):
         self.sample_foldlabel = sample_foldlabel
         self.sample_distbottom = sample_distbottom
         self.sample_extremities = sample_extremities
+        self.mask = mask
 
     def __call__(self, tensor):
         arr = tensor.numpy()
         arr_foldlabel = self.sample_foldlabel.numpy()
         arr_distbottom = self.sample_distbottom.numpy()
         arr_extremities = self.sample_extremities.numpy()
-        arr_concat = np.stack((arr, arr_foldlabel, arr_distbottom, arr_extremities))
+        arr_mask = self.mask
+        arr_concat = np.stack((arr, arr_foldlabel, arr_distbottom, arr_extremities, arr_mask))
 
         return torch.from_numpy(arr_concat)
 
@@ -489,7 +491,7 @@ class PartialCutOutTensor_Roll(object):
     We assume that the rectangle to be cut is inside the image.
     """
 
-    def __init__(self, mask, mask_constraint=False, from_skeleton=True, input_size=None,
+    def __init__(self, mask_constraint=False, from_skeleton=True, input_size=None,
                  keep_extremity='bottom', keep_proba_per_branch=1., keep_proba_global=1., patch_size=None,
                  random_size=False, localization=None):
         """[summary]
@@ -520,7 +522,6 @@ class PartialCutOutTensor_Roll(object):
         self.random_size = random_size
         self.localization = localization
         self.from_skeleton = from_skeleton
-        self.mask = mask
         self.mask_constraint = mask_constraint
         self.keep_proba_per_branch = keep_proba_per_branch
         self.keep_proba_global = keep_proba_global
@@ -587,7 +588,8 @@ class PartialCutOutTensor_Roll(object):
                 #        middle_cutout.append(middle_pos)
                 # alt : use mask as proba sampling # TODO : implement properly and distinguish cutin and cutout
                 # normalize the mask
-                mask = self.mask / np.sum(self.mask)
+                mask = arr_all[4]
+                mask = mask / np.sum(mask)
                 i = np.random.choice(np.arange(mask.size), p=mask.ravel())
                 middle_pos = np.unravel_index(i, mask.shape)
                 start_cutout = [(middle_pos[ndim] - size[ndim] // 2)%img_shape[ndim] for ndim in range(len(img_shape))]

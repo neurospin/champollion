@@ -278,9 +278,9 @@ if __name__ == "__main__":
                         verbose=False)
     """
                         
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/test_rotation_first/SOr_left_UKB40",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/2025-04-09/",
                         dataset_localization="neurospin",
-                        datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
+                        datasets=["julien/MICCAI_2024/evaluation/with_topology_maps/orbital_left_hcp_custom_with_maps"],
                         idx_region_evaluation = None,
                         labels=['Left_OFC'],
                         classifier_name='logistic',

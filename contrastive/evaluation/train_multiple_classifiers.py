@@ -318,7 +318,7 @@ def train_one_classifier(config, inputs, subjects, i=0):
         if config.classifier_name == 'logistic': # TODO: change the parameter name for Elastic
             #model = LinearRegression() # TODO: ElasticNet instead + add gridsearch  
             parameters={'l1_ratio': np.linspace(0,1,11), 'alpha': [10**k for k in range(-3,4)]}   
-            model = ElasticNet() # TODO : change the number of iterations ?
+            model = ElasticNet(max_iter=1000000) # TODO : change the number of iterations ?
         else:
             model = SVR(kernel='linear',max_iter=config.class_max_epochs,
                         C=0.01)
@@ -524,7 +524,7 @@ def train_n_repeat_classifiers(config, subset='full'):
     X[X.columns] = scaler.fit_transform(X)
     if 'label_type' in config.keys() and config['label_type']=='continuous':
         Y= Y.to_numpy().reshape(-1, 1)
-        #Y = scaler.fit_transform(Y) # do not normalize, so that MAE is interpretable
+        Y = scaler.fit_transform(Y)
         Y = Y.reshape(-1)
         Y = pd.Series(Y)
     inputs['X'] = X

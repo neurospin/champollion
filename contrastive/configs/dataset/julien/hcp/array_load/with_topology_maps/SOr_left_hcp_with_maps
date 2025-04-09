@@ -1,0 +1,27 @@
+# @package dataset.SOr_left_hcp_with_maps
+dataset_name: SOr_left_hcp_with_maps
+pickle_normal: ${dataset_folder}/hcp/crops/2mm/S.Or./mask/Lskeleton.pkl
+numpy_all: ${dataset_folder}/hcp/crops/2mm/S.Or./mask/Lskeleton.npy
+subjects_all: ${dataset_folder}/hcp/crops/2mm/S.Or./mask/Lskeleton_subject.csv
+crop_dir: ${dataset_folder}/hcp/crops/2mm/S.Or./mask/Lcrops
+foldlabel_dir: ${dataset_folder}/hcp/crops/2mm/S.Or./mask/Llabels
+foldlabel_all: ${dataset_folder}/hcp/crops/2mm/S.Or./mask/Llabel.npy
+subjects_foldlabel_all: ${dataset_folder}/hcp/crops/2mm/S.Or./mask/Llabel_subject.csv
+distbottom_dir: ${dataset_folder}/hcp/crops/2mm/S.Or./mask/Ldistbottom
+distbottom_all: ${dataset_folder}/hcp/crops/2mm/S.Or./mask/Ldistbottom.npy
+extremity_dir: ${dataset_folder}/hcp/crops/2mm/S.Or./mask/Lextremities
+extremity_all: ${dataset_folder}/hcp/crops/2mm/S.Or./mask/Lextremities.npy
+subjects_extremity_all: ${dataset_folder}/hcp/crops/2mm/S.Or./mask/Lextremities_subject.csv
+subjects_distbottom_all: ${dataset_folder}/hcp/crops/2mm/S.Or./mask/Ldistbottom_subject.csv
+topology_dir: ${dataset_folder}/hcp/crops/2mm/S.Or./mask/Ltopologies # doesn't exist
+topology_all: ${dataset_folder}/hcp/crops/2mm/S.Or./mask/Ltopologies.npy
+subjects_topology_all: ${dataset_folder}/hcp/crops/2mm/S.Or./mask/Ltopology_subject.csv
+crop_file_suffix: _cropped_skeleton.nii.gz
+pickle_benchmark: 
+train_val_csv_file: ${dataset_folder}/hcp/crops/2mm/S.Or./mask/Lskeleton_subject.csv
+subject_labels_file: ${dataset_folder}/hcp/crops/2mm/S.Or./mask/Lskeleton_subject.csv # no label
+subject_column_name: 'Subject'
+cutout_mask_path:
+cutin_mask_path: ${dataset_folder}/hcp/crops/2mm/S.Or./mask/Lmask.npy
+flip_dataset: False
+input_size: (1, 30, 38, 22)

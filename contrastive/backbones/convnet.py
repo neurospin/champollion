@@ -145,6 +145,7 @@ class ConvNet(pl.LightningModule):
         self.initial_kernel_size = initial_kernel_size
         self.initial_stride = initial_stride
         self.max_pool = max_pool
+        self.in_channels = in_channels
         assert len(self.filters) >= encoder_depth, "Incomplete filters list given."
 
         if adaptive_pooling is None:
@@ -164,7 +165,7 @@ class ConvNet(pl.LightningModule):
         for step in range(encoder_depth):
             for depth in range(block_depth-1):
                 name = layer_name[depth]
-                in_channels = 1 if (step == 0 and depth==0) else out_channels
+                in_channels = self.in_channels if (step == 0 and depth==0) else out_channels
                 kernel_size = self.initial_kernel_size if (step == 0 and depth==0) else 3
                 stride = self.initial_stride if (step==0 and depth==0) else 1
                 out_channels = filters[step]

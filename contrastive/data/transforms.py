@@ -51,16 +51,20 @@ def transform_nothing_done():
         ])
 
 
-def transform_only_padding(input_size, flip_dataset, config):
+def transform_only_padding(input_size, sample_foldlabel, sample_distbottom, sample_extremities, mask, sample_topology, flip_dataset, config):
+    mask = np.load(mask)
     if config.backbone_name != 'pointnet':
         transforms_list = [
                 SimplifyTensor(),
                 PaddingTensor(shape=input_size,
                               fill_value=config.fill_value),
+                ConcatTensor(sample_foldlabel, sample_distbottom, sample_extremities, mask, sample_topology),
+                ReduceTensor(),
+                ScaleNonZeroTensor(mini=config.scale_topology[0], maxi=config.scale_topology[1]),
                 BinarizeTensor()]
         if flip_dataset:
             transforms_list.append(FlipFirstAxisTensor())
-        transforms_list.append(EndTensor())
+        transforms_list.append(TransposeTensor())
         return transforms.Compose(transforms_list)
     else:
         return \
@@ -389,12 +393,12 @@ def transform_random(sample_foldlabel,
     
 
 def transform_mixed(sample_foldlabel, sample_distbottom,
-                    sample_extremities, cutin_mask_path, input_size, config):
+                    sample_extremities, sample_topology, cutin_mask_path, input_size, config):
     mask=np.load(cutin_mask_path)
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
-                       ConcatTensor(sample_foldlabel, sample_distbottom, sample_extremities, mask)]
+                       ConcatTensor(sample_foldlabel, sample_distbottom, sample_extremities, mask, sample_topology)]
     np.random.seed()
     r = np.random.uniform()
     if r < config.proba_trimdepth:
@@ -453,9 +457,10 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                                     keep_proba_global=keep_proba_global,
                                     patch_size=patch_size)
         )
-
     ## Reduce to one modality
     transforms_list.append(ReduceTensor())
+    transforms_list.append(ScaleNonZeroTensor(mini=config.scale_topology[0], maxi=config.scale_topology[1]))
+    transforms_list.append(MaskTensor())
     transforms_list.append(BinarizeTensor())
     r = np.random.uniform()
     if r < config.proba_translation:

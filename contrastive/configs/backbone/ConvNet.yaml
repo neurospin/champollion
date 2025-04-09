@@ -14,3 +14,4 @@ adaptive_pooling: !!null
 #adaptive_pooling: ['average', [3,3,3]]
 #adaptive_pooling: ['max', 1]
 projection_head_hidden_layers:
+in_channels: 3

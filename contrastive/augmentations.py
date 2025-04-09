@@ -173,7 +173,7 @@ class OnlyBottomTensor(object):
 
 
 class BinarizeTensor(object):
-    """Puts non-zero values to 1
+    """Puts non-zero values to 1 on the first channel.
     """
 
     def __init__(self):
@@ -181,12 +181,30 @@ class BinarizeTensor(object):
 
     def __call__(self, tensor):
         arr = tensor.numpy()
-        arr[arr > 0] = 1
+        binary_mask = np.where(arr[..., 0] > 0, 1, 0)
+        arr[...,0][binary_mask > 0]=1
         return torch.from_numpy(arr)
     
 
+class MaskTensor(object):
+    """Mask channels with the first one.
+    """
+
+    def __init__(self):
+        None
+    
+    def __call__(self, tensor):
+        arr = tensor.numpy()
+        if arr.shape[-1]==1:
+            return torch.from_numpy(arr)
+        else:
+            arr[..., 1:] *= (arr[..., 0] > 0)[..., None]
+            return torch.from_numpy(arr)
+    
+
 class ReduceTensor(object):
-    """Keep only the first modality (skeleton)
+    """Keep only the first modality (skeleton) and the topology channels.
+    (N,H,W,D,1) -> (H,W,D,k), k the number of input channels.
     """
 
     def __init__(self):
@@ -195,18 +213,39 @@ class ReduceTensor(object):
     def __call__(self, tensor):
         arr = tensor.numpy()
         arr_skel = arr[0]
-        return torch.from_numpy(arr_skel)
+        if arr.shape[0] > 5:
+            arr_topology = arr[5:]
+            # mask the topology maps with the skeleton
+            ndim = arr_topology.shape[0]
+            if ndim==1:
+                arr_topology = mask_array_with_skeleton(arr_topology[0], arr_skel, cval=0)
+            else:
+                list_arr_topology = []
+                for dim in range(ndim):
+                    topology_map = arr_topology[dim]
+                    topology_map = mask_array_with_skeleton(topology_map, arr_skel, cval=0)
+                    list_arr_topology.append(topology_map)
+                arr_topology = np.concatenate(list_arr_topology, axis=-1)
+        
+            arr = np.concatenate((arr_skel, arr_topology), axis=-1) 
+        
+        else:
+            arr = arr_skel.copy()
+
+        return torch.from_numpy(arr)
     
 
 class ConcatTensor(object):
     """Concat skeleton with foldlabel, distbottom and edges.
+    N*(H,W,D,1) -> (N,H,W,D,1)
     """
 
-    def __init__(self, sample_foldlabel, sample_distbottom, sample_extremities, mask):
+    def __init__(self, sample_foldlabel, sample_distbottom, sample_extremities, mask, sample_topology):
         self.sample_foldlabel = sample_foldlabel
         self.sample_distbottom = sample_distbottom
         self.sample_extremities = sample_extremities
         self.mask = mask
+        self.sample_topology = sample_topology
 
     def __call__(self, tensor):
         arr = tensor.numpy()
@@ -214,10 +253,48 @@ class ConcatTensor(object):
         arr_distbottom = self.sample_distbottom.numpy()
         arr_extremities = self.sample_extremities.numpy()
         arr_mask = self.mask
-        arr_concat = np.stack((arr, arr_foldlabel, arr_distbottom, arr_extremities, arr_mask))
+        arr_topology = self.sample_topology.numpy()
+        if arr_topology.shape[-1] == 1: # TODO : shape in which order ?
+            arr_concat = np.stack((arr, arr_foldlabel, arr_distbottom, arr_extremities, arr_mask, arr_topology))
+        else:
+            arr_concat = np.stack((arr, arr_foldlabel, arr_distbottom, arr_extremities, arr_mask))
+            arr_topology = np.expand_dims(arr_topology, axis=0)
+            arr_topology = np.transpose(arr_topology, (4,1,2,3,0))
+            arr_concat = np.vstack((arr_concat, arr_topology))
 
         return torch.from_numpy(arr_concat)
 
+
+class ScaleNonZeroTensor(object):
+    """Scale non-zero values to [mini, maxi], on the additional channels.
+    Input : (H,W,D,k), k the number of input channels.
+    """
+    def __init__(self, mini, maxi):
+        self.mini=mini
+        self.maxi=maxi
+    
+    def __call__(self, tensor):
+        arr = tensor.numpy()
+        arr_skel = arr[...,0][..., None]
+
+        if arr.shape[-1] == 2:
+            arr_topology = arr[...,1:][..., None]
+        else:
+            arr_topology = arr[...,1:]
+
+        # scale the topology channels
+        mask = arr_topology > 0
+        # Get the min and max of the non-zero values
+        min_val = arr_topology[mask].min()
+        max_val = arr_topology[mask].max()
+
+        # Scale non-zero values to [a, b]
+        arr_scaled = np.zeros_like(arr_topology)
+        arr_scaled[mask] = self.mini + (arr_topology[mask] - min_val) * (self.maxi - self.mini) / (max_val - min_val)
+
+        arr = np.concatenate((arr_skel, arr_scaled), axis=-1)
+
+        return torch.from_numpy(arr)
     
 
 class FlipTensor(object):

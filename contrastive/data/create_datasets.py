@@ -161,6 +161,42 @@ def sanity_checks_extremities_without_labels(config, skeleton_output, reg):
     return extremity_output
 
 
+def sanity_checks_topologies_without_labels(config, skeleton_output, reg):
+    # Loads and separates in train_val/test set extremities if requested
+    check_subject_consistency(config.data[reg].subjects_all,
+                              config.data[reg].subjects_topology_all,
+                              name='topology')
+    # TODO : QC here (beware to multidimensional maps)
+    #check_topology_npy_consistency(config.data[reg].numpy_all,
+    #                                config.data[reg].topology_all)
+    # in order to avoid logging twice the same information
+    if root.level == 20:  # root logger in INFO mode
+        set_root_logger_level(0)
+    # add all the other created objects in the next line
+    topology_output = extract_data(config.data[reg].topology_all,
+                                    config.data[reg].crop_dir,
+                                    config, reg)
+    if root.level == 10:  # root logger in WARNING mode
+        set_root_logger_level(1)
+    log.info("topology data loaded")
+
+    # Makes some sanity checks
+    for subset_name in topology_output.keys():
+        log.debug("skeleton", skeleton_output[subset_name][1].shape)
+        log.debug("topology", topology_output[subset_name][1].shape)
+        check_if_same_subjects(skeleton_output[subset_name][0],
+                               topology_output[subset_name][0],
+                               subset_name)
+        check_subject_consistency(config.data[reg].subjects_all,
+                              config.data[reg].subjects_topology_all,
+                              name='topology')
+        #check_if_same_shape(skeleton_output[subset_name][1],
+        #                    topology_output[subset_name][1],
+        #                    subset_name)
+
+    return topology_output
+
+
 def create_sets_without_labels_without_load(config):
     """
     Create train / val / train-val / test sets when using individual directories
@@ -251,6 +287,7 @@ def create_sets_without_labels_without_load(config):
             foldlabel_arrays_dirs=dirs[subset_name]['foldlabel_dirs'],
             distbottom_arrays_dirs=dirs[subset_name]['distbottom_dirs'],
             extremity_arrays_dirs=dirs[subset_name]['extremity_dirs'],
+            topology_arrs_dirs=dirs[subset_name]['topology_dirs'],
             config=config,
             apply_transform=config.apply_augmentations)
         
@@ -269,6 +306,7 @@ def create_sets_without_labels(config):
     foldlabel_all = []
     distbottom_all = []
     extremity_all = []
+    topology_all = []
     
     # checks consistency among regions
     if len(config.data) > 1:
@@ -299,6 +337,10 @@ def create_sets_without_labels(config):
                 check_if_numpy_same_length(config.data[0].extremity_all,
                                            config.data[reg+1].extremity_all,
                                            "extremity_all")
+            if config.random_choice or config.mixed:
+                check_if_numpy_same_length(config.data[0].topology_all,
+                                           config.data[reg+1].topology_all,
+                                           "topology_all")
 
     for reg in range(len(config.data)):
         # Loads and separates in train_val/test skeleton crops
@@ -308,7 +350,7 @@ def create_sets_without_labels(config):
         skeleton_all.append(skeleton_output)
 
         # Loads and separates in train_val/test set foldlabels if requested
-        if config.apply_augmentations and (config.foldlabel or config.trimdepth
+        if (config.foldlabel or config.trimdepth
                                            or config.random_choice or config.mixed):
             foldlabel_output = sanity_checks_foldlabels_without_labels(config,
                                                             skeleton_output,
@@ -320,7 +362,7 @@ def create_sets_without_labels(config):
         foldlabel_all.append(foldlabel_output)
 
         # same with distbottom
-        if config.apply_augmentations and (config.trimdepth or config.random_choice or config.mixed):
+        if (config.trimdepth or config.random_choice or config.mixed):
             distbottom_output = sanity_checks_distbottoms_without_labels(config,
                                                             skeleton_output,
                                                             reg)
@@ -331,7 +373,7 @@ def create_sets_without_labels(config):
         distbottom_all.append(distbottom_output)
 
         # same with extremity # TODO: reduce to single sanity check function
-        if config.apply_augmentations and (config.random_choice or config.mixed):
+        if (config.random_choice or config.mixed):
             extremity_output = sanity_checks_extremities_without_labels(config,
                                                             skeleton_output,
                                                             reg)
@@ -340,6 +382,16 @@ def create_sets_without_labels(config):
             log.info("extremity data NOT requested. extremity data NOT loaded")
         
         extremity_all.append(extremity_output)
+
+        if (config.random_choice or config.mixed):
+            topology_output = sanity_checks_topologies_without_labels(config,
+                                                            skeleton_output,
+                                                            reg)
+        else:
+            topology_output = None
+            log.info("topology data NOT requested. topology data NOT loaded")
+        
+        topology_all.append(topology_output)
             
 
     # Creates the dataset from these data by doing some preprocessing
@@ -357,41 +409,26 @@ def create_sets_without_labels(config):
         # Concatenates foldabel arrays
         foldlabel_arrays = []
         for foldlabel_output in foldlabel_all:
-            # select the augmentation method
-            if config.apply_augmentations:
-                if config.trimdepth or config.random_choice or config.mixed or config.foldlabel:  # branch_clipping
-                    foldlabel_array = foldlabel_output[subset_name][1]
-                else:  # cutout
-                    foldlabel_array = None  # no need of fold labels
-            else:  # no augmentation
-                foldlabel_array = None
+            foldlabel_array = foldlabel_output[subset_name][1]
             foldlabel_arrays.append(foldlabel_array)
 
         # Concatenates distbottom arrays
         distbottom_arrays = []
         for distbottom_output in distbottom_all:
-            # select the augmentation method
-            if config.apply_augmentations:
-                if config.random_choice or config.mixed or config.trimdepth:  # trimdepth
-                    distbottom_array = distbottom_output[subset_name][1]
-                else:  # cutout
-                    distbottom_array = None  # no need of fold labels
-            else:  # no augmentation
-                distbottom_array = None
+            distbottom_array = distbottom_output[subset_name][1]
             distbottom_arrays.append(distbottom_array)
 
         # Concatenates extremity arrays
         extremity_arrays = []
         for extremity_output in extremity_all:
-            # select the augmentation method
-            if config.apply_augmentations:
-                if config.random_choice or config.mixed:
-                    extremity_array = extremity_output[subset_name][1]
-                else:  # cutout
-                    extremity_array = None  # no need of fold labels
-            else:  # no augmentation
-                extremity_array = None
+            extremity_array = extremity_output[subset_name][1]
             extremity_arrays.append(extremity_array)
+
+        # Concatenates topology arrays
+        topology_arrays = []
+        for topology_output in topology_all:
+            topology_array = topology_output[subset_name][1]
+            topology_arrays.append(topology_array)
 
         # Checks if equality of filenames and labels
         check_if_list_of_equal_dataframes(
@@ -404,6 +441,7 @@ def create_sets_without_labels(config):
             foldlabel_arrays=foldlabel_arrays,
             distbottom_arrays=distbottom_arrays,
             extremity_arrays=extremity_arrays,
+            topology_arrays=topology_arrays,
             config=config,
             apply_transform=config.apply_augmentations)
 

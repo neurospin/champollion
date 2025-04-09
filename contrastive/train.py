@@ -138,11 +138,13 @@ def train(config):
     #     input_size.extend(config.dataset[dataset]['input_size'][1:])
     # print(f"Last linear layer dimension : \
     #      {model.state_dict()['backbones.0.encoder.Linear.weight'].shape}")
-    input_size = tuple([1] + list(config.data[0].input_size))
+    input_size = [1] + list(config.data[0])
     if config.backbone_name != 'pointnet':
         if (len(config.dataset.keys()) == 1): # if one region
             print(config.data[0].input_size)
-            summary(model, input_data=input_size, batch_dim=0, device=config.device, depth=6)
+            input_size[1]=config.in_channels
+            input_size=tuple(input_size)
+            #summary(model, input_data=input_size, batch_dim=0, device=config.device, depth=6)
         else:
             summary(model, device=config.device, depth=6) # TODO : why 16 ?
     else:

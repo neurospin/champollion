@@ -102,12 +102,13 @@ def check_consistency(filename, labels, idx):
                          f"and filename_label = {filename_label}")
 
 
-def padd_array(sample, input_size, fill_value=0):
+def padd_array(sample, input_size, nb_channels=1, fill_value=0):
     """Padds array according to input_size"""
     transfo = PaddingTensor(
         input_size,
+        nb_channels=nb_channels,
         fill_value=fill_value)
-    sample = transfo(sample)
+    #sample = transfo(sample) # TODO : make it work for multiple channels, check if shape is rotated during transform ?
     return sample
 
 
@@ -137,9 +138,10 @@ class ContrastiveDatasetFusion():
     def __init__(self, filenames, config, apply_transform=True,
                  labels=None, arrays=None, foldlabel_arrays=None,
                  distbottom_arrays=None, extremity_arrays=None,
+                 topology_arrays=None,
                  coords_arrays_dirs=None, skeleton_arrays_dirs=None,
                  foldlabel_arrays_dirs=None, distbottom_arrays_dirs=None,
-                 extremity_arrays_dirs=None):
+                 extremity_arrays_dirs=None,topology_arrs_dirs=None):
         """
         Every data argument is a list over regions
 
@@ -153,6 +155,7 @@ class ContrastiveDatasetFusion():
         self.foldlabel_arrs=foldlabel_arrays
         self.distbottom_arrs=distbottom_arrays
         self.extremity_arrs=extremity_arrays
+        self.topology_arrs=topology_arrays
         self.nb_train=len(filenames[0])
         self.filenames=filenames
         self.config=config
@@ -162,6 +165,7 @@ class ContrastiveDatasetFusion():
         self.foldlabel_arrs_dirs=foldlabel_arrays_dirs
         self.distbottom_arrs_dirs=distbottom_arrays_dirs
         self.extremity_arrs_dirs=extremity_arrays_dirs
+        self.topology_arrs_dirs=topology_arrs_dirs
 
         log.debug(f"nb_train = {self.nb_train}")
         log.debug(f"filenames[:5] = {filenames[:5]}")
@@ -276,6 +280,24 @@ class ContrastiveDatasetFusion():
                                     for reg, sample_extremity in enumerate(sample_extremities)]
             #for s, f in zip(samples, sample_extremities):
             #    check_equal_non_zero_voxels(s, f, "extremity") # TODO: check inclusion only ?
+        if self.topology_arrs is not None and self.topology_arrs[0] is not None:
+            if self.config.multiregion_single_encoder:
+                topology_arr = self.topology_arrs[idx_region]
+                sample_topologies = get_sample(topology_arr, idx, 'float32')
+                sample_topologies = [padd_array(sample_topologies,
+                                                self.config.data[idx_region].input_size,
+                                                nb_channels=self.config.in_channels-1,
+                                                fill_value=0)]
+            else:
+                sample_topologies = [get_sample(topology_arr, idx, 'float32')
+                                    for topology_arr in self.topology_arrs]
+                sample_topologies = [padd_array(sample_topology,
+                                                self.config.data[reg].input_size,
+                                                nb_channels=self.config.in_channels-1,
+                                                fill_value=0)
+                                    for reg, sample_topology in enumerate(sample_topologies)]
+            #for s, f in zip(samples, sample_topologies):
+            #    check_equal_non_zero_voxels(s, f, "topology")
 
         
         # if path given instead
@@ -394,6 +416,30 @@ class ContrastiveDatasetFusion():
                                     self.config.data[reg].input_size,
                                     fill_value=0)
                            for reg, sample_extremity in enumerate(sample_extremities)]
+        if self.topology_arrs_dirs is not None and self.topology_arrs_dirs[0] is not None:
+            if self.config.multiregion_single_encoder:
+                topology_arr_dir = self.topology_arrs_dirs[idx_region][idx]
+                topology_arr = np.load(topology_arr_dir)
+                sample_topologies = convert_sparse_to_numpy(topology_arr, coords_arr,
+                                                  self.config.data[idx_region].input_size[1:], 'float32')
+                sample_topologies = torch.from_numpy(sample_topologies)
+                sample_topologies = [padd_array(sample_topologies,
+                                    self.config.data[idx_region].input_size,
+                                    nb_channels=self.config.in_channels-1,
+                                    fill_value=0)]
+            else:
+                topology_arr_dir = [arr[idx] for arr in self.topology_arrs_dirs]
+                topology_arrs = [np.load(topology_dir) for topology_dir in topology_arr_dir]
+                sample_topologies = [convert_sparse_to_numpy(topology_arr, coords_arr,
+                                                  self.config.data[reg].input_size[1:], 'float32')
+                                                  for reg, (topology_arr, coords_arr)
+                                                  in enumerate(zip(topology_arrs, coords_arrs))]
+                sample_topologies = [torch.from_numpy(sample) for sample in sample_topologies]
+                sample_topologies = [padd_array(sample,
+                                    self.config.data[reg].input_size,
+                                    nb_channels=self.config.in_channels-1,
+                                    fill_value=0)
+                           for reg, sample in enumerate(sample_topologies)]
             #for s, f in zip(samples, sample_extremities):
             #    check_equal_non_zero_voxels(s, f, "extremity") TODO: check inclusion only ?
         
@@ -446,6 +492,7 @@ class ContrastiveDatasetFusion():
                         sample_foldlabels[reg],
                         sample_distbottoms[reg],
                         sample_extremities[reg],
+                        sample_topologies[reg],
                         cutin_mask_path=cutin_mask_path,
                         input_size=input_size,
                         config=self.config)
@@ -453,6 +500,7 @@ class ContrastiveDatasetFusion():
                         sample_foldlabels[reg],
                         sample_distbottoms[reg],
                         sample_extremities[reg],
+                        sample_topologies[reg],
                         cutin_mask_path=cutin_mask_path,
                         input_size=input_size,
                         config=self.config)
@@ -489,11 +537,23 @@ class ContrastiveDatasetFusion():
                         input_size=input_size,
                         config=self.config)
                     
-            else:
+            else: # TODO : need to have the modalities in validation
                 transform1 = transform_only_padding(
-                    input_size, flip, self.config)
+                    input_size,
+                    sample_foldlabels[reg],
+                    sample_distbottoms[reg],
+                    sample_extremities[reg],
+                    cutin_mask_path,
+                    sample_topologies[reg],
+                    flip, self.config)
                 transform2 = transform_only_padding(
-                    input_size, flip, self.config)
+                    input_size,
+                    sample_foldlabels[reg],
+                    sample_distbottoms[reg],
+                    sample_extremities[reg],
+                    cutin_mask_path,
+                    sample_topologies[reg],
+                    flip, self.config)
             self.transform1.append(transform1)
             self.transform2.append(transform2)
 

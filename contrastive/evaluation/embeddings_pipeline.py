@@ -280,13 +280,13 @@ if __name__ == "__main__":
                         
     embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations_with_trim/SOr_left_UKB40",
                         dataset_localization="neurospin",
-                        datasets=["julien/UKB40/array_load/SOr_left_UKB40"],
+                        datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
                         idx_region_evaluation = None,
                         labels=['Left_OFC'],
                         classifier_name='logistic',
-                        short_name='ukb40', overwrite=False, embeddings=True,
-                        embeddings_only=True, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='random', cv=5,
+                        short_name='troiani', overwrite=True, embeddings=True,
+                        embeddings_only=False, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='custom', cv=5,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/Left/train_val_split_',
                         verbose=False)
     
@@ -423,12 +423,12 @@ if __name__ == "__main__":
 
     embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations_with_trim/LARGE_CINGULATE_right_UKB40",
         dataset_localization="neurospin",
-        datasets=["julien/UKB40/array_load/LARGE_CINGULATE_right_UKB40"],
+        datasets=["julien/MICCAI_2024/evaluation/LARGE_CINGULATE_right_ACCpatterns_custom"],
         idx_region_evaluation = None,
         labels=['Right_PCS'],
         classifier_name='logistic',
-        short_name='ukb40', overwrite=False, embeddings=True, embeddings_only=True, use_best_model=False,
-        subsets=['full'], epochs=[None], split='random', cv=5,
+        short_name='ACC', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
+        subsets=['full'], epochs=[None], split='custom', cv=5,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/splits/Right/train_val_split_',
         verbose=False)
 
@@ -462,13 +462,13 @@ if __name__ == "__main__":
 
     embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations_with_trim/FIP_right_UKB40/",
                         dataset_localization="neurospin",
-                        datasets=["julien/UKB40/array_load/FIP_right_UKB40"],
+                        datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
                         idx_region_evaluation = None,
                         labels=['Right_FIP'],
                         classifier_name='logistic',
-                        short_name='ukb40', overwrite=False, embeddings=True,
-                        embeddings_only=True, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='random', cv=5,
+                        short_name='FIP_right', overwrite=True, embeddings=True,
+                        embeddings_only=False, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='custom', cv=5,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/Right/train_val_split_',
                         verbose=False)
 
@@ -634,12 +634,12 @@ if __name__ == "__main__":
 
     embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations_with_trim/SC-sylv_left_UKB40",
         dataset_localization="neurospin",
-        datasets=["julien/UKB40/array_load/SC-sylv_left_UKB40"],
+        datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_isomap"],
         idx_region_evaluation=None,
         labels=[f'Isomap_central_left_dim{k}' for k in range(1,7)],
         classifier_name='logistic',
-        short_name='ukb40', overwrite=False, embeddings=True, embeddings_only=True, use_best_model=False,
-        subsets=['full'], epochs=[None], split='random', cv=5,
+        short_name='hcp_isomap', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
+        subsets=['full'], epochs=[None], split='custom', cv=5,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/Isomap/splits/train_val_split_',
         verbose=False)
 
@@ -785,18 +785,17 @@ if __name__ == "__main__":
     """
 
     # Isomap cingulate    
-    """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations_with_trim/LARGE_CINGULATE_right_UKB40",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/LARGE_CINGULATE_right_isomap"],
         idx_region_evaluation=None,
         labels=[f'Isomap_cingulate_right_dim{k}' for k in range(1,7)],
         classifier_name='logistic',
-        short_name='hcp_isomap', overwrite=False, embeddings=True, embeddings_only=False, use_best_model=False,
+        short_name='hcp_isomap', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
         subsets=['full'], epochs=[None], split='custom', cv=5,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/Isomap/splits/train_val_split_',
         verbose=False)
-    """
+    
 
     
 

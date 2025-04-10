@@ -446,7 +446,6 @@ class ContrastiveDatasetFusion():
                         sample_foldlabels[reg],
                         sample_distbottoms[reg],
                         sample_extremities[reg],
-                        cutout_mask_path=cutout_mask_path,
                         cutin_mask_path=cutin_mask_path,
                         input_size=input_size,
                         config=self.config)
@@ -454,7 +453,6 @@ class ContrastiveDatasetFusion():
                         sample_foldlabels[reg],
                         sample_distbottoms[reg],
                         sample_extremities[reg],
-                        cutout_mask_path=cutout_mask_path,
                         cutin_mask_path=cutin_mask_path,
                         input_size=input_size,
                         config=self.config)

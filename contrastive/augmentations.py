@@ -185,6 +185,41 @@ class BinarizeTensor(object):
         return torch.from_numpy(arr)
     
 
+class ReduceTensor(object):
+    """Keep only the first modality (skeleton)
+    """
+
+    def __init__(self):
+        None
+
+    def __call__(self, tensor):
+        arr = tensor.numpy()
+        arr_skel = arr[0]
+        return torch.from_numpy(arr_skel)
+    
+
+class ConcatTensor(object):
+    """Concat skeleton with foldlabel, distbottom and edges.
+    """
+
+    def __init__(self, sample_foldlabel, sample_distbottom, sample_extremities, mask):
+        self.sample_foldlabel = sample_foldlabel
+        self.sample_distbottom = sample_distbottom
+        self.sample_extremities = sample_extremities
+        self.mask = mask
+
+    def __call__(self, tensor):
+        arr = tensor.numpy()
+        arr_foldlabel = self.sample_foldlabel.numpy()
+        arr_distbottom = self.sample_distbottom.numpy()
+        arr_extremities = self.sample_extremities.numpy()
+        arr_mask = self.mask
+        arr_concat = np.stack((arr, arr_foldlabel, arr_distbottom, arr_extremities, arr_mask))
+
+        return torch.from_numpy(arr_concat)
+
+    
+
 class FlipTensor(object):
     """
     Flip one axis randomly with probability p.
@@ -429,7 +464,7 @@ class RotateTensor(object):
         log.debug("Shapes before rotation", tensor.shape, arr.shape)
         rot_array = np.copy(arr)
 
-        for axes in (0, 1), (0, 2), (1, 2):
+        for axes in (1, 2), (1, 3), (2, 3):
             np.random.seed()
             angle = np.random.uniform(-self.max_angle, self.max_angle)
             log.debug(axes, angle)
@@ -456,7 +491,7 @@ class PartialCutOutTensor_Roll(object):
     We assume that the rectangle to be cut is inside the image.
     """
 
-    def __init__(self, sample_foldlabel, mask, mask_constraint=False, from_skeleton=True, input_size=None,
+    def __init__(self, mask_constraint=False, from_skeleton=True, input_size=None,
                  keep_extremity='bottom', keep_proba_per_branch=1., keep_proba_global=1., patch_size=None,
                  random_size=False, localization=None):
         """[summary]
@@ -484,11 +519,9 @@ class PartialCutOutTensor_Roll(object):
         else: # a crop size is given
             self.patch_size = rotate_list(patch_size)
         self.input_size = input_size
-        self.sample_foldlabel = sample_foldlabel
         self.random_size = random_size
         self.localization = localization
         self.from_skeleton = from_skeleton
-        self.mask = mask
         self.mask_constraint = mask_constraint
         self.keep_proba_per_branch = keep_proba_per_branch
         self.keep_proba_global = keep_proba_global
@@ -511,9 +544,11 @@ class PartialCutOutTensor_Roll(object):
 
     def __call__(self, tensor):
 
-        arr = tensor.numpy()
-        arr_foldlabel = self.sample_foldlabel.numpy()
-        # TODO: mask foldlabel with arr
+        arr_all = tensor.numpy()
+        arr = arr_all[0]
+        arr_foldlabel = arr_all[1]
+        arr_foldlabel = mask_array_with_skeleton(arr_foldlabel, arr, cval=0)
+
         img_shape = np.array(arr.shape)
         if isinstance(self.patch_size, int):
             proportion = (1/100*self.patch_size)**(1/(len(img_shape)-1))
@@ -553,7 +588,8 @@ class PartialCutOutTensor_Roll(object):
                 #        middle_cutout.append(middle_pos)
                 # alt : use mask as proba sampling # TODO : implement properly and distinguish cutin and cutout
                 # normalize the mask
-                mask = self.mask / np.sum(self.mask)
+                mask = arr_all[4]
+                mask = mask / np.sum(mask)
                 i = np.random.choice(np.arange(mask.size), p=mask.ravel())
                 middle_pos = np.unravel_index(i, mask.shape)
                 start_cutout = [(middle_pos[ndim] - size[ndim] // 2)%img_shape[ndim] for ndim in range(len(img_shape))]
@@ -628,7 +664,13 @@ class PartialCutOutTensor_Roll(object):
 
         #log.info(f"{self.from_skeleton},{np.sum(arr!=0)},{np.sum(trimmed_arr!=0)},{np.sum(np.logical_and(arr!=0, arr!=30))},{np.sum(np.logical_and(trimmed_arr!=0,trimmed_arr!=30))}")
         #np.save('/volatile2/jl277509/visu_augmentations/sub_new/skel_trimdepth_extremities_cutout.npy', trimmed_arr)
-        return torch.from_numpy(trimmed_arr)
+
+        trimmed_arr = np.expand_dims(trimmed_arr, axis=0)
+        arr_all = np.vstack((trimmed_arr, arr_all[1:]))
+
+        arr_all = arr_all.astype('float32')
+
+        return torch.from_numpy(arr_all)
 
 
 class CheckerboardTensor(object):
@@ -914,6 +956,7 @@ class TransposeTensor(object):
     def __call__(self, tensor):
         arr = tensor.numpy()
         arr_t = np.transpose(arr, (3, 0, 1, 2))
+        arr_t = arr_t.astype('float32')
 
         return(torch.from_numpy(arr_t))
     
@@ -1028,14 +1071,12 @@ class TrimDepthTensor(object):
     Then the scale is 100 = 2mm.
     """
 
-    def __init__(self, sample_distbottom, sample_foldlabel, max_distance, delta,
+    def __init__(self, max_distance, delta,
                  input_size, keep_extremity, uniform, binary, binary_proba=0.5,
                  pepper=0.5, redefine_bottom=False):
         self.max_distance = max_distance
         self.delta = delta
         self.input_size = input_size
-        self.sample_distbottom = sample_distbottom
-        self.sample_foldlabel = sample_foldlabel
         self.uniform=uniform
         self.binary=binary
         self.binary_proba=binary_proba
@@ -1053,10 +1094,11 @@ class TrimDepthTensor(object):
     
     def __call__(self, tensor_skel):
         log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
-        arr_skel = tensor_skel.numpy()
+        arr_all = tensor_skel.numpy()
+        arr_skel = arr_all[0]
         #np.save('/volatile2/jl277509/visu_augmentations/sub_new/full_skel.npy', arr_skel)
-        arr_distbottom = self.sample_distbottom.numpy()
-        arr_foldlabel = self.sample_foldlabel.numpy()
+        arr_distbottom = arr_all[2]
+        arr_foldlabel = arr_all[1]
 
         assert (self.max_distance >= -1)
 
@@ -1113,9 +1155,14 @@ class TrimDepthTensor(object):
         pepper = np.multiply(pepper, arr_skel)
         arr_trimmed += np.multiply(trimmed_vx, pepper)
         
-        arr_trimmed = arr_trimmed.astype('float32')
+        #arr_trimmed = arr_trimmed.astype('float32')
         #np.save('/volatile2/jl277509/visu_augmentations/sub_new/skel_trimdepth.npy', arr_trimmed)
-        return torch.from_numpy(arr_trimmed)
+        arr_trimmed = np.expand_dims(arr_trimmed, axis=0)
+        arr_all = np.vstack((arr_trimmed, arr_all[1:]))
+
+        arr_all = arr_all.astype('float32')
+
+        return torch.from_numpy(arr_all)
     
 """
 class ElasticDeformTensor(object):
@@ -1237,21 +1284,20 @@ class HighlightExtremitiesTensor(object):
     arr_extremities : binary mask of the trimmed skeleton voxels.
     """
 
-    def __init__(self, sample_extremities, sample_foldlabel,
+    def __init__(self,
                  input_size, protective_structure, p=0.5, pepper=0.5, keep_extremity=None):
         self.input_size = input_size
         self.protective_structure = protective_structure
         self.p = p
         self.pepper=pepper
-        self.sample_foldlabel = sample_foldlabel
-        self.sample_extremities = sample_extremities
         self.keep_extremity=keep_extremity
     
     def __call__(self, tensor_skel):
         log.debug(f"Shape of tensor_skel = {tensor_skel.shape}")
-        arr_skel = tensor_skel.numpy()
-        arr_foldlabel = self.sample_foldlabel.numpy()
-        arr_extremities = self.sample_extremities.numpy()
+        arr_all = tensor_skel.numpy()
+        arr_skel = arr_all[0]
+        arr_extremities = arr_all[3]
+        arr_foldlabel = arr_all[1]
 
         assert (self.p >= 0)
 
@@ -1332,10 +1378,16 @@ class HighlightExtremitiesTensor(object):
         # multiply by the topological values
         arr_trimmed = np.multiply(arr_trimmed, arr_skel)
         
-        arr_trimmed = arr_trimmed.astype('float32')
+        #arr_trimmed = arr_trimmed.astype('float32')
+
+        arr_trimmed = np.expand_dims(arr_trimmed, axis=0)
+
+        arr_all = np.vstack((arr_trimmed, arr_all[1:]))
+
+        arr_all = arr_all.astype('float32')
 
         #np.save('/volatile2/jl277509/visu_augmentations/sub_new/skel_trimdepth_extremities.npy', arr_trimmed)
-        return torch.from_numpy(arr_trimmed)
+        return torch.from_numpy(arr_all)
 
 
 class TrimCropEdges(object):

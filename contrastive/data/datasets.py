@@ -45,7 +45,8 @@ from contrastive.utils.logs import set_file_logger
 from contrastive.data.transforms import \
     transform_foldlabel, transform_cutin, transform_cutout, \
     transform_nothing_done, transform_only_padding,\
-    transform_trimdepth, transform_random, transform_mixed
+    transform_trimdepth, transform_random, transform_mixed,\
+    transform_cropresize
 
 from contrastive.data.utils import convert_sparse_to_numpy
 
@@ -478,6 +479,12 @@ class ContrastiveDatasetFusion():
                             sample_foldlabels[reg],
                             input_size,
                             self.config)
+                # cropresize
+                elif self.config.cropresize:
+                    transform1 = transform_cropresize(
+                        input_size, self.config)
+                    transform2 = transform_cropresize(
+                        input_size, self.config)
                 # cutout with or without noise
                 else:
                     transform1 = transform_cutout(

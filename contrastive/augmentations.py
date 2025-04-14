@@ -934,6 +934,53 @@ class ResizeTensor(object):
                            order=0)
 
         return torch.from_numpy(resized_arr)
+    
+
+class CropResizeTensor(object):
+    """Apply crop then resize to a 3D image.
+    the crop ratio is given by a range and is chosen uniformly.
+    """
+
+    def __init__(self, input_size, crop_ratio):
+        self.input_size = input_size
+        if isinstance(crop_ratio, int):
+            self.crop_ratio = crop_ratio
+        elif len(crop_ratio)==2: # a range is given, select a random size in the range
+            self.crop_ratio = np.random.randint(low=crop_ratio[0], high=crop_ratio[1])
+
+    def __call__(self, tensor):
+
+        arr = tensor.numpy()
+        img_shape = np.array(arr.shape)
+
+        # define crop size
+        proportion = (1/100*self.crop_ratio)**(1/(len(img_shape)-1))
+        size = rotate_list(self.input_size)
+        size = proportion*np.array(size)
+        size = np.round(size).astype(int)
+        size[-1]=1
+
+        # define cropped_arr
+        start_cutout = []
+        for ndim in range(len(img_shape)):
+            max_offset = img_shape[ndim] - size[ndim]
+            if max_offset <= 0:
+                delta_before = 0
+            else:
+                np.random.seed()
+                delta_before = np.random.randint(0, img_shape[ndim]-size[ndim])
+            start_cutout.append(delta_before)
+        cropped_arr = arr.copy()
+        cropped_arr = cropped_arr[tuple([slice(int(delta_before),
+                                                int(delta_before + s)) for delta_before, s in zip(start_cutout, size)])]
+
+        # define resize_ratio
+        resize_ratio = np.array(img_shape) / np.array(size)
+        resized_arr = zoom(cropped_arr,
+                           resize_ratio,
+                           order=0)
+
+        return torch.from_numpy(resized_arr)
 
 
 class GaussianNoiseTensor(object):

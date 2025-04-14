@@ -465,6 +465,25 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
     return transforms.Compose(transforms_list)
 
 
+
+def transform_cropresize(input_size, config):
+    transforms_list = [SimplifyTensor(),
+                       PaddingTensor(shape=input_size,
+                                     fill_value=config.fill_value)]
+    np.random.seed()
+    r = np.random.uniform()
+    if r < config.proba_cropresize:
+        transforms_list.append(CropResizeTensor(input_size=input_size,
+                                                crop_ratio=config.crop_ratio))
+    transforms_list.append(BinarizeTensor())
+    r = np.random.uniform()
+    if r < config.proba_translation:
+        transforms_list.append(TranslateTensor(config.max_translation))
+    transforms_list.append(TransposeTensor())
+
+    return transforms.Compose(transforms_list)
+
+
 # DEPRECATED
 def transform_both(sample_foldlabel, from_skeleton,
                    input_size, config):

@@ -42,7 +42,10 @@ setup(
                       'pqdm',
                       'wandb',
                       'odfpy',
-                      'captum'
+                      'captum',
+                      'sparse',
+                      'kornia',
+                      'timm'
                       ],
     extras_require={"anatomist": ['deep_folding @ \
                         git+https://git@github.com/neurospin/deep_folding',

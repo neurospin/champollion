@@ -1,0 +1,57 @@
+python3 train.py +dataset=julien/UKB40/array_load/SOr_left_UKB40 +dataset_localization=neurospin batch_size=32 contrastive_model=SimCLR
+python3 train.py +dataset=julien/UKB40/array_load/SOr_left_UKB40 +dataset_localization=neurospin batch_size=16,32,64,128 contrastive_model=SimCLR -m
+python3 train.py +dataset=julien/UKB40/array_load/SOr_left_UKB40,julien/UKB40/array_load/LARGE_CINGULATE_right_UKB40,julien/UKB40/array_load/SC-sylv_left_UKB40,julien/UKB40/array_load/FIP_right_UKB40 +dataset_localization=neurospin batch_size=16,32,64,128 contrastive_model=SimCLR -m
+## read config diff to retrieve batch size and region
+vim /neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/2025-04-22/config_diff.csv
+## example symlink
+ln -s ../2025-04-22/16-53-34_76/ batch_size128
+## to run evaluation
+cd contrastive
+python3 evaluation/embeddings_pipeline.py
+
+
+ln -s ../2025-04-23/17-21-37_0 batch_size_16
+ln -s ../2025-04-23/17-12-00_1 batch_size_32
+ln -s ../2025-04-22/17-12-00_2 batch_size_64
+ln -s ../2025-04-22/17-12-00_3 batch_size_128
+
+ln -s ../2025-04-22/17-12-00_9 batch_size_32
+
+
+====================RESULTS========================
+""ACC_custom_embeddings/Right_PCS""
+ LARGE_CINGULATE_right_UKB40 batch_size: 16=> "cv_score": 0.8892906448779522, "cv_std": 0.04512682810806758
+ LARGE_CINGULATE_right_UKB40 batch_size: 32=>  "cv_score": 0.8754965680649411, "cv_std": 0.05972633252116822
+ LARGE_CINGULATE_right_UKB40 batch_size: 64=>  "cv_score": 0.8690882882117105, "cv_std": 0.06130486733312218
+ LARGE_CINGULATE_right_UKB40 batch_size: 128=> "cv_score": 0.8865112644679615, "cv_std": 0.051200687724483995
+
+""SOr_left_UKB40/Left_OFC""
+
+ SOr_left_UKB40 batch_size: 16=> "cv_score": 0.7855740672537299, "cv_std": 0.020220889654316874
+ SOr_left_UKB40 batch_size: 32=> "cv_score": 0.7807917112640155, "cv_std": 0.03405923195085317
+ SOr_left_UKB40 batch_size: 64=> "cv_score": 0.7700899471234257, "cv_std": 0.0293200215390756
+ SOr_left_UKB40 batch_size: 128=> "cv_score": 0.7650330126714324, "cv_std": 0.021975976622066046
+===================================================================================
+
+FIP_right_UKB40 batch_size: 16=> "cv_score": 0.7650330126714324, "cv_std": 0.021975976622066046
+ln -s ../2025-04-23/17-21-37_0 batch_size_16
+ln -s ../2025-04-23/17-12-00_1 batch_size_32
+:q
+
+ SC-sylv_left_UKB40 batch_size: 16=> 17-12-00_8
+ SC-sylv_left_UKB40 batch_size: 32=> 17-12-00_9
+
+python3 train.py -m +dataset=julien/UKB40/array_load/FIP_right_UKB40 batch_size=16,32,64,128 +dataset_localization=neurospin contrastive_model=SimCLR
+
+ #pour trouver les resultats d'evaluation 
+ cb283697@rosette:/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/2025-04-18/15-18-17_136/troiani_custom_embeddings/Left_OFC$ more test_values.json 
+
+ #pour lancer tensoorboard
+/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output$ tensorboard --logdir . --port 6009 
+
+
+#pour voir le dataset 
+/neurospin/dico/data/deep_folding/current/datasets/UkBioBank
+
+#pour voir the length of dataset 
+more brain_segmentation_volume.csv | wc -l

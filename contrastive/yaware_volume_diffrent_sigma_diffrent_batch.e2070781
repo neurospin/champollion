@@ -1,0 +1,11 @@
+/neurospin/dico/babdelghani/Runs/02_champollion_v1/Program/venv_kraken/lib/python3.8/site-packages/kornia/feature/lightglue.py:44: FutureWarning: `torch.cuda.amp.custom_fwd(args...)` is deprecated. Please use `torch.amp.custom_fwd(args..., device_type='cuda')` instead.
+  @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
+/neurospin/dico/babdelghani/Runs/02_champollion_v1/Program/venv_kraken/lib/python3.8/site-packages/timm/models/layers/__init__.py:48: FutureWarning: Importing from timm.models.layers is deprecated, please import via timm.layers
+  warnings.warn(f"Importing from {__name__} is deprecated, please import via timm.layers", FutureWarning)
+Could not override 'sigma_label'.
+To append to your config use +sigma_label=0.5
+Key 'sigma_label' is not in struct
+    full_key: sigma_label
+    object_type=dict
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

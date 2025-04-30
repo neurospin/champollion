@@ -16,8 +16,8 @@ subjects_distbottom_all: ${dataset_folder}/UkBioBank40/crops/2mm/CINGULATE./mask
 crop_file_suffix: _cropped_skeleton.nii.gz
 pickle_benchmark: 
 train_val_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/CINGULATE./mask/Rskeleton_subject.csv
-subject_labels_file: ${dataset_folder}/UkBioBank40/participants_sex_age.csv
-subject_column_name: 'Subject'
+subject_labels_file: ${dataset_folder}/UkBioBank40/participants_sex_age_volumes_normalized.csv
+subject_column_name: 'participant_id'
 cutout_mask_path:
 cutin_mask_path: ${dataset_folder}/UkBioBank40/crops/2mm/CINGULATE./mask/Rmask.npy
 flip_dataset: False

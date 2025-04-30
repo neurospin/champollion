@@ -485,19 +485,17 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         loss = NTXenLoss(temperature=self.config.temperature,
                          return_logits=True)
         return loss.forward(z_i, z_j)
-
+    
     def generalized_supervised_nt_xen_loss(self, z_i, z_j, labels):
         """Loss function for supervised contrastive"""
-        temperature = self.config.temperature
-        temperature_supervised = self.config.temperature_supervised
-
-        loss = GeneralizedSupervisedNTXenLoss(
-            temperature=temperature,
-            temperature_supervised=temperature_supervised,
+        loss_fn = GeneralizedSupervisedNTXenLoss(
+            kernel='rbf',
+            temperature=self.config.temperature,
             sigma=self.config.sigma_labels,
-            proportion_pure_contrastive=self.config.proportion_pure_contrastive,
             return_logits=True)
-        return loss.forward(z_i, z_j, labels)
+
+        return loss_fn(z_i, z_j, labels)
+
 
     def cross_entropy_loss_classification(self, output_i, output_j, labels):
         """Loss function for decoder"""
@@ -543,16 +541,18 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         elif self.config.mode == "regresser":
             batch_loss = self.mse_loss_regression(z_i, z_j, labels)
             batch_label_loss = torch.tensor(0.)
-        elif self.config.proportion_pure_contrastive != 1:
-            batch_loss, batch_label_loss, \
-                sim_zij, sim_zii, sim_zjj, correct_pair, weights = \
-                self.generalized_supervised_nt_xen_loss(z_i, z_j, labels)
+        # elif self.config.proportion_pure_contrastive != 1:
+        #     batch_loss, batch_label_loss, \
+        #         sim_zij, sim_zii, sim_zjj, correct_pair, weights = \
+        #         self.generalized_supervised_nt_xen_loss(z_i, z_j, labels)
         elif self.config.contrastive_model=='SimCLR':
             batch_loss, sim_zij, sim_zii, sim_zjj = self.nt_xen_loss(z_i, z_j)
         elif self.config.contrastive_model=='BarlowTwins':
             batch_loss, loss_invariance, loss_redundancy = self.barlow_twins_loss(z_i,z_j)
         elif self.config.contrastive_model=='VicReg':
             batch_loss = self.vic_reg_loss(z_i,z_j)
+        elif self.config.contrastive_model=='Yaware':
+            batch_loss,sim_zij, sim_zii,sim_zjj = self.generalized_supervised_nt_xen_loss(z_i,z_j, labels)
         #TODO: add error if None of these names
         #encoder peut être du contrastive supervisé !! gérer ce cas là...
 
@@ -573,6 +573,10 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                 self.sim_zij = sim_zij * self.config.temperature
                 self.sim_zii = sim_zii * self.config.temperature
                 self.sim_zjj = sim_zjj * self.config.temperature
+            if self.config.mode == "encoder" and self.config.contrastive_model=='Yaware':
+                self.sim_zij = sim_zij * self.config.temperature
+                self.sim_zii = sim_zii * self.config.temperature
+                self.sim_zjj = sim_zjj * self.config.temperature    
             if self.config.environment == 'brainvisa' and self.config.checking:
                 bv_checks(self, filenames)  # untested
         
@@ -600,8 +604,8 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         if self.config.scheduler:
             batch_dictionary['learning_rate'] = self.optimizers().param_groups[0]['lr']
 
-        if self.config.with_labels and self.config.mode == 'encoder' \
-        and self.config.proportion_pure_contrastive != 1:
+        if self.config.with_labels and self.config.mode == 'encoder'\
+           and self.config.proportion_pure_contrastive != 1:
             # add label_loss (a part of the loss) to log
             self.log('train_label_loss', float(batch_label_loss))
             logs['train_label_loss'] = float(batch_label_loss)
@@ -1163,15 +1167,18 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         elif self.config.mode == "regresser":
             batch_loss = self.mse_loss_regression(z_i, z_j, labels)
             batch_label_loss = torch.tensor(0.)
-        elif self.config.proportion_pure_contrastive != 1:
-            batch_loss, batch_label_loss, _ = \
-                self.generalized_supervised_nt_xen_loss(z_i, z_j, labels)
+        # elif self.config.proportion_pure_contrastive != 1:
+        #     batch_loss, batch_label_loss, _ = \
+        #         self.generalized_supervised_nt_xen_loss(z_i, z_j, labels)
         elif self.config.contrastive_model=='SimCLR':
             batch_loss, sim_zij, sim_zii, sim_zjj = self.nt_xen_loss(z_i, z_j)
         elif self.config.contrastive_model=='BarlowTwins':
             batch_loss, loss_invariance, loss_redundancy = self.barlow_twins_loss(z_i,z_j)
         elif self.config.contrastive_model=='VicReg':
             batch_loss = self.vic_reg_loss(z_i,z_j)
+        elif self.config.contrastive_model=='Yaware':
+            batch_loss,sim_zij, sim_zii, sim_zjj = self.generalized_supervised_nt_xen_loss(z_i, z_j,labels)    
+
         #TODO: add error if None of these names
         
         # values useful for early stoppings

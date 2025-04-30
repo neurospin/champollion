@@ -278,17 +278,17 @@ if __name__ == "__main__":
                         verbose=False)
     """
                         
-    # embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/LARGE_CINGULATE_right_UKB40",
-    #                     dataset_localization="neurospin",
-    #                     datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
-    #                     idx_region_evaluation = None,
-    #                     labels=['Left_OFC'],
-    #                     classifier_name='logistic',
-    #                     short_name='troiani', overwrite=True, embeddings=True,
-    #                     embeddings_only=False, use_best_model=False,
-    #                     subsets=['full'], epochs=[None], split='custom', cv=5,
-    #                     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/Left/train_val_split_',
-    #                     verbose=False)
+    embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/yaware_volume",
+                        dataset_localization="neurospin",
+                        datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
+                        idx_region_evaluation = None,
+                        labels=['Left_OFC'],
+                        classifier_name='logistic',
+                        short_name='troiani', overwrite=True, embeddings=True,
+                        embeddings_only=False, use_best_model=False,
+                        subsets=['full'], epochs=[None], split='custom', cv=5,
+                        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/Left/train_val_split_',
+                        verbose=False)
     
     """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/10_cutin/SOr_left_UKB40",
@@ -460,7 +460,7 @@ if __name__ == "__main__":
 
     # custom cv (80%)
 
-    # embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations_with_trim/FIP_right_UKB40/",
+    # embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/FIP_right_UKB40/",
     #                     dataset_localization="neurospin",
     #                     datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
     #                     idx_region_evaluation = None,
@@ -619,20 +619,20 @@ if __name__ == "__main__":
                         verbose=False)
     """
     """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/FIP_right_ConvNet_v1",
-                        dataset_localization="neurospin",
-                        datasets=["julien/MICCAI_2024/training/FIP_40k_right"],
-                        idx_region_evaluation = None,
-                        labels=['isOld'],
-                        classifier_name='logistic',
-                        short_name='ukb40', overwrite=True, embeddings=True,
-                        embeddings_only=True, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='random', cv=3,
-                        splits_basedir='',
-                        verbose=False)
-    """
+    # embeddings_pipeline("/neurospin/dico/jlaval/Output/FIP_right_ConvNet_v1",
+    #                     dataset_localization="neurospin",
+    #                     datasets=["julien/MICCAI_2024/training/FIP_40k_right"],
+    #                     idx_region_evaluation = None,
+    #                     labels=['isOld'],
+    #                     classifier_name='logistic',
+    #                     short_name='ukb40', overwrite=True, embeddings=True,
+    #                     embeddings_only=True, use_best_model=False,
+    #                     subsets=['full'], epochs=[None], split='random', cv=3,
+    #                     splits_basedir='',
+    #                     verbose=False)
+    # """
 
-    # embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations_with_trim/SC-sylv_left_UKB40",
+    # embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/SC-sylv_left_UKB40",
     #     dataset_localization="neurospin",
     #     datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_isomap"],
     #     idx_region_evaluation=None,
@@ -852,17 +852,17 @@ if __name__ == "__main__":
         verbose=False)
 """        
 
-embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/SOr_left_UKB40",
-                        dataset_localization="neurospin",
-                        datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
-                        idx_region_evaluation = None,
-                        labels=['Left_OFC'],
-                        classifier_name='logistic',
-                        short_name='troiani', overwrite=True, embeddings=True,
-                        embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='custom', cv=3,
-                        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/Left/train_val_split_',
-                        verbose=False)
+# embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/SOr_left_UKB40",
+#                         dataset_localization="neurospin",
+#                         datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
+#                         idx_region_evaluation = None,
+#                         labels=['Left_OFC'],
+#                         classifier_name='logistic',
+#                         short_name='troiani', overwrite=True, embeddings=True,
+#                         embeddings_only=False, use_best_model=False,
+#                         subsets=['full'], epochs=[None], split='custom', cv=3,
+#                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/Left/train_val_split_',
+#                         verbose=False)
 
 """OFC
         datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],

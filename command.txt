@@ -1,6 +1,6 @@
 python3 train.py +dataset=julien/UKB40/array_load/SOr_left_UKB40 +dataset_localization=neurospin batch_size=32 contrastive_model=SimCLR
 python3 train.py +dataset=julien/UKB40/array_load/SOr_left_UKB40 +dataset_localization=neurospin batch_size=16,32,64,128 contrastive_model=SimCLR -m
-python3 train.py +dataset=julien/UKB40/array_load/SOr_left_UKB40,julien/UKB40/array_load/LARGE_CINGULATE_right_UKB40,julien/UKB40/array_load/SC-sylv_left_UKB40,julien/UKB40/array_load/FIP_right_UKB40 +dataset_localization=neurospin batch_size=16,32,64,128 contrastive_model=SimCLR -m
+python3 train.py +dataset=julien/UKB40/array_load/FIP_right_UKB40 +dataset_localization=neurospin batch_size=64,128 contrastive_model=SimCLR -m
 ## read config diff to retrieve batch size and region
 vim /neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/2025-04-22/config_diff.csv
 ## example symlink
@@ -9,11 +9,13 @@ ln -s ../2025-04-22/16-53-34_76/ batch_size128
 cd contrastive
 python3 evaluation/embeddings_pipeline.py
 
+# To see diffrent 
+config cb283697@rosette:/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/2025-04-25$ more config_diff.csv 
 
 ln -s ../2025-04-23/17-21-37_0 batch_size_16
 ln -s ../2025-04-23/17-12-00_1 batch_size_32
-ln -s ../2025-04-22/17-12-00_2 batch_size_64
-ln -s ../2025-04-22/17-12-00_3 batch_size_128
+ln -s ../2025-04-24/10-56-39_0 batch_size_64
+ln -s ../2025-04-24/10-56-39_1 batch_size_128
 
 ln -s ../2025-04-22/17-12-00_9 batch_size_32
 
@@ -33,13 +35,26 @@ ln -s ../2025-04-22/17-12-00_9 batch_size_32
  SOr_left_UKB40 batch_size: 128=> "cv_score": 0.7650330126714324, "cv_std": 0.021975976622066046
 ===================================================================================
 
-FIP_right_UKB40 batch_size: 16=> "cv_score": 0.7650330126714324, "cv_std": 0.021975976622066046
-ln -s ../2025-04-23/17-21-37_0 batch_size_16
-ln -s ../2025-04-23/17-12-00_1 batch_size_32
-:q
+FIP_right_UKB40 batch_size: 16=> "cv_score": 0.8025403360409481, "cv_std": 0.050555812692956,
+FIP_right_UKB40 batch_size: 64=> "cv_score": 0.7650330126714324, "cv_std": 0.021975976622066046
+FIP_right_UKB40 batch_size: 128=> "cv_score": 0.7930210303772115, "cv_std": 0.057432615416072356,
 
- SC-sylv_left_UKB40 batch_size: 16=> 17-12-00_8
- SC-sylv_left_UKB40 batch_size: 32=> 17-12-00_9
+ SC-sylv_left_UKB40 batch_size: 16=> 
+ dim1:"cv_score": 0.6143251605982739, "cv_std": 0.0343359347498918,
+ dim2:"cv_score": 0.49520365583263815, "cv_std": 0.02700813937405829,
+ dim3:"cv_score": 0.6973972872980626, "cv_std": 0.047499699855016085
+ SC-sylv_left_UKB40 batch_size: 32=> 
+ dim1:"cv_score": 0.639027541157462, "cv_std": 0.049498833591563034
+ dim2:"cv_score": 0.5140749933824116, "cv_std": 0.04156659211117649,
+ dim3:"cv_score": 0.7183519583629485, "cv_std": 0.03830536123100647
+SC-sylv_left_UKB40 batch_size: 64=> 
+ dim1:"cv_score": 0.6309142389450251, "cv_std": 0.04924395729901899
+ dim2:"cv_score": 0.5002970976261357, "cv_std": 0.035094695047498056,
+ dim3:"cv_score": 0.7255468993825467, "cv_std": 0.03407939762681798,
+ SC-sylv_left_UKB40 batch_size: 128=> 
+ dim1:"cv_score": 0.6559234216510921, "cv_std": 0.039319144901830236,
+ dim2:"cv_score": 0.5202286142262864, "cv_std": 0.0408091224413729,
+ dim3:"cv_score": 0.717458140590462, "cv_std": 0.04122746824715702,
 
 python3 train.py -m +dataset=julien/UKB40/array_load/FIP_right_UKB40 batch_size=16,32,64,128 +dataset_localization=neurospin contrastive_model=SimCLR
 
@@ -55,3 +70,16 @@ python3 train.py -m +dataset=julien/UKB40/array_load/FIP_right_UKB40 batch_size=
 
 #pour voir the length of dataset 
 more brain_segmentation_volume.csv | wc -l
+
+
+NaNs per column:
+participant_id       0
+Sex                  0
+Age                  0
+volume            4764
+dtype: int64
+
+
+2025-04-23/17-21-37_0  FIP_right_UKB40 batch_size: 16
+2025-04-28/11-23-56_42 FIP_right_UKB40 batch_size: 128
+2025-04-27/11-30-39_0  FIP_right_UKB40 batch_size: 64

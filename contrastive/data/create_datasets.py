@@ -410,7 +410,7 @@ def create_sets_without_labels(config):
     return datasets
 
 
-def sanity_checks_with_labels(config, skeleton_output, subject_labels, reg):
+def sanity_checks_foldlabel_with_labels(config, skeleton_output, subject_labels, reg):
     """Checks alignment of the generated objects."""
     # remove test_intra if not in config
     subsets = [key for key in skeleton_output.keys()]
@@ -437,7 +437,8 @@ def sanity_checks_with_labels(config, skeleton_output, subject_labels, reg):
     # TODO: add distbottom and extremity to check
     if (
         ('foldlabel' in config.keys())
-        and (config.foldlabel)
+        and ((config.foldlabel or config.trimdepth
+              or config.random_choice or config.mixed))
         and (config.mode != 'evaluation')
     ):
         check_subject_consistency(config.data[reg].subjects_all,
@@ -483,6 +484,150 @@ def sanity_checks_with_labels(config, skeleton_output, subject_labels, reg):
         return None
 
     return foldlabel_output
+    
+
+def sanity_checks_distbottoms_with_labels(config, skeleton_output, subject_labels, reg):
+    """Checks alignment of the generated objects."""
+    # remove test_intra if not in config
+    subsets = [key for key in skeleton_output.keys()]
+    if 'test_intra_csv_file' not in config.keys():
+        subsets.pop(3)
+    log.debug(f"SANITY CHECKS {subsets}")
+
+    for subset_name in subsets:
+        check_if_skeleton(skeleton_output[subset_name][1], subset_name)
+
+    if config.environment == "brainvisa" and config.checking:
+        for subset_name in subsets:
+            compare_array_aims_files(skeleton_output[subset_name][0],
+                                    skeleton_output[subset_name][1],
+                                    config.data[reg].crop_dir)
+
+    # Makes some sanity checks on ordering of label subjects
+    for subset_name in subsets:
+        check_if_same_subjects(skeleton_output[subset_name][0][['Subject']],
+                            skeleton_output[subset_name][2][['Subject']],
+                            f"{subset_name} labels")
+    if (
+        (config.trimdepth or config.random_choice or config.mixed)
+        and (config.mode != 'evaluation')
+    ):
+        check_subject_consistency(config.data[reg].subjects_all,
+                                config.data[reg].subjects_distbottom_all,
+                                subset_name)
+        # in order to avoid logging twice the same information
+        if root.level == 20:  # root logger in INFO mode
+            set_root_logger_level(0)
+        distbottom_output = extract_data_with_labels(
+            config.data[reg].distbottom_all,
+            subject_labels,
+            config.data[reg].distbottom_dir,
+            config, reg)
+        if root.level == 10:  # root logger in WARNING mode
+            set_root_logger_level(1)
+        log.info("distbottom data loaded")
+
+        # Makes some sanity checks
+        for subset_name in subsets:
+            check_if_same_subjects(skeleton_output[subset_name][0],
+                                distbottom_output[subset_name][0],
+                                subset_name)
+            check_if_same_shape(skeleton_output[subset_name][1],
+                                distbottom_output[subset_name][1],
+                                subset_name)
+            check_if_same_subjects(
+                distbottom_output[subset_name][0],
+                skeleton_output[subset_name][2][['Subject']],
+                f"{subset_name} labels")
+            check_if_same_subjects(
+                distbottom_output[subset_name][2][['Subject']],
+                skeleton_output[subset_name][2][['Subject']],
+                f"{subset_name} labels")
+
+        if config.environment == "brainvisa" and config.checking:
+            for subset_name in distbottom_output.keys():
+                compare_array_aims_files(distbottom_output[subset_name][0],
+                                        distbottom_output[subset_name][1],
+                                        config.data[reg].distbottom_dir)
+
+    else:
+        log.info("distbottom data NOT requested. Distbottom data NOT loaded")
+        return None
+
+    return distbottom_output
+
+
+def sanity_checks_extremities_with_labels(config, skeleton_output, subject_labels, reg):
+    """Checks alignment of the generated objects."""
+    # remove test_intra if not in config
+    subsets = [key for key in skeleton_output.keys()]
+    if 'test_intra_csv_file' not in config.keys():
+        subsets.pop(3)
+    log.debug(f"SANITY CHECKS {subsets}")
+
+    for subset_name in subsets:
+        check_if_skeleton(skeleton_output[subset_name][1], subset_name)
+
+    if config.environment == "brainvisa" and config.checking:
+        for subset_name in subsets:
+            compare_array_aims_files(skeleton_output[subset_name][0],
+                                     skeleton_output[subset_name][1],
+                                     config.data[reg].crop_dir)
+
+    # Makes some sanity checks on ordering of label subjects
+    for subset_name in subsets:
+        check_if_same_subjects(skeleton_output[subset_name][0][['Subject']],
+                               skeleton_output[subset_name][2][['Subject']],
+                               f"{subset_name} labels")
+
+    # Loads and separates in train_val/test set foldlabels if requested
+    # TODO: add distbottom and extremity to check
+    if (
+    (config.trimdepth or config.random_choice or config.mixed)
+    and (config.mode != 'evaluation')):
+        check_subject_consistency(config.data[reg].subjects_all,
+                                    config.data[reg].subjects_extremity_all,
+                                    subset_name)
+                        # in order to avoid logging twice the same information
+        if root.level == 20:  # root logger in INFO mode
+            set_root_logger_level(0)
+        extremity_output = extract_data_with_labels(
+            config.data[reg].extremity_all,
+            subject_labels,
+            config.data[reg].crop_dir,  # Assuming extremity data is also in crop_dir
+            config, reg)
+        if root.level == 10:  # root logger in WARNING mode
+            set_root_logger_level(1)
+        log.info("extremity data loaded")
+
+        # Makes some sanity checks
+        for subset_name in subsets:
+            check_if_same_subjects(skeleton_output[subset_name][0],
+                                extremity_output[subset_name][0],
+                                subset_name)
+            check_if_same_shape(skeleton_output[subset_name][1],
+                                extremity_output[subset_name][1],
+                                subset_name)
+            check_if_same_subjects(
+                extremity_output[subset_name][0],
+                skeleton_output[subset_name][2][['Subject']],
+                f"{subset_name} labels")
+            check_if_same_subjects(
+                extremity_output[subset_name][2][['Subject']],
+                skeleton_output[subset_name][2][['Subject']],
+                f"{subset_name} labels")
+
+        if config.environment == "brainvisa" and config.checking:
+            for subset_name in extremity_output.keys():
+                compare_array_aims_files(extremity_output[subset_name][0],
+                                        extremity_output[subset_name][1],
+                                        config.data[reg].crop_dir)
+
+    else:
+        log.info("extremity data NOT requested. Extremity data NOT loaded")
+        return None
+
+    return extremity_output
 
 
 def check_if_list_of_equal_dataframes(list_of_df, key):
@@ -598,11 +743,16 @@ def create_sets_with_labels(config):
         skeleton_output = extract_data_with_labels(
             config.data[reg].numpy_all, subject_labels,
             config.data[reg].crop_dir, config, reg)
-
+        
+        log.info(f"[DEBUG] apply_augmentations={config.apply_augmentations} "
+         f"foldlabel={config.foldlabel} trimdepth={config.trimdepth} "
+         f"random_choice={config.random_choice} mixed={config.mixed} "
+         f"types: {type(config.foldlabel)}, {type(config.mixed)}")
+         
         # Loads and separates in train_val/test set foldlabels if requested
         if config.apply_augmentations and (config.foldlabel or config.trimdepth
                                            or config.random_choice or config.mixed):
-            foldlabel_output = sanity_checks_with_labels(config,
+            foldlabel_output = sanity_checks_foldlabel_with_labels(config,
                                                          skeleton_output,
                                                          subject_labels,
                                                          reg)
@@ -612,16 +762,28 @@ def create_sets_with_labels(config):
 
         # same with distbottom
         if config.apply_augmentations and (config.trimdepth or config.random_choice or config.mixed):
-            distbottom_output = sanity_checks_distbottoms_without_labels(config,
+            if config.with_labels :
+               distbottom_output = sanity_checks_distbottoms_with_labels(config,
                                                             skeleton_output,
+                                                            subject_labels,
                                                             reg)
+            else:       
+                distbottom_output = sanity_checks_distbottoms_without_labels(config,
+                                                             skeleton_output,
+                                                             reg)
         else:
             distbottom_output = None
             log.info("distbottom data NOT requested. Distbottom data NOT loaded")
 
         # same with extremity
         if config.apply_augmentations and (config.trimdepth or config.random_choice or config.mixed):
-            extremity_output = sanity_checks_extremities_without_labels(config,
+            if config.with_labels :
+                extremity_output = sanity_checks_extremities_with_labels(config,
+                                                            skeleton_output,
+                                                            subject_labels,
+                                                            reg)
+            else:   
+                extremity_output = sanity_checks_extremities_without_labels(config,
                                                             skeleton_output,
                                                             reg)
         else:

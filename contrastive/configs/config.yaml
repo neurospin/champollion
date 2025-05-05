@@ -15,7 +15,7 @@ defaults:
   #- dataset/julien/sparse_load/_rotated/SOr_left_UKB_rotated_sparse_load.yaml
   #- dataset/julien/MICCAI_2024/training/orbital_right_UKB.yaml
   #- dataset/julien/hcp/FIP_right.yaml
-  #- dataset/julien/hcp/SC-sylv_right.yaml
+  #- dataset/julien/hcp/SC-sylv_right_hcp.yaml
   #- dataset/julien/sparse_load/SOr_left_UKB_sparse_load.yaml
   #- dataset/julien/sparse_load/FIP_right_UKB_sparse_load.yaml
   #- dataset/julien/sparse_load/SC-sylv_left_UKB_sparse_load.yaml
@@ -42,7 +42,8 @@ defaults:
   #- dataset/local_julien/1-5mm/cingulate_UKB_right_1-5mm.yaml
   #- dataset/local_julien/old/STs_UkBioBank.yaml
   #- dataset/occipital_schiz_L_strat_bis_threshold1
-  #- dataset_localization: volatile2_julien
+  - dataset/julien/UKB40/array_load/SOr_left_UKB40
+  - dataset_localization: neurospin
   - embeddings: embeddings
   - hydra: local
   - label: Left_OFC

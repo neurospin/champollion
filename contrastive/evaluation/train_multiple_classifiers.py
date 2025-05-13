@@ -317,8 +317,8 @@ def train_one_classifier(config, inputs, subjects, i=0):
     if 'label_type' in config.keys() and config['label_type']=='continuous':
         if config.classifier_name == 'logistic': # TODO: change the parameter name for Elastic
             #model = LinearRegression() # TODO: ElasticNet instead + add gridsearch  
-            parameters={'l1_ratio': np.linspace(0,1,11), 'alpha': [10**k for k in range(-3,4)]}   
-            model = ElasticNet(max_iter=1000000) # TODO : change the number of iterations ?
+            parameters={'l1_ratio': np.linspace(0,1,11), 'alpha': [10**k for k in range(-3,4)]} 
+            model = ElasticNet(max_iter=10000) # TODO : change the number of iterations ?
         else:
             model = SVR(kernel='linear',max_iter=config.class_max_epochs,
                         C=0.01)
@@ -387,7 +387,7 @@ def train_one_classifier(config, inputs, subjects, i=0):
             #                           random_state=i)
             parameters={'l1_ratio': np.linspace(0,1,11), 'C': [10**k for k in range(-3,4)]}
             model = LogisticRegression(solver='saga', penalty='elasticnet',
-                                       max_iter=1000000, random_state=i)
+                                       max_iter=config.class_max_epochs, random_state=i)
             #parameters={'n_neighbors': [30,40,50,60,70], 'weights': ['distance'], 'leaf_size': [1,2], 'metric': ['chebyshev', 'cosine']}
             #model = KNeighborsClassifier() # LogisticRegression is better
         else:

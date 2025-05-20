@@ -1,6 +1,6 @@
 # @package _global_
 model: SimCLR_fusion
-sigma_labels: 2.0
+sigma_labels: 0.01
 sigma: 5
 drop_rate: 0.05
 pretrained_model_path:

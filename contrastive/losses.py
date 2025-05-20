@@ -253,7 +253,7 @@ class GeneralizedSupervisedNTXenLoss(nn.Module):
         self.return_logits = return_logits
         self.INF = 1e8
 
-    def forward(self, z_i, z_j, labels):
+    def forward(self, z_i, z_j, labels,return_kernel=False, step=None, writer=None):
         N = len(z_i)
         assert N == len(labels), "Unexpected labels length: %i"%len(labels)
         z_i = func.normalize(z_i, p=2, dim=-1) # dim [N, D]
@@ -276,6 +276,7 @@ class GeneralizedSupervisedNTXenLoss(nn.Module):
         loss = -1./N * (torch.from_numpy(weights).to(z_i.device) * log_sim_Z).sum()
 
         correct_pairs = torch.arange(N, device=z_i.device).long()
+        
 
         if self.return_logits:
             return loss, sim_zij, sim_zii,sim_zjj

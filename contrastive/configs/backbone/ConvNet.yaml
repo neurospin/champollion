@@ -8,7 +8,7 @@ initial_kernel_size: 7
 initial_stride: 1
 max_pool: False
 block_depth: 4
-backbone_output_size: 32
+backbone_output_size: 256
 adaptive_pooling: !!null
 #adaptive_pooling: ['max', [3,3,3]]
 #adaptive_pooling: ['average', [3,3,3]]

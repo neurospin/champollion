@@ -14,4 +14,4 @@ temperature_supervised: 0.3
 lambda_BT: 2.56
 lambda_VR: 2.56
 epsilon_VR: 0.001
-sigma_labels: 1
+sigma_labels: 0.01

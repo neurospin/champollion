@@ -23,7 +23,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression, LinearRegression, ElasticNet
 from sklearn.svm import SVC, SVR
 from sklearn.neural_network import MLPClassifier
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import KNeighborsClassifier,KNeighborsRegressor
 
 from contrastive.data.utils import read_labels
 
@@ -318,7 +318,17 @@ def train_one_classifier(config, inputs, subjects, i=0):
         if config.classifier_name == 'logistic': # TODO: change the parameter name for Elastic
             #model = LinearRegression() # TODO: ElasticNet instead + add gridsearch  
             parameters={'l1_ratio': np.linspace(0,1,11), 'alpha': [10**k for k in range(-3,4)]}   
-            model = ElasticNet(max_iter=1000000) # TODO : change the number of iterations ?
+            model = ElasticNet(max_iter=100000) # TODO : change the number of iterations ?
+        
+        elif config.classifier_name == 'knn':
+             parameters = {
+                'n_neighbors': [5, 10, 20, 30, 40,50,60,70,100],
+                'algorithm':['auto', 'ball_tree', 'kd_tree', 'brute'],
+                'weights': ['uniform', 'distance'],
+                'leaf_size': [1,2,3,5,10, 20, 30],
+                'metric': ['euclidean', 'manhattan','chebyshev', 'cosine']
+              }
+             model = KNeighborsRegressor() 
         else:
             model = SVR(kernel='linear',max_iter=config.class_max_epochs,
                         C=0.01)
@@ -390,6 +400,14 @@ def train_one_classifier(config, inputs, subjects, i=0):
                                        max_iter=1000000, random_state=i)
             #parameters={'n_neighbors': [30,40,50,60,70], 'weights': ['distance'], 'leaf_size': [1,2], 'metric': ['chebyshev', 'cosine']}
             #model = KNeighborsClassifier() # LogisticRegression is better
+        elif config.classifier_name == 'knn':
+             parameters = {
+                'n_neighbors': [5, 10, 20, 30, 40,50,60,70,100],
+                'weights': ['uniform', 'distance'],
+                'leaf_size': [1,2,3,5,10, 20, 30],
+                'metric': ['euclidean', 'manhattan','chebyshev', 'cosine']
+              }
+             model = KNeighborsClassifier()    
         else:
             raise ValueError(f"The chosen classifier ({config.classifier_name}) is not handled by the pipeline. \
                                Choose a classifier type that exists in configs/classifier.")

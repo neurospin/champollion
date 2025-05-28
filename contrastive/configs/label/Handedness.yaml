@@ -1,0 +1,3 @@
+# @package _global_
+label_names: ["Handedness"]
+label_type: 'continuous'

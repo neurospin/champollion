@@ -1,0 +1,19 @@
+# @package dataset.SC-sylv_right_handedness
+dataset_name: SC-sylv_right_handedness
+numpy_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/S.C.-sylv./mask/Rskeleton.npy
+subjects_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/S.C.-sylv./mask/Rskeleton_subject.csv
+foldlabel_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/S.C.-sylv./mask/Rlabel.npy
+subjects_foldlabel_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/S.C.-sylv./mask/Rlabel_subject.csv
+crop_dir: /neurospin/dico/data/deep_folding/papers/miccai2023/Input/datasets/hcp/crops/2mm/S.C.-sylv./mask/Rcrops
+crop_file_suffix: _cropped_skeleton.nii.gz
+foldlabel_dir: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/S.C.-sylv./mask/Rlabels
+pickle_benchmark: 
+#train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/hcp_isomap_subjects.csv
+test_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/Isomap/splits/union/union_custom_splits_train_val.csv
+train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/hcp/subjects_handedness.csv
+subject_labels_file: /neurospin/dico/mguevara/RESTRICTED_jfmangin_9_26_2018_3_24_50_.csv
+subject_column_name: 'Subject'
+cutout_mask_path:
+cutin_mask_path:
+flip_dataset: False
+input_size: (1, 42, 34, 49)

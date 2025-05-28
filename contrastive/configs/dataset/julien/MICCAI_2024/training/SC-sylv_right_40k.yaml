@@ -16,7 +16,7 @@ subjects_distbottom_all: /neurospin/dico/data/deep_folding/current/datasets/UkBi
 crop_file_suffix: _cropped_skeleton.nii.gz
 pickle_benchmark: 
 train_val_csv_file: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rskeleton_subject.csv
-subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rskeleton_subject.csv # no label
+subject_labels_file: /neurospin/dico/data/deep_folding/current/datasets/UkBioBank40/participants_sex_age.csv # sex and age
 subject_column_name: 'Subject'
 cutout_mask_path:
 cutin_mask_path:

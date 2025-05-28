@@ -1,5 +1,5 @@
-# @package dataset.FIP_right
-dataset_name: FIP_right
+# @package dataset.FIP_right_hcp
+dataset_name: FIP_right_hcp
 pickle_normal: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/F.I.P./mask/Rskeleton.pkl
 numpy_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/F.I.P./mask/Rskeleton.npy
 subjects_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/F.I.P./mask/Rskeleton_subject.csv

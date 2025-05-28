@@ -1,5 +1,5 @@
-# @package dataset.SC-sylv_right
-dataset_name: SC-sylv_right
+# @package dataset.SC-sylv_right_hcp
+dataset_name: SC-sylv_right_hcp
 pickle_normal: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/S.C.-sylv./mask/Rskeleton.pkl
 numpy_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/S.C.-sylv./mask/Rskeleton.npy
 subjects_all: /neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/S.C.-sylv./mask/Rskeleton_subject.csv

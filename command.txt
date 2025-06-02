@@ -20,44 +20,6 @@ ln -s ../2025-04-24/10-56-39_1 batch_size_128
 ln -s ../2025-04-22/17-12-00_9 batch_size_32
 
 
-====================RESULTS========================
-""ACC_custom_embeddings/Right_PCS""
- LARGE_CINGULATE_right_UKB40 batch_size: 16=> "cv_score": 0.8892906448779522, "cv_std": 0.04512682810806758
- LARGE_CINGULATE_right_UKB40 batch_size: 32=>  "cv_score": 0.8754965680649411, "cv_std": 0.05972633252116822
- LARGE_CINGULATE_right_UKB40 batch_size: 64=>  "cv_score": 0.8690882882117105, "cv_std": 0.06130486733312218
- LARGE_CINGULATE_right_UKB40 batch_size: 128=> "cv_score": 0.8865112644679615, "cv_std": 0.051200687724483995
-
-""SOr_left_UKB40/Left_OFC""
-
- SOr_left_UKB40 batch_size: 16=> "cv_score": 0.7855740672537299, "cv_std": 0.020220889654316874
- SOr_left_UKB40 batch_size: 32=> "cv_score": 0.7807917112640155, "cv_std": 0.03405923195085317
- SOr_left_UKB40 batch_size: 64=> "cv_score": 0.7700899471234257, "cv_std": 0.0293200215390756
- SOr_left_UKB40 batch_size: 128=> "cv_score": 0.7650330126714324, "cv_std": 0.021975976622066046
-===================================================================================
-
-FIP_right_UKB40 batch_size: 16=> "cv_score": 0.8025403360409481, "cv_std": 0.050555812692956,
-FIP_right_UKB40 batch_size: 32=> "cv_score": 0.8080149104261711, "cv_std": 0.06451625053818438,
-FIP_right_UKB40 batch_size: 64=> "cv_score": 0.7650330126714324, "cv_std": 0.021975976622066046
-FIP_right_UKB40 batch_size: 128=> "cv_score": 0.7930210303772115, "cv_std": 0.057432615416072356,
-
-
- SC-sylv_left_UKB40 batch_size: 16=> 
- dim1:"cv_score": 0.6143251605982739, "cv_std": 0.0343359347498918,
- dim2:"cv_score": 0.49520365583263815, "cv_std": 0.02700813937405829,
- dim3:"cv_score": 0.6973972872980626, "cv_std": 0.047499699855016085
- SC-sylv_left_UKB40 batch_size: 32=> 
- dim1:"cv_score": 0.639027541157462, "cv_std": 0.049498833591563034
- dim2:"cv_score": 0.5140749933824116, "cv_std": 0.04156659211117649,
- dim3:"cv_score": 0.7183519583629485, "cv_std": 0.03830536123100647
-SC-sylv_left_UKB40 batch_size: 64=> 
- dim1:"cv_score": 0.6309142389450251, "cv_std": 0.04924395729901899
- dim2:"cv_score": 0.5002970976261357, "cv_std": 0.035094695047498056,
- dim3:"cv_score": 0.7255468993825467, "cv_std": 0.03407939762681798,
- SC-sylv_left_UKB40 batch_size: 128=> 
- dim1:"cv_score": 0.6559234216510921, "cv_std": 0.039319144901830236,
- dim2:"cv_score": 0.5202286142262864, "cv_std": 0.0408091224413729,
- dim3:"cv_score": 0.717458140590462, "cv_std": 0.04122746824715702,
-
 python3 train.py -m +dataset=julien/UKB40/array_load/FIP_right_UKB40 batch_size=16,32,64,128 +dataset_localization=neurospin contrastive_model=SimCLR
 
  #pour trouver les resultats d'evaluation 
@@ -73,13 +35,6 @@ python3 train.py -m +dataset=julien/UKB40/array_load/FIP_right_UKB40 batch_size=
 #pour voir the length of dataset 
 more brain_segmentation_volume.csv | wc -l
 
-
-NaNs per column:
-participant_id       0
-Sex                  0
-Age                  0
-volume            4764
-dtype: int64
 
 
 2025-04-23/17-21-37_0  FIP_right_UKB40 batch_size: 16
@@ -108,3 +63,10 @@ ln -s ../../2025-05-12/11-57-42_0 dim_32_batch_64_sigma_0.01
 
 2025-05-12/11-57-42_0  ====> dim_32_batch_128_sigma_0.01
 
+ssh ulq59dy@jean-zay.idris.fr
+
+rsync -aP /neurospin/dico/data/deep_folding/current/datasets/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/tiv_subjects_test.csv ulq59dy@jean-zay.idris.fr:/lustre/fswork/projects/rech/tgu/umy22uu/Runs/75_V1/Input
+
+/lustre/fsn1/projects/rech/tgu/ulq59dy/Runs/02_champollion_v1/Program/2023_jlaval_STSbabies/contrastive/configs/dataset/julien/UKB40/array_load
+
+rsync -aP /neurospin/dico/data/deep_folding/current/datasets/UkBioBank40/participants_tiv_volumes_normalized.csv ulq59dy@jean-zay.idris.fr:/lustre/fswork/projects/rech/tgu/umy22uu/Runs/75_V1/Input

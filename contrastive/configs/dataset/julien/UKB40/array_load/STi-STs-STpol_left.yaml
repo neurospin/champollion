@@ -15,9 +15,14 @@ subjects_extremity_all: ${dataset_folder}/UkBioBank40/crops/2mm/S.T.i.-S.T.s.-S.
 subjects_distbottom_all: ${dataset_folder}/UkBioBank40/crops/2mm/S.T.i.-S.T.s.-S.T.pol./mask/Ldistbottom_subject.csv
 crop_file_suffix: _cropped_skeleton.nii.gz
 pickle_benchmark: 
-train_val_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/S.T.i.-S.T.s.-S.T.pol./mask/Lskeleton_subject.csv
-subject_labels_file: ${dataset_folder}/UkBioBank40/participants_sex_age.csv
-subject_column_name: 'Subject'
+# train_val_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/S.T.i.-S.T.s.-S.T.pol./mask/Lskeleton_subject.csv
+# subject_labels_file: ${dataset_folder}/UkBioBank40/participants_sex_age.csv
+train_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/Rskeleton_subject_train.csv
+val_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/Rskeleton_subject_val.csv
+test_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/Rskeleton_subject_test.csv
+subject_labels_file: ${dataset_folder}/UkBioBank40/participants_sex_age_volumes_normalized.csv 
+subject_column_name: 'participant_id'
+# subject_column_name: 'Subject'
 cutout_mask_path:
 cutin_mask_path: ${dataset_folder}/UkBioBank40/crops/2mm/S.T.i.-S.T.s.-S.T.pol./mask/Lmask.npy
 flip_dataset: False

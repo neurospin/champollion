@@ -760,17 +760,39 @@ if __name__ == "__main__":
     
     ## SC-sylv_right UKB
     
-    embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/yaware_volume/SC_right",
-        dataset_localization="neurospin",
-        datasets=["julien/MICCAI_2024/evaluation/SC-sylv_right_isomap"],
-        idx_region_evaluation=None,
-        labels=[f'Isomap_central_right_dim{k}' for k in range(1,7)],
-        classifier_name='logistic',
-        short_name='ukb40', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['full'], epochs=[None], split='random', cv=5,
-        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/Isomap/splits_right/train_val_split_',
-        verbose=False)
+    # embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/yaware_volume/SC_right",
+    #     dataset_localization="neurospin",
+    #     datasets=["julien/MICCAI_2024/evaluation/SC-sylv_right_isomap"],
+    #     idx_region_evaluation=None,
+    #     labels=[f'Isomap_central_right_dim{k}' for k in range(1,7)],
+    #     classifier_name='logistic',
+    #     short_name='ukb40', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
+    #     subsets=['full'], epochs=[None], split='random', cv=5,
+    #     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/Isomap/splits_right/train_val_split_',
+    #     verbose=False)
     
+    # embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/yaware_volume/SC_right_tiv",
+    #     dataset_localization="neurospin",
+    #     datasets=["julien/UKB40/array_load/SC-sylv_right_UKB40"],
+    #     idx_region_evaluation=None,
+    #     labels=['volume'],
+    #     classifier_name='logistic',
+    #     short_name='hcp_isomap_regression', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
+    #     subsets=['full'], epochs=[None], split='custom', cv=5,
+    #     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/volume/train_val_split_',
+    #     verbose=False)
+    
+    #embeddings only SC_right
+    embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/yaware_volume/STi-STs-STpol_left",
+        dataset_localization="neurospin",
+        datasets=["julien/UKB40/array_load/STi-STs-STpol_left"],
+        idx_region_evaluation=None,
+        labels=['volume'],
+        classifier_name='logistic',
+        short_name='full_ukb_all_sub', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
+        subsets=['full'], epochs=[None], split='random', cv=5,
+        splits_basedir='',
+        verbose=False)
     
     # embeddings_pipeline("/neurospin/dico/jlaval/Output/2025-03-07",
     #     dataset_localization="neurospin",
@@ -782,7 +804,18 @@ if __name__ == "__main__":
     #     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
     #     verbose=False)
     
-    
+
+    # embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/yaware_volume/FCLp-subsc-FCLa-INSULA_left",
+    #         dataset_localization="neurospin",
+    #         datasets=["julien/UKB40/array_load/FCLp-subsc-FCLa-INSULA_left"],
+    #         idx_region_evaluation=None,
+    #         labels=['volume'],
+    #         classifier_name='logistic',
+    #         short_name='full_ukb_all_sub', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
+    #         subsets=['full'], epochs=[None], split='random', cv=5,
+    #         splits_basedir='',
+    #         verbose=False)
+            
     """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/5_trimextremities_SC_right/1_all_augmentations/2025-02-26",
         dataset_localization="neurospin",

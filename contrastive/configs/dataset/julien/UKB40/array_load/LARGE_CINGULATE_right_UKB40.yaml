@@ -15,12 +15,17 @@ subjects_extremity_all: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE.
 subjects_distbottom_all: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/Rdistbottom_subject.csv
 crop_file_suffix: _cropped_skeleton.nii.gz
 pickle_benchmark: 
-# train_val_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/Rskeleton_subject.csv
-train_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/Rskeleton_subject_train.csv
-val_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/Rskeleton_subject_val.csv
-test_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/Rskeleton_subject_test.csv
-subject_labels_file: ${dataset_folder}/UkBioBank40/participants_sex_age_volumes_normalized.csv # no label
+train_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/tiv_subjects_train.csv
+val_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/tiv_subjects_val.csv
+test_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/tiv_subjects_test.csv
+subject_labels_file: ${dataset_folder}/UkBioBank40/participants_tiv_volumes_normalized.csv # no label
 subject_column_name: 'participant_id'
+# train_val_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/Rskeleton_subject.csv
+# train_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/Rskeleton_subject_train.csv
+# val_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/Rskeleton_subject_val.csv
+# test_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/Rskeleton_subject_test.csv
+# subject_labels_file: ${dataset_folder}/UkBioBank40/participants_sex_age_volumes_normalized.csv # no label
+#subject_column_name: 'participant_id'
 cutout_mask_path:
 cutin_mask_path: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/Rmask.npy
 flip_dataset: False

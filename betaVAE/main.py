@@ -41,7 +41,7 @@ import sys
 import hydra
 import omegaconf
 from omegaconf import OmegaConf
-
+import time
 import numpy as np
 import pandas as pd
 import json
@@ -93,8 +93,14 @@ def train_model(config):
 
     """ Load data and generate torch datasets """
     subset1 = create_subset(config)
+    
+
+    proportion_test = 0.8
+    proportion_validation = 0.2
+    #train_set, val_set = torch.utils.data.random_split(subset1,
+    #                        [round(0.8*len(subset1)), round(0.2*len(subset1))])
     train_set, val_set = torch.utils.data.random_split(subset1,
-                            [round(0.8*len(subset1)), round(0.2*len(subset1))])
+                            [round(proportion_test*len(subset1)), round(proportion_validation*len(subset1))])
     trainloader = torch.utils.data.DataLoader(
                   train_set,
                   batch_size=config.batch_size,
@@ -144,4 +150,7 @@ def train_model(config):
     #     json_file.write(json.dumps(res, sort_keys=True, indent=4))
 
 if __name__ == '__main__':
+    start_time = time.time()
     train_model()
+    print("--- %s seconds ---" % (time.time() - start_time))
+

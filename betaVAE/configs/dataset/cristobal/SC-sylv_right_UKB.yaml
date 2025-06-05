@@ -1,0 +1,8 @@
+# @package _global_
+dataset_name: SC-sylv_right_UKB
+data_dir: "/neurospin/dico/data/deep_folding/current/datasets/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rskeleton.npy"
+subject_dir: "/neurospin/dico/data/deep_folding/current/datasets/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rskeleton_subject.csv"
+save_dir: "/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output"
+in_shape: [1, 42, 34, 49]
+subjects_to_remove: "/neurospin/dico/data/deep_folding/current/datasets/UkBioBank40/CSLabel/interrupted_CS_QC.csv"
+remove_subjects: True

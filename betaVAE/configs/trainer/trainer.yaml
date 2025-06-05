@@ -1,4 +1,4 @@
 # @package _global_
-batch_size: 16
+batch_size: 512
 nb_epoch: 150
 lr: 2e-4

@@ -129,6 +129,7 @@ def train(config):
                                     encoder_only=config.load_encoder_only)
 
     dataset = list(config.dataset.keys())[0]
+    print('dataset',dataset)
     input_size = tuple([1] + list(config.dataset[dataset]['input_size']))
     #print(f"Last linear layer dimension : \
     #      {model.state_dict()['backbones.0.encoder.Linear.weight'].shape}")

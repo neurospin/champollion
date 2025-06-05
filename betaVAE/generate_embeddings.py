@@ -42,6 +42,7 @@ import torch.nn as nn
 
 from beta_vae import VAE, ModelTester
 from load_data import create_subset
+from load_data import create_subset_eval
 import hydra
 from utils.config import process_config
 
@@ -105,7 +106,7 @@ def main(config):
     """
     Infer a trained model on test data and saves the embeddings as csv
     """
-
+    print('Infer a trained model on test data and saves the embeddings as csv')
     config=process_config(config)
 
     torch.manual_seed(0)
@@ -117,9 +118,10 @@ def main(config):
 
     config.in_shape = adjust_in_shape(config)
 
-    config.test_model_dir = "/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-03-31/16-49-44/"
+    config.test_model_dir = "/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30"
 
-    model_dir = os.path.join(config.test_model_dir, 'checkpoint.pt')
+    model_dir = os.path.join(config.test_model_dir, 'checkpoint.pt') #checkpoint.pt instead of vae.pt?
+    #model_dir = os.path.join(config.test_model_dir, 'vae.pt')
     model = VAE(config.in_shape, config.n, depth=3)
     model.load_state_dict(torch.load(model_dir))
     model = model.to(device)
@@ -128,19 +130,21 @@ def main(config):
     class_weights = torch.FloatTensor(weights).to(device)
     criterion = nn.CrossEntropyLoss(weight=class_weights, reduction='sum')
 
-    subset_test = create_subset(config)
+    subset_test = create_subset_eval(config)
     testloader = torch.utils.data.DataLoader(
               subset_test,
-              batch_size=config.batch_size,
+              batch_size=1,
               num_workers=8,
-              shuffle=True)
+              shuffle=False) #Shuffle was set to True?
     dico_set_loaders = {'test': testloader}
 
     tester = ModelTester(model=model, dico_set_loaders=dico_set_loaders,
                          kl_weight=config.kl, loss_func=criterion,
-                         n_latent=config.n, depth=config.depth)
-
+                         n_latent=config.n, depth=config.depth,save_dir=config.test_model_dir)
+    print('Tester',tester)
     results = tester.test()[0]
+    #print(results)
+    '''
     for k in results['test']:
         results['test'][k] = results['test'][k][1]
     embedding = pd.DataFrame(results['test']).T.reset_index()
@@ -149,6 +153,6 @@ def main(config):
     print(embedding.head())
 
     generate_embedding_sets(embedding, config)
-
+    '''
 if __name__ == '__main__':
     main()

@@ -151,7 +151,7 @@ class ModelTester():
     Class to test data with a trained model
     """
     def __init__(self, model, dico_set_loaders, kl_weight, loss_func,
-                n_latent, depth):
+                n_latent, depth,save_dir):
         """
         Args:
             model: trained model to use
@@ -173,7 +173,8 @@ class ModelTester():
         self.n_latent = n_latent
         self.depth = depth
         self.loss_func = loss_func
-
+        self.save_dir = save_dir
+        #self.subjects_to_write = subjects_to_write
 
     def test(self):
 
@@ -182,27 +183,55 @@ class ModelTester():
         results = {k:{} for k in self.dico_set_loaders.keys()}
         out_z = []
         output_list = []
-
+        recon_error = {}
+        embeddings = {}
         for loader_name, loader in self.dico_set_loaders.items():
+            print('loader_name loader',loader_name,loader)
             self.model.eval()
             with torch.no_grad():
+                counter = 0
                 for inputs, path in loader:
+                    print('path',path,len(path))
                     inputs = Variable(inputs).to(device, dtype=torch.float32)
                     target = torch.squeeze(inputs, dim=1).long()
 
                     z, logvar = self.model.encode(inputs) # z = mean because no random sampling
                     outputs = self.model.decode(z)
-
+                    #print(z.shape,outputs.shape)
                     recon_loss_val, kl_val, loss_val = vae_loss(outputs, target, z, logvar, self.loss_func,
                                     kl_weight=self.kl_weight)                        
                     outputs = torch.argmax(outputs, dim=1) # otherwise two values with cross entropy
+                    #print(recon_loss_val,z.shape)
                     output_list.append(np.array(outputs.cpu().detach().numpy()).astype(bool))
 
+                    if counter < 3:
+                        print(inputs.cpu().numpy().shape,outputs.cpu().numpy().shape)
+                        np.save(self.save_dir+'/subjects/'+path[0]+'_input.npy',inputs.cpu().numpy()[0,0,:,:,:])
+                        np.save(self.save_dir+'/subjects/'+path[0]+'_output.npy',outputs.cpu().numpy()[0,:,:,:])
+
                     for k in range(len(path)):
+                        print(counter,path[k][0],len(path),'loss',recon_loss_val,kl_val)
                         out_z = np.array(np.squeeze(z[k]).cpu().detach().numpy())
                         var = np.array(np.squeeze(logvar[k].exp()).cpu().detach().numpy())
                         #results[loader_name][path[k]] = loss_val, out_z, recon_loss_val
                         results[loader_name][path[k]] = loss_val, out_z, recon_loss_val, var
+                        #Save reconstruction error for each subject
+                        #print(loss_val.cpu().detach().numpy().item())
+                        #print(out_z.shape)
+                        recon_error[str(path[k])] = [recon_loss_val.cpu().detach().numpy().item()]
+                        embeddings[str(path[k])] = out_z
+                        counter+=1
+        print('Size',counter*16)
+        results_recon_error = pd.DataFrame.from_dict(recon_error)
+        results_recon_error = results_recon_error.T
+        print(self.save_dir+'/Reconstruction_error.csv')
+        results_recon_error.to_csv(self.save_dir+'/Reconstruction_error.csv')
+        
+        results_embeddings = pd.DataFrame.from_dict(embeddings)
+        results_embeddings = results_embeddings.T
+        print(self.save_dir+'/Embeddings_error.csv')
+        results_embeddings.to_csv(self.save_dir+'/Embeddings.csv')
+
         output = np.vstack(output_list)
 
         return results, output

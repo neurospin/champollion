@@ -1,0 +1,7 @@
+# @package _global_
+dataset_name: SOr_left_UKB
+data_dir: ${dataset_folder}/UkBioBank40/crops/2mm/S.Or./mask/Lskeleton.npy
+subject_dir: ${dataset_folder}/UkBioBank40/crops/2mm/S.Or./mask/Lskeleton_subject.csv
+in_shape: [1, 30, 38, 22]
+subjects_to_remove: ${dataset_folder}/UkBioBank40/CSLabel/interrupted_CS_QC.csv
+remove_subjects: False

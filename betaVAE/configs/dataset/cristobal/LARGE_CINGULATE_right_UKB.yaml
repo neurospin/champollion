@@ -1,0 +1,7 @@
+# @package _global_
+dataset_name: LARGE_CINGULATE_right_UKB
+data_dir: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/Rskeleton.npy
+subject_dir: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/Rskeleton_subject.csv
+in_shape: [1, 18, 73, 57]
+subjects_to_remove: ${dataset_folder}/UkBioBank40/CSLabel/interrupted_CS_QC.csv
+remove_subjects: False

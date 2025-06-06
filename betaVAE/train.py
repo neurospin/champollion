@@ -38,7 +38,7 @@
 import numpy as np
 import pandas as pd
 import torchvision
-from torchsummary import summary
+#from torchsummary import summary
 from torch.utils.tensorboard import SummaryWriter
 import torch.nn as nn
 
@@ -69,7 +69,7 @@ def train_vae(config, trainloader, valloader, root_dir=None):
     if torch.cuda.is_available():
         device = "cuda:0"
     vae.to(device)
-    summary(vae, list(config.in_shape))
+    #summary(vae, list(config.in_shape))
 
     weights = [1, 2]
     class_weights = torch.FloatTensor(weights).to(device)

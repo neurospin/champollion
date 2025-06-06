@@ -62,7 +62,8 @@ def create_subset(config):
 
     #We load the list of subjects with one column called 'subjects'
     train_list = pd.read_csv(config.subject_dir)
-    print('---------------------------------------- Train list',train_list)
+    print('---------------------------------------- Reading .csv ',config.subject_dir)
+    print(train_list)
 
     #We get the list, ensure they are strings and remove the sub- part at the beginning of the string
     train_list.columns=['subjects']
@@ -71,9 +72,14 @@ def create_subset(config):
     if tmp_sub[0][:4]=='sub-':
         tmp_sub = [subject[4:] for subject in tmp_sub]
         train_list['subjects']=tmp_sub
-    print('---------------------------------------- Train list edited without sub',train_list)
+
+    print('---------------------------------------- Train list edited without sub-')
+    print(train_list)
+
+    print('Filename and file extension of subjects data')
     filename, file_extension = os.path.splitext(config.data_dir)
     print('---------------------------------------- Filename and file-extension',filename,file_extension)
+
     if file_extension=='.pkl':
         print('Reading pickle file')
         #Cada columna es un sujeto
@@ -90,10 +96,10 @@ def create_subset(config):
 
         #We create a dictionary containing the subject (key) and their crop (value)
         dict_sub_crop = dict(zip(train_list['subjects'].tolist(), list_crops))
-        print('Dict sub crop size', len(dict_sub_crop))
+        print('Size of dictionary containing subject id (key) and crop (value)', len(dict_sub_crop))
 
         #If we want to train with the whole dataset
-        if config.subjects_to_remove == False:
+        if config.remove_subjects == False:
             tmp = pd.DataFrame.from_dict(dict_sub_crop)
             print('final tmp',tmp.shape,tmp.iloc[0][0].shape,tmp.info())
 
@@ -118,16 +124,16 @@ def create_subset(config):
 
             #We get a list of the subjects to be removed, which are OK (realiable interrupted) and without the sub- part in the string
             subs_to_remove = df_filtered['ID'].tolist()
-            print(' ° dict_sub_crop size before removing subjects', len(dict_sub_crop))
-            print(' ° train_list size before removing interrupted CS',len(train_list))
+            print(' ° dict_sub_crop size before removing interrupted subjects', len(dict_sub_crop))
+            print(' ° train_list size before removing interrupted subjects',len(train_list))
 
             #We removed the subjects from the dictionary and from the whole list of subjects
             for sub in subs_to_remove:
                 del dict_sub_crop[sub]
             train_list = filter_rows_by_values(train_list , "subjects", subs_to_remove)
 
-            print('°° dict_sub_crop size after removing subjects', len(dict_sub_crop))
-            print('°° train_list size before after interrupted CS',len(train_list))
+            print('°° dict_sub_crop size after removing interrupted subjects', len(dict_sub_crop))
+            print('°° train_list size before after removing interrupted subjects',len(train_list))
 
             #We create a test dataset from the set of subject without the interrupted subjects, same size of interrupted subjects
             n = 0
@@ -143,8 +149,8 @@ def create_subset(config):
             
             train_list = filter_rows_by_values(train_list , "subjects", test_subjects)
 
-            print('°° dict_sub_crop size after removing subjects', len(dict_sub_crop))
-            print('°° train_list size before after interrupted CS',len(train_list))
+            print('°° dict_sub_crop size after removing test subjects', len(dict_sub_crop))
+            print('°° train_list size before after removing test subjects',len(train_list))
 
             #Save everything to csv
             train_dataset = pd.DataFrame.from_dict({'ID':train_list['subjects'].tolist()})
@@ -177,27 +183,40 @@ def create_subset(config):
     tmp = tmp.T
     print([tmp.index[k] for k in range(len(tmp))])
     Output:
-    ['A','B','C']
+         A    B    C
+        0  123  245  678 
+            0
+        A  123
+        B  245
+        C  678
+        ['A', 'B', 'C']
+
+
+        ** Process exited - Return Code: 0 **
+        Press Enter to exit terminal
     '''
     
     #Here we get a list with the ID of the subjects
     tmp['subjects'] = [tmp.index[k] for k in range(len(tmp))]
-
     res = tmp['subjects'].tolist()== train_list['subjects'].tolist()
-    print('res',res)
-    print('Final number of subject after removing interrupted and test:',len(tmp['subjects'].tolist()))
+    if res == False:
+        print('--- Problem --- Verify order of subjects for dataset')
+        sys.exit()
+    else:
+        print('Same ordering',res)
+
+    print('Final number of subject for train:',len(tmp['subjects'].tolist()))
     #We merged it
     #tmp = tmp.merge(train_list, left_on = 'subjects', right_on='subjects', how='right')
     #filenames = list(train_list['subjects'])
-    tmp = tmp.merge(train_list, left_on = 'subjects', right_on='subjects', how='right')
-    filenames = list(train_list['subjects'])
-    print(tmp.iloc[0][0].shape,type(tmp.iloc[0][0]))
-    #If we want a subset
-    #tmp = tmp.head(1200)
-    #filenames = filenames[0:1200]
-    #tmp.to_csv(config.save_dir+'/Train_subjects_subset.csv')
+    #tmp = tmp.merge(train_list, left_on = 'subjects', right_on='subjects', how='right')
+    #filenames = list(train_list['subjects'])
+    tmp = tmp.merge(tmp['subjects'], left_on = 'subjects', right_on='subjects', how='right')
+    filenames = list(tmp['subjects'])
+    
 
     subset = SkeletonDataset(config=config, dataframe=tmp, filenames=filenames)
+    print('------- Succesfully loaded dataset')
     return subset
 
 
@@ -212,7 +231,8 @@ def create_subset_eval(config):
 
     #We load the list of subjects with one column called 'subjects'
     train_list = pd.read_csv(config.subject_dir)
-    print('---------------------------------------- Train list',train_list)
+    print('---------------------------------------- Reading .csv ',config.subject_dir)
+    print(train_list)
 
     #We get the list, ensure they are strings and remove the sub- part at the beginning of the string
     train_list.columns=['subjects']
@@ -221,9 +241,14 @@ def create_subset_eval(config):
     if tmp_sub[0][:4]=='sub-':
         tmp_sub = [subject[4:] for subject in tmp_sub]
         train_list['subjects']=tmp_sub
-    print('---------------------------------------- Train list edited without sub',train_list)
+
+    print('---------------------------------------- Train list edited without sub-')
+    print(train_list)
+
+    print('Filename and file extension of subjects data')
     filename, file_extension = os.path.splitext(config.data_dir)
     print('---------------------------------------- Filename and file-extension',filename,file_extension)
+
     if file_extension=='.pkl':
         print('Reading pickle file')
         #Cada columna es un sujeto
@@ -240,14 +265,14 @@ def create_subset_eval(config):
 
         #We create a dictionary containing the subject (key) and their crop (value)
         dict_sub_crop = dict(zip(train_list['subjects'].tolist(), list_crops))
-        print('Dict sub crop size', len(dict_sub_crop))
+        print('Size of dictionary containing subject id (key) and crop (value)', len(dict_sub_crop))
 
 
     tmp = pd.DataFrame.from_dict(dict_sub_crop)
     subjects = tmp.columns.tolist()
     #print('subjects',subjects)
 
-    #I Don't get why this is here but we don't get in the for cycle anyways
+    #I Don't get why this is here but we don't get in the for cycle anyways / maybe we will remove it later on
     if subjects[0][:4]=='sub-': # remove sub
         print('Yep got into if')
         subjects = [subject[4:] for subject in subjects]
@@ -261,13 +286,21 @@ def create_subset_eval(config):
     #Here we get a list with the ID of the subjects
     tmp['subjects'] = [tmp.index[k] for k in range(len(tmp))]
     res = tmp['subjects'].tolist()== train_list['subjects'].tolist()
-    print('res',res)
+
+    if res == False:
+        print('--- Problem --- Verify order of subjects for dataset')
+        sys.exit()
+    else:
+        print('Same ordering',res)
+
+
     #We merged it
     #tmp = tmp.merge(train_list, left_on = 'subjects', right_on='subjects', how='right')
     #filenames = list(train_list['subjects'])
-    tmp = tmp.merge(train_list, left_on = 'subjects', right_on='subjects', how='right')
-    filenames = list(train_list['subjects'])
-    print(tmp.iloc[0][0].shape,type(tmp.iloc[0][0]))
+    #tmp = tmp.merge(train_list, left_on = 'subjects', right_on='subjects', how='right')
+    #filenames = list(train_list['subjects'])
+    tmp = tmp.merge(tmp['subjects'], left_on = 'subjects', right_on='subjects', how='right')
+    filenames = list(tmp['subjects'])
 
     subset = SkeletonDataset(config=config, dataframe=tmp, filenames=filenames)
     return subset

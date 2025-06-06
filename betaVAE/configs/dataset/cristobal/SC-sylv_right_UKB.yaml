@@ -4,4 +4,4 @@ data_dir: ${dataset_folder}/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rskeleton.npy
 subject_dir: ${dataset_folder}/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rskeleton_subject.csv
 in_shape: [1, 42, 34, 49]
 subjects_to_remove: ${dataset_folder}/UkBioBank40/CSLabel/interrupted_CS_QC.csv
-remove_subjects: True
+remove_subjects: False

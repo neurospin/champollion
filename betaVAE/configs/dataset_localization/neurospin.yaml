@@ -1,0 +1,3 @@
+# @package _global_
+dataset_folder: /neurospin/dico/data/deep_folding/current/datasets
+save_dir: /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output

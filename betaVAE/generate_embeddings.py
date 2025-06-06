@@ -118,9 +118,11 @@ def main(config):
 
     config.in_shape = adjust_in_shape(config)
 
-    config.test_model_dir = "/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30"
+    #Here we select the model
+    #config.test_model_dir = "/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30"
+    config.test_model_dir = "/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-06-05/17-32-49"
 
-    model_dir = os.path.join(config.test_model_dir, 'checkpoint.pt') #checkpoint.pt instead of vae.pt?
+    model_dir = os.path.join(config.test_model_dir, 'checkpoint.pt') 
     #model_dir = os.path.join(config.test_model_dir, 'vae.pt')
     model = VAE(config.in_shape, config.n, depth=3)
     model.load_state_dict(torch.load(model_dir))

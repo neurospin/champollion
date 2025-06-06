@@ -39,7 +39,7 @@ import torch
 import pandas as pd
 from torch.autograd import Variable
 import torch.nn as nn
-
+import os
 
 
 class VAE(nn.Module):
@@ -203,6 +203,8 @@ class ModelTester():
                     outputs = torch.argmax(outputs, dim=1) # otherwise two values with cross entropy
                     #print(recon_loss_val,z.shape)
                     output_list.append(np.array(outputs.cpu().detach().numpy()).astype(bool))
+                    if not os.path.exists(self.save_dir+'/subjects'):
+                        os.mkdir(self.save_dir+'/subjects')
 
                     if counter < 3:
                         print(inputs.cpu().numpy().shape,outputs.cpu().numpy().shape)

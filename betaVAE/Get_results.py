@@ -13,13 +13,18 @@ import pickle
 from sklearn.manifold import Isomap
 import umap
 from denmarf import DensityEstimate
+from sklearn.neighbors import KDTree
 
+
+
+model_path = '/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30/'
+model_path = "/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-06-05/17-32-49/"
 #Reconstruction error results
-Train_subjects = pd.read_csv('/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30/Train_subjects.csv').ID.values.tolist()
-Test_subjects = pd.read_csv('/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30/Test_subjects.csv').ID.values.tolist()
-Interrupted_subjects = pd.read_csv('/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30/Interrupted_CS_subjects.csv').ID.values.tolist()
+Train_subjects = pd.read_csv(model_path+'Train_subjects.csv').ID.values.tolist()
+Test_subjects = pd.read_csv(model_path+'Test_subjects.csv').ID.values.tolist()
+Interrupted_subjects = pd.read_csv(model_path+'Interrupted_CS_subjects.csv').ID.values.tolist()
 
-Reconstruction_error = pd.read_csv('/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30/Reconstruction_error.csv')
+Reconstruction_error = pd.read_csv(model_path+'Reconstruction_error.csv')
 Reconstruction_error.columns = ['ID','Recon']
 
 Reconstruction_train = Reconstruction_error[Reconstruction_error['ID'].isin(Train_subjects)]
@@ -36,7 +41,7 @@ sns.histplot(data = Reconstruction_train,x='Recon',element="step",label='Train',
 sns.histplot(data = Reconstruction_interrupted,x='Recon',element="step",label='Int. CS',color='red',stat='density',kde=True)
 sns.histplot(data = Reconstruction_test,x='Recon',element="step",label='Test',color='orange',stat='density',kde=True,alpha=0.1)
 plt.legend()
-plt.savefig('/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30/Reconstruction_error.png',dpi=300)
+plt.savefig(model_path+'Reconstruction_error.png',dpi=300)
 
 U1, p = mannwhitneyu(Reconstruction_train.Recon.values, Reconstruction_interrupted.Recon.values)
 print(U1,p)
@@ -61,7 +66,7 @@ print(Subject_high_recon_,len(Subject_high_recon_))
 
 #SVM
 print('Support vector machine')
-Embeddings = pd.read_csv('/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30/Embeddings.csv')
+Embeddings = pd.read_csv(model_path+'Embeddings.csv')
 columns = ['ID']
 for i in range(0,75):
     columns.append('dim'+str(i))
@@ -104,6 +109,7 @@ for train_index, test_index in kf.split(X, y):
     print('yprob ytest shape',y_prob.shape,y_test.shape)
     fpr, tpr, threshold = roc_curve(y_test, y_prob)
     roc_auc = roc_auc_score(y_test, y_prob)
+    aucs.append(roc_auc)
     print('score' , model.score(X_test,y_test))
 
     # Interpolación para tener todos los TPR en el mismo eje
@@ -113,7 +119,7 @@ for train_index, test_index in kf.split(X, y):
 
     #if i == 3:
 
-    with open('/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30/SVM_fold_'+str(i)+'.pkl','wb') as f:
+    with open(model_path+'SVM_fold_'+str(i)+'.pkl','wb') as f:
         pickle.dump(model,f)
 
     plt.plot(fpr, tpr, alpha=0.5, label=f'ROC Fold {i} (AUC = {roc_auc:.3f})',lw=2)
@@ -142,10 +148,11 @@ plt.title('ROC Curve Stratified K-Cross Fold Validation')
 plt.legend(loc='lower right')
 plt.grid(True)
 plt.tight_layout()
-plt.savefig('/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30/SVM.png',dpi=300)
+plt.savefig(model_path+'SVM.png',dpi=300)
 
 #Get Interrupted subjects based on SVM probability 
-with open('/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30/SVM_fold_6.pkl', 'rb') as f:
+print('SVM with highest AUC is ',str(np.argmax(aucs)+1), aucs[np.argmax(aucs)])
+with open(model_path+'SVM_fold_'+str(np.argmax(aucs)+1)+'.pkl', 'rb') as f:
     model = pickle.load(f)
 
 X = Embeddings.drop(columns=['ID']).to_numpy()
@@ -180,7 +187,7 @@ tmp_df.columns = ['DIM1','DIM2','Class']
 print(tmp_df)
 plt.figure()
 sns.scatterplot(data = tmp_df,x='DIM1',y='DIM2',size = 'Class',sizes = [1,6,6] , hue = 'Class',s=1,palette = ['blue','red','orange'])
-plt.savefig('/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30/UMAP.png',dpi=300)
+plt.savefig(model_path+'UMAP.png',dpi=300)
 
 #Coloring according to SVM probability
 tmp = dict(zip(All_subjects, zip(X_umap[:, 0], X_umap[:, 1], y_prob)))
@@ -190,7 +197,7 @@ tmp_df.columns = ['DIM1','DIM2','prob']
 print(tmp_df)
 plt.figure()
 sns.scatterplot(data = tmp_df,x='DIM1',y='DIM2', palette='cool', hue = 'prob',s=2)
-plt.savefig('/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30/UMAP_prob.png',dpi=300)
+plt.savefig(model_path+'UMAP_prob.png',dpi=300)
 
 #Coloring according to reconstruction error
 tmp = dict(zip(All_subjects, zip(X_umap[:, 0], X_umap[:, 1], Reconstruction_error.Recon.values)))
@@ -201,21 +208,11 @@ print(tmp_df)
 tmp_df['ReconError_bin'] = pd.cut(tmp_df.ReconError.values, bins=[2000, 3000, 4000, 5000])
 plt.figure()
 sns.scatterplot(data = tmp_df,x='DIM1',y='DIM2', palette='cool', hue=tmp_df['ReconError_bin'],s=1)
-plt.savefig('/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30/UMAP_recon.png',dpi=300)
+plt.savefig(model_path+'UMAP_recon.png',dpi=300)
 
-#To get local averages
-res =  Reconstruction_error.ID.values.tolist() == Embeddings.ID.values.tolist()
-print(res)
-knn_dists, knn_indices = reducer._knn_dists, reducer._knn_indices
-print(knn_dists.shape) 
-beg = prob_df_sorted.iloc[:500]
-mid = prob_df_sorted.iloc[20000:20500]
-end = prob_df_sorted.iloc[len(y_prob)-500:len(y_prob)]
-combined_df = pd.concat([beg, mid, end], axis=0).reset_index(drop=True)
-combined_df.to_csv("/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30/CS_prob.csv", index=False)
 
 #UMAP Supervised
-Embeddings = pd.read_csv('/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30/Embeddings.csv')
+Embeddings = pd.read_csv(model_path+'Embeddings.csv')
 columns = ['ID']
 for i in range(0,75):
     columns.append('dim'+str(i))
@@ -263,7 +260,7 @@ tmp_df.columns = ['DIM1','DIM2','Class']
 print(tmp_df)
 plt.figure()
 sns.scatterplot(data = tmp_df,x='DIM1',y='DIM2',size = 'Class',sizes = [6,6,1] , hue = 'Class',s=1,palette = ['orange','red','blue'])
-plt.savefig('/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30/UMAP_Semi_supervised.png',dpi=300)
+plt.savefig(model_path+'UMAP_Semi_supervised.png',dpi=300)
 
 #Coloring according probability
 y_prob = model.predict_proba(X)[:,1]
@@ -274,7 +271,7 @@ tmp_df.columns = ['DIM1','DIM2','prob']
 print(tmp_df)
 plt.figure()
 sns.scatterplot(data = tmp_df,x='DIM1',y='DIM2', palette='cool', hue = 'prob',s=2)
-plt.savefig('/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30/UMAP_Semi_supervised_prob.png',dpi=300)
+plt.savefig(model_path+'UMAP_Semi_supervised_prob.png',dpi=300)
 
 #Coloring according reconstrcution error
 
@@ -291,22 +288,56 @@ tmp_df['ReconError_bin'] = pd.cut(df_sorted.Recon.values, bins=[2000, 3000, 4000
 print(tmp_df)
 plt.figure()
 sns.scatterplot(data = tmp_df,x='DIM1',y='DIM2', palette='cool', hue=tmp_df['ReconError_bin'],s=2)
-plt.savefig('/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-05-28/23-11-30/UMAP_Semi_supervised_recon.png',dpi=300)
+plt.savefig(model_path+'UMAP_Semi_supervised_recon.png',dpi=300)
 
 # Access nearest neighbor distances and indices
-knn_dists, knn_indices = reducer._knn_dists, reducer._knn_indices
-knn_indices_int = knn_indices[207:2*207]
-print(knn_indices_int.shape)
+tree = KDTree(embedding)              
+dist, ind = tree.query(embedding, k=10)
+print(dist,ind)
+knn_indices = ind[207:207*2]
 
-potentially_interrupted = []
-for sub in range(0,knn_indices_int.shape[0]):
+all_subs_to_check = []
+Interrupted_subjects = [str(sub) for sub in Interrupted_subjects]
+print('int subject',Interrupted_subjects)
+for sub in range(0,knn_indices.shape[0]):
     indices = knn_indices[sub,:]
     neighbors_subjects = np.asarray(Embeddings_test_int_train.ID.values)[indices].tolist()
-    print(sub)
-    print(len(neighbors_subjects))
+    #print('-------------',sub)
+    #print(len(neighbors_subjects))
     #print('neighbors',neighbors_subjects,'int subject',Interrupted_subjects)
+    c= 0
     for n_sub in neighbors_subjects:
-        if n_sub in Interrupted_subjects:
-            neighbors_subjects.remove(n_sub)
+        n_sub = str(n_sub)
+        if n_sub not in Interrupted_subjects:
+            all_subs_to_check.append(n_sub)
+            c+=1
+    #print(c)
 
-    print(len(neighbors_subjects))
+
+
+print('df before reset index',tmp_df)
+tmp_df['ID'] = tmp_df.index
+print('df after reset index',tmp_df)
+subjects = tmp_df.ID.values.tolist()
+neighbor = []
+
+for sub in subjects:
+    sub = str(sub)
+    if sub in all_subs_to_check:
+        neighbor.append(1)
+    elif sub in Interrupted_subjects:
+        neighbor.append(2)
+    else:
+        neighbor.append(0)
+
+all_subs_to_check = ['sub-'+str(sub) for sub in all_subs_to_check]
+#print('subs to check',all_subs_to_check)
+
+tmp = dict(zip(subjects, zip(embedding[:, 0], embedding[:, 1], neighbor)))
+tmp_df = pd.DataFrame.from_dict(tmp)
+tmp_df = tmp_df.T
+tmp_df.columns = ['DIM1','DIM2','Neighbor']
+
+plt.figure()
+sns.scatterplot(data = tmp_df,x='DIM1',y='DIM2', palette=['blue','purple','red'], hue='Neighbor',s=2)
+plt.savefig(model_path+'UMAP_Semi_supervised_rneighbors.png',dpi=300)

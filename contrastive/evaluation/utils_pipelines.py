@@ -30,17 +30,24 @@ def get_save_folder_name(datasets, short_name):
     return folder_name
 
 
-def change_config_datasets(config, new_datasets):
+def change_config_datasets(config, new_datasets, new_datasets_root):
     """Replace the 'dataset' entry of a config 
     with the new target datasets. Works in place.
     
     Arguments:
         - config: a config object (omegaconf).
         - new_datasets: list of str, each corresponding to the name 
-        of a target yaml file."""
+        of a target yaml file.
+        - new_datasets_root: if not none, takes the same regions as for training but with the new dataset"""
     
     # replace the datasets
-    # first, remove the keys of the older datasets
+    
+    if new_datasets_root:
+        new_datasets = [f"{new_datasets_root}/{region}"
+                        for region in config['dataset']
+                        ]
+
+    # remove the keys of the older datasets
     config['dataset'] = {}
 
     # add the ones of the target datasets

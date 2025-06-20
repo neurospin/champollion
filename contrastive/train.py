@@ -158,7 +158,7 @@ def train(config):
                       divergence_threshold=config.diff_auc_threshold,
                       patience=config.max_epochs)
 
-    #callbacks = [early_stop_callback]
+    callbacks = [early_stop_callback]
     if config.mode in ['classifier', 'regresser']:
         callbacks.append(early_stop_overfitting)
 
@@ -178,7 +178,7 @@ def train(config):
         accelerator='gpu',
         devices=1,
         max_epochs=config.max_epochs,
-        #callbacks=callbacks,
+        callbacks=callbacks,
         logger=loggers,
         #flush_logs_every_n_steps=config.nb_steps_per_flush_logs,
         log_every_n_steps=config.log_every_n_steps,

@@ -2,6 +2,7 @@ import os
 import yaml
 import json
 import omegaconf
+import glob
 
 from generate_embeddings import compute_embeddings
 from train_multiple_classifiers import train_classifiers
@@ -133,7 +134,7 @@ def embeddings_pipeline(dir_path, dataset_localization, datasets, idx_region_eva
 
                 if (
                     os.path.exists(sub_dir + f"/{folder_name}_embeddings")
-                    and (not overwrite)
+                    and (len(os.listdir(sub_dir + f"/{folder_name}_embeddings"))>0) and (not overwrite)
                 ):
                     print("Model already treated "
                           "(existing folder with embeddings). "
@@ -251,34 +252,21 @@ if __name__ == "__main__":
                         verbose=False)
     
     """
-    
     """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_full/8_trimdepth_translation_3/SOr_left_UKB40",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_architecture/nb_epochs/SOr_left_UKB40",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
                         idx_region_evaluation = None,
                         labels=['Left_OFC'],
                         classifier_name='logistic',
-                        short_name='troiani', overwrite=True, embeddings=True,
+                        short_name='troiani', overwrite=False, embeddings=True,
                         embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='custom', cv=5,
-                        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/Left/train_val_split_',
-                        verbose=False)
-    
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_full/9_trimextremities_translation_3/SOr_left_UKB40",
-                        dataset_localization="neurospin",
-                        datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
-                        idx_region_evaluation = None,
-                        labels=['Left_OFC'],
-                        classifier_name='logistic',
-                        short_name='troiani', overwrite=True, embeddings=True,
-                        embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='custom', cv=5,
+                        subsets=['full'], epochs=range(0,90,10), split='custom', cv=5,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/Left/train_val_split_',
                         verbose=False)
     """
-                        
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations_with_trim/SOr_left_UKB40",
+    """                
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/2025-04-10",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/orbital_left_hcp_custom"],
                         idx_region_evaluation = None,
@@ -289,7 +277,7 @@ if __name__ == "__main__":
                         subsets=['full'], epochs=[None], split='custom', cv=5,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/Left/train_val_split_',
                         verbose=False)
-    
+    """
     """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/10_cutin/SOr_left_UKB40",
                         dataset_localization="neurospin",
@@ -420,18 +408,65 @@ if __name__ == "__main__":
                         verbose=False)
     """
     
-
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations_with_trim/LARGE_CINGULATE_right_UKB40",
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_architecture/nb_epochs/LARGE_CINGULATE_right_UKB40",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/LARGE_CINGULATE_right_ACCpatterns_custom"],
         idx_region_evaluation = None,
         labels=['Right_PCS'],
         classifier_name='logistic',
-        short_name='ACC', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['full'], epochs=[None], split='custom', cv=5,
+        short_name='ACC', overwrite=False, embeddings=True, embeddings_only=False, use_best_model=False,
+        subsets=['full'], epochs=range(0,90,10), split='custom', cv=5,
+        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/splits/Right/train_val_split_',
+        verbose=False)
+    """
+
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/V1/SOr_left_UKB40",
+        dataset_localization="neurospin",
+        datasets=["julien/hcp/SOr_left_hcp"],
+        idx_region_evaluation = None,
+        labels=['Right_PCS'],
+        classifier_name='logistic',
+        short_name='hcp', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
+        subsets=['train_val'], epochs=[None], split='random', cv=5,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/splits/Right/train_val_split_',
         verbose=False)
 
+
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/V1/LARGE_CINGULATE_right_UKB40",
+        dataset_localization="neurospin",
+        datasets=["julien/hcp/LARGE_CINGULATE_right_hcp"],
+        idx_region_evaluation = None,
+        labels=['Right_PCS'],
+        classifier_name='logistic',
+        short_name='hcp', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
+        subsets=['train_val'], epochs=[None], split='random', cv=5,
+        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/splits/Right/train_val_split_',
+        verbose=False)
+    
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/V1/FIP_right_UKB40",
+        dataset_localization="neurospin",
+        datasets=["julien/hcp/FIP_right_hcp"],
+        idx_region_evaluation = None,
+        labels=['Right_PCS'],
+        classifier_name='logistic',
+        short_name='hcp', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
+        subsets=['train_val'], epochs=[None], split='random', cv=5,
+        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/splits/Right/train_val_split_',
+        verbose=False)
+    
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/V1/SC-sylv_left_UKB40",
+        dataset_localization="neurospin",
+        datasets=["julien/hcp/SC-sylv_left_hcp"],
+        idx_region_evaluation = None,
+        labels=['Right_PCS'],
+        classifier_name='logistic',
+        short_name='hcp', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
+        subsets=['train_val'], epochs=[None], split='random', cv=5,
+        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/splits/Right/train_val_split_',
+        verbose=False)
+    """
     """
     embeddings_pipeline('/neurospin/dico/jlaval/Output/CINGULATE_40k',
         dataset_localization="neurospin",
@@ -459,32 +494,590 @@ if __name__ == "__main__":
     """
 
     # custom cv (80%)
-
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations_with_trim/FIP_right_UKB40/",
-                        dataset_localization="neurospin",
-                        datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
-                        idx_region_evaluation = None,
-                        labels=['Right_FIP'],
-                        classifier_name='logistic',
-                        short_name='FIP_right', overwrite=True, embeddings=True,
-                        embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='custom', cv=5,
-                        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/Right/train_val_split_',
-                        verbose=False)
-
     """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/9_trimextremities/FIP_right_UKB40/",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_architecture/nb_epochs/FIP_right_UKB40/",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
                         idx_region_evaluation = None,
                         labels=['Right_FIP'],
                         classifier_name='logistic',
-                        short_name='FIP_right', overwrite=True, embeddings=True,
+                        short_name='FIP_right', overwrite=False, embeddings=True,
                         embeddings_only=False, use_best_model=False,
-                        subsets=['full'], epochs=[None], split='custom', cv=5,
+                        subsets=['full'], epochs=range(0,90,10), split='custom', cv=5,
                         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/Right/train_val_split_',
                         verbose=False)
+    """
+    # EVAL ON ALL REGIONS
     
+    #datasets = ["julien/hcp/Right_FIP/LARGE_CINGULATE_right", "julien/hcp/Right_FIP/SC-sylv_left", "julien/hcp/Right_FIP/SC-sylv_right", "julien/hcp/Right_FIP/FIP_right"]
+    #models = glob.glob('/neurospin/dico/jlaval/Output/ablation_2_models_architecture/nb_epochs/*')
+    #for dataset, model in zip(datasets, models): #TODO : make sure that datasets and models are in the correct order !!
+
+    # ============== UKB40 =================
+    ## volume !!    
+    """
+    models = glob.glob('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation_latent_256/*/')
+    count = 0
+    for model in models:
+        # read the config yaml file
+        try :
+            config = yaml.safe_load(open(glob.glob(model + '*/.hydra/config.yaml')[0])) ## assuming there is only one model per folder
+            # get the dataset name
+            dataset = next(iter(config['dataset']))
+            # add the basename to the dataset name to get the hcp config
+            dataset = 'julien/UKB40/volume/' + dataset
+            print(model, dataset)
+            embeddings_pipeline(model,
+                                dataset_localization="neurospin",
+                                datasets=[dataset],
+                                idx_region_evaluation = None,
+                                labels=['volume'],
+                                classifier_name='logistic',
+                                short_name='ukb40_volume', overwrite=False, embeddings=True,
+                                embeddings_only=False, use_best_model=False,
+                                subsets=['test'], epochs=[None], split='random', cv=5,
+                                splits_basedir='',
+                                verbose=False)
+            count+=1
+            print("Number of models treated", count)
+        except:
+            print("Error in treating", model)
+            continue
+        
+    
+    models = glob.glob('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation/*/')
+    count = 0
+    for model in models:
+        # read the config yaml file
+        try : 
+            config = yaml.safe_load(open(glob.glob(model + '*/.hydra/config.yaml')[0])) ## assuming there is only one model per folder
+            # get the dataset name
+            dataset = next(iter(config['dataset']))
+            # add the basename to the dataset name to get the hcp config
+            dataset = 'julien/UKB40/volume/' + dataset
+            print(model, dataset)
+            embeddings_pipeline(model,
+                                dataset_localization="neurospin",
+                                datasets=[dataset],
+                                idx_region_evaluation = None,
+                                labels=['volume'],
+                                classifier_name='logistic',
+                                short_name='ukb40_volume', overwrite=False, embeddings=True,
+                                embeddings_only=False, use_best_model=False,
+                                subsets=['test'], epochs=[None], split='random', cv=5,
+                                splits_basedir='',
+                                verbose=False)
+            count+=1
+            print("Number of models treated", count)
+        except:
+            print("Error in treating", model)
+            continue
+    """
+    #=============== hcp =================
+    """
+    models = glob.glob('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation_latent_256/*/')
+    count = 0
+    for model in models:
+        # read the config yaml file
+        try :
+            config = yaml.safe_load(open(glob.glob(model + '*/.hydra/config.yaml')[0])) ## assuming there is only one model per folder
+            # get the dataset name
+            dataset = next(iter(config['dataset']))
+            # add the basename to the dataset name to get the hcp config
+            dataset = 'julien/hcp/all_data/' + dataset
+            print(model, dataset)
+            embeddings_pipeline(model,
+                                dataset_localization="neurospin",
+                                datasets=[dataset],
+                                idx_region_evaluation = None,
+                                labels=['Right_FIP'],
+                                classifier_name='logistic',
+                                short_name='hcp', overwrite=False, embeddings=True,
+                                embeddings_only=True, use_best_model=False,
+                                subsets=['full'], epochs=[None], split='random', cv=5,
+                                splits_basedir='',
+                                verbose=False)
+            count+=1
+            print("Number of models treated", count)
+        except:
+            print("Error in treating", model)
+            continue
+        
+    
+    models = glob.glob('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation/*/')
+    count = 0
+    for model in models:
+        # read the config yaml file
+        try : 
+            config = yaml.safe_load(open(glob.glob(model + '*/.hydra/config.yaml')[0])) ## assuming there is only one model per folder
+            # get the dataset name
+            dataset = next(iter(config['dataset']))
+            # add the basename to the dataset name to get the hcp config
+            dataset = 'julien/hcp/all_data/' + dataset
+            print(model, dataset)
+            embeddings_pipeline(model,
+                                dataset_localization="neurospin",
+                                datasets=[dataset],
+                                idx_region_evaluation = None,
+                                labels=['Right_FIP'],
+                                classifier_name='logistic',
+                                short_name='hcp', overwrite=False, embeddings=True,
+                                embeddings_only=True, use_best_model=False,
+                                subsets=['full'], epochs=[None], split='random', cv=5,
+                                splits_basedir='',
+                                verbose=False)
+            count+=1
+            print("Number of models treated", count)
+        except:
+            print("Error in treating", model)
+            continue
+    """
+    # =============== dHCP =================
+    """
+    models = glob.glob('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation_latent_256/*/')
+    count = 0
+    for model in models:
+        # read the config yaml file
+        try :
+            config = yaml.safe_load(open(glob.glob(model + '*/.hydra/config.yaml')[0])) ## assuming there is only one model per folder
+            # get the dataset name
+            dataset = next(iter(config['dataset']))
+            # add the basename to the dataset name to get the hcp config
+            dataset = 'julien/dHCP/' + dataset
+            print(model, dataset)
+            embeddings_pipeline(model,
+                                dataset_localization="neurospin",
+                                datasets=[dataset],
+                                idx_region_evaluation = None,
+                                labels=['Right_FIP'],
+                                classifier_name='logistic',
+                                short_name='dHCP', overwrite=True, embeddings=True,
+                                embeddings_only=True, use_best_model=False,
+                                subsets=['full'], epochs=[None], split='random', cv=5,
+                                splits_basedir='',
+                                verbose=False)
+            count+=1
+            print("Number of models treated", count)
+        except:
+            print("Error in treating", model)
+            continue
+        
+    
+    models = glob.glob('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation/*/')
+    count = 0
+    for model in models:
+        # read the config yaml file
+        try : 
+            config = yaml.safe_load(open(glob.glob(model + '*/.hydra/config.yaml')[0])) ## assuming there is only one model per folder
+            # get the dataset name
+            dataset = next(iter(config['dataset']))
+            # add the basename to the dataset name to get the hcp config
+            dataset = 'julien/dHCP/' + dataset
+            print(model, dataset)
+            embeddings_pipeline(model,
+                                dataset_localization="neurospin",
+                                datasets=[dataset],
+                                idx_region_evaluation = None,
+                                labels=['Right_FIP'],
+                                classifier_name='logistic',
+                                short_name='dHCP', overwrite=True, embeddings=True,
+                                embeddings_only=True, use_best_model=False,
+                                subsets=['full'], epochs=[None], split='random', cv=5,
+                                splits_basedir='',
+                                verbose=False)
+            count+=1
+            print("Number of models treated", count)
+        except:
+            print("Error in treating", model)
+            continue
+    """
+    #=============== Right FIP ================
+    """
+    models = glob.glob('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation_latent_256/*/')
+    count = 0
+    for model in models:
+        # read the config yaml file
+        try :
+            config = yaml.safe_load(open(glob.glob(model + '*/.hydra/config.yaml')[0])) ## assuming there is only one model per folder
+            # get the dataset name
+            dataset = next(iter(config['dataset']))
+            # add the basename to the dataset name to get the hcp config
+            dataset = 'julien/hcp/Right_FIP/' + dataset
+            print(model, dataset)
+            embeddings_pipeline(model,
+                                dataset_localization="neurospin",
+                                datasets=[dataset],
+                                idx_region_evaluation = None,
+                                labels=['Right_FIP'],
+                                classifier_name='logistic',
+                                short_name='Right_FIP', overwrite=False, embeddings=True,
+                                embeddings_only=False, use_best_model=False,
+                                subsets=['full'], epochs=[None], split='custom', cv=5,
+                                splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/Right/train_val_split_',
+                                verbose=False)
+            count+=1
+            print("Number of models treated", count)
+        except:
+            print("Error in treating", model)
+            continue
+        
+    
+    models = glob.glob('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation/*/')
+    count = 0
+    for model in models:
+        # read the config yaml file
+        try : 
+            config = yaml.safe_load(open(glob.glob(model + '*/.hydra/config.yaml')[0])) ## assuming there is only one model per folder
+            # get the dataset name
+            dataset = next(iter(config['dataset']))
+            # add the basename to the dataset name to get the hcp config
+            dataset = 'julien/hcp/Right_FIP/' + dataset
+            print(model, dataset)
+            embeddings_pipeline(model,
+                                dataset_localization="neurospin",
+                                datasets=[dataset],
+                                idx_region_evaluation = None,
+                                labels=['Right_FIP'],
+                                classifier_name='logistic',
+                                short_name='Right_FIP', overwrite=False, embeddings=True,
+                                embeddings_only=False, use_best_model=False,
+                                subsets=['full'], epochs=[None], split='custom', cv=5,
+                                splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/FIP/Right/train_val_split_',
+                                verbose=False)
+            count+=1
+            print("Number of models treated", count)
+        except:
+            print("Error in treating", model)
+            continue
+    
+
+    
+    #=============== Left_OFC =================
+    models = glob.glob('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation_latent_256/*/')
+    count = 0
+    for model in models:
+        # read the config yaml file
+        try :
+            config = yaml.safe_load(open(glob.glob(model + '*/.hydra/config.yaml')[0])) ## assuming there is only one model per folder
+            # get the dataset name
+            dataset = next(iter(config['dataset']))
+            # add the basename to the dataset name to get the hcp config
+            dataset = 'julien/hcp/Left_OFC/' + dataset
+            print(model, dataset)
+            embeddings_pipeline(model,
+                                dataset_localization="neurospin",
+                                datasets=[dataset],
+                                idx_region_evaluation = None,
+                                labels=['Left_OFC'],
+                                classifier_name='logistic',
+                                short_name='Left_OFC', overwrite=False, embeddings=True,
+                                embeddings_only=False, use_best_model=False,
+                                subsets=['full'], epochs=[None], split='custom', cv=5,
+                                splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/Left/train_val_split_',
+                                verbose=False)
+            count+=1
+            print("Number of models treated", count)
+        except:
+            print("Error in treating", model)
+            continue
+      
+    
+    models = glob.glob('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation/*/')
+    count = 0
+    for model in models:
+        # read the config yaml file
+        try : 
+            config = yaml.safe_load(open(glob.glob(model + '*/.hydra/config.yaml')[0])) ## assuming there is only one model per folder
+            # get the dataset name
+            dataset = next(iter(config['dataset']))
+            # add the basename to the dataset name to get the hcp config
+            dataset = 'julien/hcp/Left_OFC/' + dataset
+            print(model, dataset)
+            embeddings_pipeline(model,
+                                dataset_localization="neurospin",
+                                datasets=[dataset],
+                                idx_region_evaluation = None,
+                                labels=['Left_OFC'],
+                                classifier_name='logistic',
+                                short_name='Left_OFC', overwrite=False, embeddings=True,
+                                embeddings_only=False, use_best_model=False,
+                                subsets=['full'], epochs=[None], split='custom', cv=5,
+                                splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/Left/train_val_split_',
+                                verbose=False)
+            count+=1
+            print("Number of models treated", count)
+        except:
+            print("Error in treating", model)
+            continue
+
+
+    #============= Isomap_central_left ===============
+    models = glob.glob('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation_latent_256/*/')
+    count = 0
+    for model in models:
+        # read the config yaml file
+        try :
+            config = yaml.safe_load(open(glob.glob(model + '*/.hydra/config.yaml')[0])) ## assuming there is only one model per folder
+            # get the dataset name
+            dataset = next(iter(config['dataset']))
+            # add the basename to the dataset name to get the hcp config
+            dataset = 'julien/hcp/Isomap_central_left/' + dataset
+            print(model, dataset)
+            embeddings_pipeline(model,
+                                dataset_localization="neurospin",
+                                datasets=[dataset],
+                                idx_region_evaluation = None,
+                                labels=[f'Isomap_central_left_dim{k}' for k in range(1,7)],
+                                classifier_name='logistic',
+                                short_name='Isomap_central_left', overwrite=False, embeddings=True,
+                                embeddings_only=False, use_best_model=False,
+                                subsets=['full'], epochs=[None], split='custom', cv=5,
+                                splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/Isomap/splits/train_val_split_',
+                                verbose=False)
+            count+=1
+            print("Number of models treated", count)
+        except:
+            print("Error in treating", model)
+            continue
+        
+    
+    models = glob.glob('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation/*/')
+    count = 0
+    for model in models:
+        # read the config yaml file
+        try : 
+            config = yaml.safe_load(open(glob.glob(model + '*/.hydra/config.yaml')[0])) ## assuming there is only one model per folder
+            # get the dataset name
+            dataset = next(iter(config['dataset']))
+            # add the basename to the dataset name to get the hcp config
+            dataset = 'julien/hcp/Isomap_central_left/' + dataset
+            print(model, dataset)
+            embeddings_pipeline(model,
+                                dataset_localization="neurospin",
+                                datasets=[dataset],
+                                idx_region_evaluation = None,
+                                labels=[f'Isomap_central_left_dim{k}' for k in range(1,7)],
+                                classifier_name='logistic',
+                                short_name='Isomap_central_left', overwrite=False, embeddings=True,
+                                embeddings_only=False, use_best_model=False,
+                                subsets=['full'], epochs=[None], split='custom', cv=5,
+                                splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/Isomap/splits/train_val_split_',
+                                verbose=False)
+            count+=1
+            print("Number of models treated", count)
+        except:
+            print("Error in treating", model)
+            continue
+    
+
+    #=========== Right_PCS ==============
+    models = glob.glob('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation_latent_256/*/')
+    count = 0
+    for model in models:
+        # read the config yaml file
+        try :
+            config = yaml.safe_load(open(glob.glob(model + '*/.hydra/config.yaml')[0])) ## assuming there is only one model per folder
+            # get the dataset name
+            dataset = next(iter(config['dataset']))
+            # add the basename to the dataset name to get the hcp config
+            dataset = 'julien/ACCpatterns/Right_PCS/' + dataset
+            print(model, dataset)
+            embeddings_pipeline(model,
+                                dataset_localization="neurospin",
+                                datasets=[dataset],
+                                idx_region_evaluation = None,
+                                labels=['Right_PCS'],
+                                classifier_name='logistic',
+                                short_name='Right_PCS', overwrite=False, embeddings=True,
+                                embeddings_only=False, use_best_model=False,
+                                subsets=['full'], epochs=[None], split='custom', cv=5,
+                                splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/splits/Right/train_val_split_',
+                                verbose=False)
+            count+=1
+            print("Number of models treated", count)
+        except:
+            print("Error in treating", model)
+            continue
+      
+    
+    models = glob.glob('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation/*/')
+    count = 0
+    for model in models:
+        # read the config yaml file
+        try : 
+            config = yaml.safe_load(open(glob.glob(model + '*/.hydra/config.yaml')[0])) ## assuming there is only one model per folder
+            # get the dataset name
+            dataset = next(iter(config['dataset']))
+            # add the basename to the dataset name to get the hcp config
+            dataset = 'julien/ACCpatterns/Right_PCS/' + dataset
+            print(model, dataset)
+            embeddings_pipeline(model,
+                                dataset_localization="neurospin",
+                                datasets=[dataset],
+                                idx_region_evaluation = None,
+                                labels=['Right_PCS'],
+                                classifier_name='logistic',
+                                short_name='Right_PCS', overwrite=False, embeddings=True,
+                                embeddings_only=False, use_best_model=False,
+                                subsets=['full'], epochs=[None], split='custom', cv=5,
+                                splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/ACCpatterns/splits/Right/train_val_split_',
+                                verbose=False)
+            count+=1
+            print("Number of models treated", count)
+        except:
+            print("Error in treating", model)
+            continue
+    """
+
+    # abide 1+2
+    """
+    models = glob.glob('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation_latent_256/*/')
+    count = 0
+    for model in models:
+        # read the config yaml file
+        try : 
+            config = yaml.safe_load(open(glob.glob(model + '*/.hydra/config.yaml')[0])) ## assuming there is only one model per folder
+            # get the dataset name
+            dataset = next(iter(config['dataset']))
+            # add the basename to the dataset name to get the hcp config
+            dataset = 'julien/abide/' + dataset
+            print(model, dataset)
+            embeddings_pipeline(model,
+                                dataset_localization="neurospin",
+                                datasets=[dataset],
+                                idx_region_evaluation = None,
+                                labels=['volume'],
+                                classifier_name='logistic',
+                                short_name='agg_abide', overwrite=False, embeddings=True,
+                                embeddings_only=True, use_best_model=False,
+                                subsets=['full'], epochs=[None], split='random', cv=5,
+                                splits_basedir='',
+                                verbose=False)
+            count+=1
+            print("Number of models treated", count)
+        except:
+            print("Error in treating", model)
+            continue
+    """
+
+    # ======== bipolar =========
+    """
+    models = glob.glob('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation_latent_256/*/')
+    count = 0
+    for model in models:
+        # read the config yaml file
+        try : 
+            config = yaml.safe_load(open(glob.glob(model + '*/.hydra/config.yaml')[0])) ## assuming there is only one model per folder
+            # get the dataset name
+            dataset = next(iter(config['dataset']))
+            # add the basename to the dataset name to get the hcp config
+            dataset = 'julien/bipolar/' + dataset
+            print(model, dataset)
+            embeddings_pipeline(model,
+                                dataset_localization="neurospin",
+                                datasets=[dataset],
+                                idx_region_evaluation = None,
+                                labels=['diagnosis'],
+                                classifier_name='logistic',
+                                short_name='bipolar', overwrite=True, embeddings=True,
+                                embeddings_only=True, use_best_model=False,
+                                subsets=['full'], epochs=[None], split='random', cv=5,
+                                splits_basedir='',
+                                verbose=False)
+            count+=1
+            print("Number of models treated", count)
+        except:
+            print("Error in treating", model)
+            continue  
+
+    models = glob.glob('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation/*/')
+    count = 0
+    for model in models:
+        # read the config yaml file
+        try : 
+            config = yaml.safe_load(open(glob.glob(model + '*/.hydra/config.yaml')[0])) ## assuming there is only one model per folder
+            # get the dataset name
+            dataset = next(iter(config['dataset']))
+            # add the basename to the dataset name to get the hcp config
+            dataset = 'julien/bipolar/' + dataset
+            print(model, dataset)
+            embeddings_pipeline(model,
+                                dataset_localization="neurospin",
+                                datasets=[dataset],
+                                idx_region_evaluation = None,
+                                labels=['diagnosis'],
+                                classifier_name='logistic',
+                                short_name='bipolar', overwrite=True, embeddings=True,
+                                embeddings_only=True, use_best_model=False,
+                                subsets=['full'], epochs=[None], split='random', cv=5,
+                                splits_basedir='',
+                                verbose=False)
+            count+=1
+            print("Number of models treated", count)
+        except:
+            print("Error in treating", model)
+            continue 
+    """
+
+    # ======== schiz =========
+    
+    models = glob.glob('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation_latent_256/*/')
+    count = 0
+    for model in models:
+        # read the config yaml file
+        try : 
+            config = yaml.safe_load(open(glob.glob(model + '*/.hydra/config.yaml')[0])) ## assuming there is only one model per folder
+            # get the dataset name
+            dataset = next(iter(config['dataset']))
+            # add the basename to the dataset name to get the hcp config
+            dataset = 'julien/schiz/' + dataset
+            print(model, dataset)
+            embeddings_pipeline(model,
+                                dataset_localization="neurospin",
+                                datasets=[dataset],
+                                idx_region_evaluation = None,
+                                labels=['diagnosis'],
+                                classifier_name='logistic',
+                                short_name='schiz', overwrite=True, embeddings=True,
+                                embeddings_only=True, use_best_model=False,
+                                subsets=['full'], epochs=[None], split='random', cv=5,
+                                splits_basedir='',
+                                verbose=False)
+            count+=1
+            print("Number of models treated", count)
+        except:
+            print("Error in treating", model)
+            continue  
+
+    models = glob.glob('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation/*/')
+    count = 0
+    for model in models:
+        # read the config yaml file
+        try : 
+            config = yaml.safe_load(open(glob.glob(model + '*/.hydra/config.yaml')[0])) ## assuming there is only one model per folder
+            # get the dataset name
+            dataset = next(iter(config['dataset']))
+            # add the basename to the dataset name to get the hcp config
+            dataset = 'julien/schiz/' + dataset
+            print(model, dataset)
+            embeddings_pipeline(model,
+                                dataset_localization="neurospin",
+                                datasets=[dataset],
+                                idx_region_evaluation = None,
+                                labels=['diagnosis'],
+                                classifier_name='logistic',
+                                short_name='schiz', overwrite=True, embeddings=True,
+                                embeddings_only=True, use_best_model=False,
+                                subsets=['full'], epochs=[None], split='random', cv=5,
+                                splits_basedir='',
+                                verbose=False)
+            count+=1
+            print("Number of models treated", count)
+        except:
+            print("Error in treating", model)
+            continue   
+    
+    """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/10_cutin/FIP_right_UKB40/",
                         dataset_localization="neurospin",
                         datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
@@ -631,30 +1224,32 @@ if __name__ == "__main__":
                         splits_basedir='',
                         verbose=False)
     """
-
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations_with_trim/SC-sylv_left_UKB40",
-        dataset_localization="neurospin",
-        datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_isomap"],
-        idx_region_evaluation=None,
-        labels=[f'Isomap_central_left_dim{k}' for k in range(1,7)],
-        classifier_name='logistic',
-        short_name='hcp_isomap', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['full'], epochs=[None], split='custom', cv=5,
-        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/Isomap/splits/train_val_split_',
-        verbose=False)
-
     """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/9_trimextremities/SC-sylv_left_UKB40",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_architecture/nb_epochs/SC-sylv_left_UKB40",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_isomap"],
         idx_region_evaluation=None,
         labels=[f'Isomap_central_left_dim{k}' for k in range(1,7)],
         classifier_name='logistic',
-        short_name='hcp_isomap', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
-        subsets=['full'], epochs=[None], split='custom', cv=5,
+        short_name='hcp_isomap', overwrite=False, embeddings=True, embeddings_only=False, use_best_model=False,
+        subsets=['full'], epochs=range(0,90,10), split='custom', cv=5,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/Isomap/splits/train_val_split_',
         verbose=False)
+    """
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/SC-sylv_right_V1_dimensions",
+        dataset_localization="neurospin",
+        datasets=["julien/hcp/SC-sylv_right_handedness"],
+        idx_region_evaluation=None,
+        labels=['Handedness'],
+        classifier_name='logistic',
+        short_name='hcp', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
+        subsets=['train_val'], epochs=[None], split='random', cv=5,
+        splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/Isomap/splits/train_val_split_',
+        verbose=False)
+    """
     
+    """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/10_cutin/SC-sylv_left_UKB40",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/SC-sylv_left_isomap"],
@@ -703,13 +1298,13 @@ if __name__ == "__main__":
     
     ## SC-sylv_right UKB
     """
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/SC-sylv_right_V1",
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_architecture/latent_size/SC-sylv_right_UKB40",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/training/SC-sylv_right_40k"],
         idx_region_evaluation=None,
-        labels=['Sex'],
-        short_name='ukb40', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
-        subsets=['full'], epochs=[None], split='random', cv=3,
+        labels=['Sex'], classifier_name='logistic',
+        short_name='ukb40', overwrite=False, embeddings=True, embeddings_only=False, use_best_model=False,
+        subsets=['train_val'], epochs=[None], split='random', cv=5,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/train_val_split_',
         verbose=False)
     """
@@ -784,19 +1379,19 @@ if __name__ == "__main__":
                         verbose=False)
     """
 
-    # Isomap cingulate    
-    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_combinations/combinations_with_trim/LARGE_CINGULATE_right_UKB40",
+    # Isomap cingulate  
+    """
+    embeddings_pipeline("/neurospin/dico/jlaval/Output/ablation_2_models_full/cropresize/LARGE_CINGULATE_right_UKB40",
         dataset_localization="neurospin",
         datasets=["julien/MICCAI_2024/evaluation/LARGE_CINGULATE_right_isomap"],
         idx_region_evaluation=None,
         labels=[f'Isomap_cingulate_right_dim{k}' for k in range(1,7)],
         classifier_name='logistic',
-        short_name='hcp_isomap', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
+        short_name='hcp_isomap', overwrite=False, embeddings=True, embeddings_only=False, use_best_model=False,
         subsets=['full'], epochs=[None], split='custom', cv=5,
         splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/Isomap/splits/train_val_split_',
         verbose=False)
-    
-
+    """
     
 
     # embeddings_pipeline("/neurospin/dico/jchavas/Runs/70_self-supervised_two-regions/Output/ORBITAL_BT",

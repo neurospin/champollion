@@ -69,4 +69,9 @@ rsync -aP /neurospin/dico/data/deep_folding/current/datasets/UkBioBank40/crops/2
 
 /lustre/fsn1/projects/rech/tgu/ulq59dy/Runs/02_champollion_v1/Program/2023_jlaval_STSbabies/contrastive/configs/dataset/julien/UKB40/array_load
 
-rsync -aP /neurospin/dico/data/deep_folding/current/datasets/UkBioBank40/participants_tiv_volumes_normalized.csv ulq59dy@jean-zay.idris.fr:/lustre/fswork/projects/rech/tgu/umy22uu/Runs/75_V1/Input
+rsync -aP /neurospin/dico/data/deep_folding/current/datasets/UkBioBank40/participants_sex_age_thickness_volume.csv ulq59dy@jean-zay.idris.fr:/lustre/fswork/projects/rech/tgu/umy22uu/Runs/75_V1/Input/UkBioBank40
+
+rsync -aP /neurospin/dico/babdelghani/Runs/02_champollion_v1/Program/2023_jlaval_STSbabies/contrastive/contrastive_env ulq59dy@jean-zay.idris.fr:/lustre/fsn1/projects/rech/tgu/ulq59dy/Runs/02_champollion_v1/Program/babdelghani_branch
+
+
+rsync -aP ulq59dy@jean-zay.idris.fr:/lustre/fsn1/projects/rech/tgu/ulq59dy/Runs/02_champollion_v1/Output/thikness_volume/ /neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/thickness_volume/

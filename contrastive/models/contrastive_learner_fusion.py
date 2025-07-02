@@ -47,7 +47,7 @@ from sklearn.manifold import TSNE
 from collections import OrderedDict
 
 from sklearn.metrics import roc_auc_score, r2_score
-
+from contrastive.utils.kernel_plotting import wrap_loss_with_kernel_plotting
 from contrastive.augmentations import ToPointnetTensor
 from contrastive.backbones.densenet import DenseNet
 from contrastive.backbones.convnet import ConvNet
@@ -79,6 +79,8 @@ class ContrastiveLearnerFusion(pl.LightningModule):
 
     def __init__(self, config, sample_data, with_labels=False):
         super(ContrastiveLearnerFusion, self).__init__()
+        
+        
 
         if config.multiregion_single_encoder:
             n_datasets = 1
@@ -236,6 +238,26 @@ class ContrastiveLearnerFusion(pl.LightningModule):
 
         # Output of intermediate layer of ProjectionHead
         self.activation={}
+
+        self.loss_fn = GeneralizedSupervisedNTXenLoss(
+            kernel= 'rbf',
+            temperature = config.temperature,
+            sigma = config.sigma_labels,
+            return_logits = True,
+        )
+        
+        if self.config.with_kernel :
+            self.loss_fn = wrap_loss_with_kernel_plotting(
+                    self.loss_fn,
+                    base_dir = config.kernel_save_dir,
+                    dataset_name = config.data[0].dataset_name,
+                    label_file_name = config.label_file_name,
+                    interval=config.kernel_plot_interval,
+                    )
+            
+        
+            
+
 
     def forward(self, x, idx_region=None):
         # log.info(f"x shape: {x.shape}")
@@ -486,15 +508,18 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                          return_logits=True)
         return loss.forward(z_i, z_j)
     
-    def generalized_supervised_nt_xen_loss(self, z_i, z_j, labels):
-        """Loss function for supervised contrastive"""
-        loss_fn = GeneralizedSupervisedNTXenLoss(
-            kernel='rbf',
-            temperature=self.config.temperature,
-            sigma=self.config.sigma_labels,
-            return_logits=True)
+    # def generalized_supervised_nt_xen_loss(self, z_i, z_j, labels):
+    #     """Loss function for supervised contrastive"""
+    #     loss_fn = GeneralizedSupervisedNTXenLoss(
+    #         kernel='rbf',
+    #         temperature=self.config.temperature,
+    #         sigma=self.config.sigma_labels,
+    #         return_logits=True)
 
-        return loss_fn(z_i, z_j, labels)
+    #     return loss_fn(z_i, z_j, labels)
+    
+    def generalized_supervised_nt_xen_loss(self, z_i, z_j, labels, step=None):
+        return self.loss_fn(z_i, z_j, labels, step=step)
 
 
     def cross_entropy_loss_classification(self, output_i, output_j, labels):
@@ -551,8 +576,10 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             batch_loss, loss_invariance, loss_redundancy = self.barlow_twins_loss(z_i,z_j)
         elif self.config.contrastive_model=='VicReg':
             batch_loss = self.vic_reg_loss(z_i,z_j)
-        elif self.config.contrastive_model=='Yaware':
-            batch_loss,sim_zij, sim_zii,sim_zjj = self.generalized_supervised_nt_xen_loss(z_i,z_j, labels)
+        elif self.config.contrastive_model == 'Yaware':
+            batch_loss, sim_zij, sim_zii, sim_zjj = self.generalized_supervised_nt_xen_loss(z_i, z_j, labels, step=self.global_step)
+
+
         #TODO: add error if None of these names
         #encoder peut être du contrastive supervisé !! gérer ce cas là...
 
@@ -1176,8 +1203,10 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             batch_loss, loss_invariance, loss_redundancy = self.barlow_twins_loss(z_i,z_j)
         elif self.config.contrastive_model=='VicReg':
             batch_loss = self.vic_reg_loss(z_i,z_j)
-        elif self.config.contrastive_model=='Yaware':
-            batch_loss,sim_zij, sim_zii, sim_zjj = self.generalized_supervised_nt_xen_loss(z_i, z_j,labels)    
+        elif self.config.contrastive_model == 'Yaware':
+            batch_loss, sim_zij, sim_zii, sim_zjj = self.generalized_supervised_nt_xen_loss(z_i, z_j, labels, step=self.global_step)
+
+  
 
         #TODO: add error if None of these names
         

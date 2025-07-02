@@ -20,7 +20,7 @@ pickle_benchmark:
 train_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/Rskeleton_subject_train.csv
 val_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/Rskeleton_subject_val.csv
 test_csv_file: ${dataset_folder}/UkBioBank40/crops/2mm/LARGE_CINGULATE./mask/Rskeleton_subject_test.csv
-subject_labels_file: ${dataset_folder}/UkBioBank40/participants_sex_age_volumes_normalized.csv 
+subject_labels_file: ${dataset_folder}/UkBioBank40/participants_sex_age_volumes_normalized.csv
 subject_column_name: 'participant_id'
 # subject_column_name: 'Subject'
 cutout_mask_path:

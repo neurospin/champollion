@@ -43,7 +43,7 @@ defaults:
   #- dataset/local_julien/1-5mm/cingulate_UKB_right_1-5mm.yaml
   #- dataset/local_julien/old/STs_UkBioBank.yaml
   #- dataset/occipital_schiz_L_strat_bis_threshold1
-  # - dataset/julien/UKB40/array_load/FIP_right_UKB40
+  # - dataset/julien/UKB40/array_load/FCLp-subsc-FCLa-INSULA_left
   # - dataset_localization: neurospin
   - embeddings: embeddings
   - hydra: local

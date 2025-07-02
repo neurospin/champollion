@@ -62,12 +62,22 @@ def change_config_label(config, new_label):
         of a target yaml file."""
     
     # remove the keywords of the old label
-    if 'label_names' in config.keys():
-        current_label = config.label_names[0]
+    if 'label_file_name' in config.keys():
+        current_label = config.label_file_name
         with open(os.getcwd() + f'/configs/label/{current_label}.yaml', 'r') as file:
             old_label_yaml = yaml.load(file, yaml.FullLoader)
         for key in old_label_yaml:
             config.pop(key)
+
+    # label_file = os.path.join(os.getcwd(), f"configs/label/{config.label_key}.yaml")
+
+    # with open(label_file, 'r') as file:
+    #     label_config = yaml.load(file, Loader=yaml.FullLoader)
+
+    # # Inject keys into config
+    # for key, value in label_config.items():
+    #     config[key] = value
+
 
     # add the ones of the target label
     with open(os.getcwd() + f'/configs/label/{new_label}.yaml', 'r') as file:

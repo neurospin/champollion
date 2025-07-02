@@ -37,12 +37,19 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as func
 from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.utils.validation import check_array
+try:
+    from omegaconf import ListConfig
+except ImportError:
+    ListConfig = tuple
 from contrastive.utils import logs
 import os
 import matplotlib.pyplot as plt
 import seaborn as sns
+from omegaconf import ListConfig
+from contrastive.utils.logs import set_file_logger
+import logging
 
-log = logs.set_file_logger(__file__)
 
 
 def mean_off_diagonal(a):
@@ -233,37 +240,71 @@ class MSELoss_Regression(nn.Module):
 
 
 
-import os
-import torch
-import torch.nn as nn
-import torch.nn.functional as func
-import numpy as np
-from sklearn.metrics.pairwise import rbf_kernel
-# import matplotlib.pyplot as plt
-# import seaborn as sns
-
-
 class GeneralizedSupervisedNTXenLoss(nn.Module):
-    def __init__(self, kernel='rbf', temperature=0.1, return_logits=False, sigma=1.0):
+    def __init__(self, kernel='rbf', temperature=0.1, return_logits=False, sigma=None):
         super().__init__()
-        self.original_kernel = kernel  # keep for __str__
-        self.sigma = sigma
-        if kernel == 'rbf':
-            self.kernel = lambda y1, y2: rbf_kernel(y1, y2, gamma=1. / (2 * sigma ** 2))
-        else:
-            assert hasattr(kernel, '__call__'), 'kernel must be a callable'
-            self.kernel = kernel
-
+        self.original_kernel = kernel
         self.temperature = temperature
         self.return_logits = return_logits
         self.INF = 1e8
+        self.log = set_file_logger(__file__)
+        self.log.setLevel(logging.INFO)
+        self.log.propagate = True
 
-        # self.kernel_save_dir = "/neurospin/dico/babdelghani/Runs/02_champollion_v1/Program/2023_jlaval_STSbabies/contrastive/kernel_heatmap"
-        # os.makedirs(self.kernel_save_dir, exist_ok=True)
+        # Convert ListConfig to list for compatibility
+        if isinstance(sigma, ListConfig):
+            sigma = list(sigma)
+
+        self.sigma = sigma
+
+        if kernel == 'rbf':
+            self.kernel = self._safe_rbf_kernel
+        else:
+            assert hasattr(kernel, '__call__'), 'kernel must be callable'
+            self.kernel = kernel
+
+    def _safe_rbf_kernel(self, y1, y2):
+        """
+        Compatible with scalar or vector sigma.
+        All inputs/outputs are NumPy arrays.
+        """
+        y1 = np.asarray(y1)
+        y2 = np.asarray(y2)
+
+        # Estimate sigma if not provided
+        if self.sigma is None:
+            self.sigma = self._estimate_sigma(y1)
+            self.log.info(f"[Sigma Estimation] Estimated sigma: {self.sigma}")
+            
+
+        if isinstance(self.sigma, (float, int)):
+            gamma = 1. / (2 * float(self.sigma) ** 2)
+            return rbf_kernel(y1, y2, gamma=gamma)
+
+        elif isinstance(self.sigma, (list, tuple, np.ndarray)):
+            sigma_vec = np.asarray(self.sigma)
+            assert sigma_vec.ndim == 1 and sigma_vec.shape[0] == y1.shape[1], \
+                f"Sigma vector length {len(sigma_vec)} must match label dim {y1.shape[1]}"
+            diff = y1[:, None, :] - y2[None, :, :]  # (N1, N2, D)
+            gamma_vec = 1. / (2 * sigma_vec ** 2)
+            dists = np.sum(diff ** 2 * gamma_vec, axis=2)  # (N1, N2)
+            return np.exp(-dists)
+
+        else:
+            raise ValueError(f"Unsupported sigma type: {type(self.sigma)}")
+
+    def _estimate_sigma(self, X):
+        """ Estimate per-dimension sigma using Scott's rule and print it """
+        X = check_array(X)
+        n, d = X.shape
+        factor = n ** (-1. / (d + 4))
+        variances = np.var(X, axis=0, ddof=1)
+        sigma = np.sqrt(variances) * factor
+        return sigma
 
     def forward(self, z_i, z_j, labels, return_kernel=False, step=None, writer=None):
         N = len(z_i)
-        assert N == len(labels), "Unexpected labels length: %i" % len(labels)
+        assert N == len(labels), f"Unexpected labels length: {len(labels)}"
         z_i = func.normalize(z_i, p=2, dim=-1)
         z_j = func.normalize(z_j, p=2, dim=-1)
 
@@ -274,11 +315,16 @@ class GeneralizedSupervisedNTXenLoss(nn.Module):
         sim_zii = sim_zii - self.INF * torch.eye(N, device=z_i.device)
         sim_zjj = sim_zjj - self.INF * torch.eye(N, device=z_i.device)
 
-        all_labels = labels.view(N, -1).repeat(2, 1).detach().cpu().numpy()
-        weights = self.kernel(all_labels, all_labels)
-        weights = weights * (1 - np.eye(2 * N))
-        weights /= weights.sum(axis=1, keepdims=True)
+        all_labels_np = labels.view(N, -1).repeat(2, 1).detach().cpu().numpy()
+        weights = self.kernel(all_labels_np, all_labels_np)  
 
+        if isinstance(weights, torch.Tensor):
+            weights = weights.detach().cpu().numpy()
+
+        weights = weights * (1 - np.eye(2 * N))
+        weights = weights / (weights.sum(axis=1, keepdims=True) + 1e-8)
+        weights = torch.from_numpy(weights).float().to(z_i.device)
+        
         # === Optional: save kernel heatmap every N steps
         # if step is not None and step % 500 == 0:
         #     plt.figure(figsize=(6, 5))
@@ -295,7 +341,7 @@ class GeneralizedSupervisedNTXenLoss(nn.Module):
         ], dim=0)
 
         log_sim_Z = func.log_softmax(sim_Z, dim=1)
-        loss = -1. / N * (torch.from_numpy(weights).to(z_i.device) * log_sim_Z).sum()
+        loss = -1. / N * (weights * log_sim_Z).sum()
 
         if self.return_logits:
             return loss, sim_zij, sim_zii, sim_zjj
@@ -306,162 +352,22 @@ class GeneralizedSupervisedNTXenLoss(nn.Module):
         return f"{type(self).__name__}(temp={self.temperature}, kernel={self.original_kernel}, sigma={self.sigma})"
 
 
-class CrossEntropyLoss(nn.Module):
-    """
-    Normalized Temperature Cross-Entropy Loss for Constrastive Learning
-    Refer for instance to:
-    Ting Chen, Simon Kornblith, Mohammad Norouzi, Geoffrey Hinton
-    A Simple Framework for Contrastive Learning of Visual Representations,
-    arXiv 2020
-    """
-
-    def __init__(self, weights=[1, 2], reduction='sum', device=None):
-        super().__init__()
-        self.class_weights = torch.FloatTensor(weights).to(device)
-        self.reduction = reduction
-        self.loss = nn.CrossEntropyLoss(weight=self.class_weights,
-                                        reduction=self.reduction)
-
-    def forward(self, sample, output_i, output_j):
-        sample = (sample >= 1).long()
-        output_i = output_i.float()
-        output_j = output_j.float()
-
-        loss_i = self.loss(output_i,
-                           sample[:, 0, :, :, :])
-        loss_j = self.loss(output_j,
-                           sample[:, 0, :, :, :])
-
-        return (loss_i + loss_j)
-
-    def __str__(self):
-        return "{}(temp={})".format(type(self).__name__, self.temperature)
 
 
-class NTXenLoss_NearestNeighbours(nn.Module):
-    """
-    Normalized Nearest Neighbour Temperature Cross-Entropy Loss
-    for Constrastive Learning
-    Refer for instance to:
-    Dwibedi et al, 2021
-    With a little help from my friends nearest-neighbours
-    """
+# Optional utility kernel if needed
+def rbf_kernel(Y1, Y2, gamma=1.0):
+    if isinstance(Y1, np.ndarray):
+        Y1 = torch.from_numpy(Y1)
+    if isinstance(Y2, np.ndarray):
+        Y2 = torch.from_numpy(Y2)
 
-    def __init__(self, temperature=0.1, return_logits=False):
-        super().__init__()
-        self.temperature = temperature
-        self.INF = 1e8
-        self.return_logits = return_logits
+    Y1 = Y1.to(dtype=torch.float32)
+    Y2 = Y2.to(dtype=torch.float32)
+    
+    diff = Y1.unsqueeze(1) - Y2.unsqueeze(0)
+    dist_sq = torch.sum(diff ** 2, dim=-1)
+    return torch.exp(-gamma * dist_sq)
 
-    def forward(self, z_i, z_j):
-        N = len(z_i)
-        diag_inf = self.INF * torch.eye(N, device=z_i.device)
-
-        #####################################################
-        # Computes the classical terms for NTXenLoss
-        #####################################################
-
-        z_i = func.normalize(z_i, p=2, dim=-1)  # dim [N, D]
-        z_j = func.normalize(z_j, p=2, dim=-1)  # dim [N, D]
-
-        # dim [N, N] => Upper triangle contains incorrect pairs
-        sim_zii = (z_i @ z_i.T) / self.temperature
-
-        # dim [N, N] => Upper triangle contains incorrect pairs
-        sim_zjj = (z_j @ z_j.T) / self.temperature
-
-        # dim [N, N] => the diag contains the correct pairs (i,j)
-        # (x transforms via T_i and T_j)
-        sim_zij = (z_i @ z_j.T) / self.temperature
-        sim_zji = sim_zij.T
-
-        log.info("histogram of zij:")
-        log.info(
-            np.histogram(
-                sim_zij.detach().cpu().numpy() *
-                self.temperature,
-                bins='auto'))
-
-        #####################################################
-        # Computes the terms for NearestNeighbour NTXenLoss
-        # loss_i
-        #####################################################
-
-        max_ii = torch.max(sim_zii - diag_inf, dim=1)
-        max_ij = torch.max(sim_zij - diag_inf, dim=1)
-
-        # Computes nearest-neighbour of z_i
-        z_nn_i = torch.zeros(z_i.shape, device=z_i.device)
-        for i in range(N):
-            if max_ii.values[i] > max_ij.values[i]:
-                z_nn_i[i] = z_i[max_ii.indices[i]]
-            else:
-                z_nn_i[i] = z_j[max_ij.indices[i]]
-
-        # dim [N, N] => Upper triangle contains incorrect pairs (nn(i),i+)
-        sim_nn_zii = (z_nn_i @ z_i.T) / self.temperature
-
-        # dim [N, N] => the diag contains the correct pairs (nn(i),j)
-        sim_nn_zij = (z_nn_i @ z_j.T) / self.temperature
-
-        # 'Remove' the covariant vectors by penalizing it (exp(-inf) = 0)
-        for i in range(N):
-            if max_ii.values[i] > max_ij.values[i]:
-                sim_nn_zii[i, max_ii.indices[i]] = -self.INF
-            else:
-                sim_nn_zij[i, max_ij.indices[i]] = -self.INF
-
-        # 'Remove' the diag terms by penalizing it (exp(-inf) = 0)
-        sim_nn_zii = sim_nn_zii - diag_inf
-
-        # Computes nearest neighbour contrastive loss for first view i
-        correct_pairs = torch.arange(N, device=z_i.device).long()
-        loss_i = func.cross_entropy(torch.cat([sim_nn_zij, sim_nn_zii], dim=1),
-                                    correct_pairs)
-
-        #####################################################
-        # Computes the terms for NearestNeighbour NTXenLoss
-        # loss_j
-        #####################################################
-
-        max_jj = torch.max(sim_zjj - diag_inf, dim=1)
-        max_ji = torch.max(sim_zji - diag_inf, dim=1)
-
-        # Computes nearest-neighbour of z_j
-        z_nn_j = torch.zeros(z_j.shape, device=z_j.device)
-        for i in range(N):
-            if max_jj.values[i] > max_ji.values[i]:
-                z_nn_j[i] = z_j[max_jj.indices[i]]
-            else:
-                z_nn_j[i] = z_i[max_ji.indices[i]]
-
-        # dim [N, N] => Upper triangle contains incorrect pairs (nn(i),i+)
-        sim_nn_zjj = (z_nn_j @ z_j.T) / self.temperature
-
-        # dim [N, N] => the diag contains the correct pairs (nn(i),j)
-        sim_nn_zji = (z_nn_j @ z_i.T) / self.temperature
-
-        # 'Remove' the covariant vectors by penalizing it (exp(-inf) = 0)
-        for i in range(N):
-            if max_jj.values[i] > max_ji.values[i]:
-                sim_nn_zjj[i, max_jj.indices[i]] = -self.INF
-            else:
-                sim_nn_zji[i, max_ji.indices[i]] = -self.INF
-
-        # 'Remove' the diag terms by penalizing it (exp(-inf) = 0)
-        sim_nn_zjj = sim_nn_zjj - diag_inf
-
-        # Computes nearest neighbour contrastive loss for first view i
-        loss_j = func.cross_entropy(torch.cat([sim_nn_zji, sim_nn_zjj], dim=1),
-                                    correct_pairs)
-
-        if self.return_logits:
-            return (loss_i + loss_j), sim_zij, correct_pairs
-
-        return (loss_i + loss_j)
-
-    def __str__(self):
-        return "{}(temp={})".format(type(self).__name__, self.temperature)
 
 
 class NTXenLoss_WithoutHardNegative(nn.Module):

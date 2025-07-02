@@ -285,6 +285,10 @@ def extract_train_and_val_subjects(train_val_subjects, partition, seed):
 
 def split_data(normal_data, normal_subjects, sample_dir, config, reg):
 
+    random_state = (None if 'random_state' not in config.keys()
+                    else config.random_state)
+    is_random = None if 'random' not in config.keys() else config.random
+
     if config.environment == "brainvisa" and config.checking:
         compare_array_aims_files(normal_subjects, normal_data, sample_dir)
 
@@ -302,6 +306,8 @@ def split_data(normal_data, normal_subjects, sample_dir, config, reg):
     if 'train_csv_file' in config.data[reg].keys():
         train_subjects = read_subset_csv(config.data[reg].train_csv_file, name='train')
         val_subjects = read_subset_csv(config.data[reg].val_csv_file, name='val')
+        train_subjects = restrict_length(train_subjects, config.nb_subjects, is_random, random_state)
+        val_subjects = restrict_length(val_subjects, config.nb_subjects, is_random, random_state)
         if 'train_val_csv_file' not in config.data[reg].keys():
             # reconstruct train_val from train + val if not already done
             train_val_subjects = pd.concat([train_subjects, val_subjects])
@@ -313,9 +319,11 @@ def split_data(normal_data, normal_subjects, sample_dir, config, reg):
         test_intra_subjects, test_intra_data = \
             extract_partial_numpy(normal_subjects, test_intra_subjects,
                                   normal_data, name='test_intra')
+        test_intra_subjects = restrict_length(test_intra_subjects, config.nb_subjects, is_random, random_state)
     else:
         test_intra_subjects = pd.DataFrame([], columns=['Subject'])
         test_intra_data = np.array([])
+        test_intra_subjects = restrict_length(test_intra_subjects, config.nb_subjects, is_random, random_state)
 
     # Extracts test subject names and corresponding data
     if 'test_csv_file' in config.data[reg].keys():  # if specified in config
@@ -323,14 +331,13 @@ def split_data(normal_data, normal_subjects, sample_dir, config, reg):
         test_subjects, test_data = \
             extract_partial_numpy(normal_subjects, test_subjects,
                                   normal_data, name='test')
+        test_subjects = restrict_length(test_subjects, config.nb_subjects, is_random, random_state)
     else:  # define it as complementary to train_val
         test_subjects, test_data = \
             extract_test(normal_subjects, train_val_subjects, normal_data)
+        test_subjects = restrict_length(test_subjects, config.nb_subjects, is_random, random_state)
 
     # Restricts train_val length
-    random_state = (None if 'random_state' not in config.keys()
-                    else config.random_state)
-    is_random = None if 'random' not in config.keys() else config.random
     if 'train_csv_file' in config.keys():
         train_subjects = restrict_length(train_subjects,
                                          config.nb_subjects,

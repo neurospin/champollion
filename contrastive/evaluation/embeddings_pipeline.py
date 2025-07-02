@@ -35,7 +35,10 @@ def preprocess_config(sub_dir, dataset_localization, datasets, idx_region_evalua
 
     if verbose:
         print(os.getcwd())
-    cfg = omegaconf.OmegaConf.load(sub_dir+'/.hydra/config.yaml')
+    config_path = os.path.join(sub_dir, '.hydra/config.yaml')
+    cfg = omegaconf.OmegaConf.load(config_path)
+
+    
 
     # replace the datasets
     change_config_datasets(cfg, datasets)
@@ -435,7 +438,7 @@ if __name__ == "__main__":
 #Classification=================================================================================================================
     # embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/yaware_volume/Large_cingulate_right",
     #     dataset_localization="neurospin",
-    #     datasets=["julien/MICCAI_2024/evaluation/LARGE_CINGULATE_right_ACCpatterns_custom"],
+    #     datasets=["julien/MICCAI_2024/evaluation/FCLp-subsc-FCLa-INSULA_left"],
     #     idx_region_evaluation = None,
     #     labels=['Right_PCS'],
     #     classifier_name='logistic',
@@ -516,7 +519,7 @@ if __name__ == "__main__":
 
     # custom cv (80%)
     #FIP_right================================================================================================================
-    # embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/yaware_volume/80_epoch_FIP_right",
+    # embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/2025-06-24/12-05-36_247",
     #                     dataset_localization="neurospin",
     #                     datasets=["julien/MICCAI_2024/evaluation/FIP_right_hcp_custom"],
     #                     idx_region_evaluation = None,
@@ -760,13 +763,13 @@ if __name__ == "__main__":
     
     ## SC-sylv_right UKB
     
-    # embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/yaware_volume/SC_right",
+    # embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/yaware_volume/FIP_right",
     #     dataset_localization="neurospin",
-    #     datasets=["julien/MICCAI_2024/evaluation/SC-sylv_right_isomap"],
+    #     datasets=["julien/hcp/FIP_right_hcp"],
     #     idx_region_evaluation=None,
     #     labels=[f'Isomap_central_right_dim{k}' for k in range(1,7)],
     #     classifier_name='logistic',
-    #     short_name='ukb40', overwrite=True, embeddings=True, embeddings_only=False, use_best_model=False,
+    #     short_name='ukb40_hcp', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
     #     subsets=['full'], epochs=[None], split='random', cv=5,
     #     splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/hcp/Isomap/splits_right/train_val_split_',
     #     verbose=False)
@@ -783,16 +786,16 @@ if __name__ == "__main__":
     #     verbose=False)
     
     #embeddings only SC_right
-    embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/yaware_volume/STi-STs-STpol_left",
-        dataset_localization="neurospin",
-        datasets=["julien/UKB40/array_load/STi-STs-STpol_left"],
-        idx_region_evaluation=None,
-        labels=['volume'],
-        classifier_name='logistic',
-        short_name='full_ukb_all_sub', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
-        subsets=['full'], epochs=[None], split='random', cv=5,
-        splits_basedir='',
-        verbose=False)
+    # embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/yaware_volume/STi-STs-STpol_left",
+    #     dataset_localization="neurospin",
+    #     datasets=["julien/UKB40/array_load/STi-STs-STpol_left"],
+    #     idx_region_evaluation=None,
+    #     labels=['volume'],
+    #     classifier_name='logistic',
+    #     short_name='full_ukb_all_sub', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
+    #     subsets=['full'], epochs=[None], split='random', cv=5,
+    #     splits_basedir='',
+    #     verbose=False)
     
     # embeddings_pipeline("/neurospin/dico/jlaval/Output/2025-03-07",
     #     dataset_localization="neurospin",
@@ -816,6 +819,31 @@ if __name__ == "__main__":
     #         splits_basedir='',
     #         verbose=False)
             
+    # #schz
+    embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/thickness_volume/STi-STs-STpol_left",
+                                dataset_localization="neurospin",
+                                datasets=["julien/schiz/STi-STs-STpol_left"],
+                                idx_region_evaluation = None,
+                                labels=['diagnosis'],
+                                classifier_name='logistic',
+                                short_name='schiz', overwrite=True, embeddings=True,
+                                embeddings_only=True, use_best_model=False,
+                                subsets=['full'], epochs=[None], split='random', cv=5,
+                                splits_basedir='',
+                                verbose=False) 
+
+    # regression on PGS=====================================================================
+    # embeddings_pipeline('/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/PGS/FCLp-subsc-FCLa-INSULA_left',
+    #                 dataset_localization="neurospin",
+    #                 datasets=['julien/UKB40/array_load/FCLp-subsc-FCLa-INSULA_left'],
+    #                 idx_region_evaluation = None,
+    #                 labels=['PGS'],
+    #                 classifier_name='logistic',
+    #                 short_name='ukb40_PGS_cv', overwrite=True, embeddings=True,
+    #                 embeddings_only=True, use_best_model=False,
+    #                 subsets=['train_val'], epochs=[None], split='random', cv=5,
+    #                 splits_basedir='/neurospin/dico/data/deep_folding/current/datasets/orbital_patterns/Troiani/PGS/PGS_subjects_val_fold_',
+    #                 verbose=False)
     """
     embeddings_pipeline("/neurospin/dico/jlaval/Output/5_trimextremities_SC_right/1_all_augmentations/2025-02-26",
         dataset_localization="neurospin",

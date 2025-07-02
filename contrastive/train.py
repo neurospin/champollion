@@ -61,7 +61,9 @@ from contrastive.utils.logs import set_root_logger_level, \
 
 tb_logger = pl_loggers.TensorBoardLogger('logs')
 writer = SummaryWriter()
-log = set_file_logger(__file__)
+# log = set_file_logger(__file__)
+import logging
+log = logging.getLogger(__name__)
 
 """
 We use the following definitions:
@@ -93,6 +95,7 @@ def train(config):
     # Sets handler for logger
     set_file_log_handler(file_dir=os.getcwd(),
                          suffix='output')
+    log.info("Logger correctly initialized in train()")
     log.debug(f"current directory = {os.getcwd()}")
 
     # copies some of the config parameters in a yaml file easily accessible
@@ -107,8 +110,8 @@ def train(config):
                     'environment', 'batch_size', 'pin_mem', 'partition',
                     'lr', 'gamma', 'weight_decay', 'max_epochs',
                     'early_stopping_patience', 'random_state', 'seed',
-                    'backbone_name', 'sigma_labels', 'label_names',
-                    'proportion_pure_contrastive', 'percentage', 
+                    'backbone_name', 'sigma_labels', 'label_names','label_file_name',
+                    'proportion_pure_contrastive', 'percentage','label_type',
                     'projection_head_name', 'sigma_noise', 'pretrained_model_path',
                     'freeze_encoders', 'converter_activation']
 

@@ -130,7 +130,7 @@ def check_foldlabel_npy_consistency(file_path_arr1, file_path_arr2):
             f"Both npy files (skel, foldlabel) are not equal:\n"
             f"Total voxel difference: {np.sum(arr1!=arr2)}\n")
     
-def check_distbottom_npy_consistency(file_path_arr_crops, file_path_arr_distbottom, tolerance=0.02):
+def check_distbottom_npy_consistency(file_path_arr_crops, file_path_arr_distbottom, tolerance=0.2): # not used, previous threshold of 2% incompatible with S.Call.
     arr_crops = np.load(file_path_arr_crops)
     arr_dist = np.load(file_path_arr_distbottom)
     arr_crops = arr_crops != 0

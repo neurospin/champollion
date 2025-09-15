@@ -8,6 +8,7 @@ channels: [32,64,128,256]
 zero_init_residual: True
 initial_kernel_size: 7
 initial_stride: 1
+maxpool_layer: False
 #adaptive_pooling: ['average', [3,3,3]]
 #adaptive_pooling: ['average', 1]
 adaptive_pooling: !!null

@@ -142,9 +142,9 @@ def train(config):
     if config.backbone_name != 'pointnet':
         if (len(config.dataset.keys()) == 1): # if one region
             print(config.data[0].input_size)
-            summary(model, input_data=input_size, batch_dim=0, device=config.device, depth=6)
+            summary(model, input_data=input_size, batch_dim=0, device=config.device)
         else:
-            summary(model, device=config.device, depth=6) # TODO : why 16 ?
+            summary(model, device=config.device) # TODO : why 16 ?
     else:
         summary(model, device='cpu')
 

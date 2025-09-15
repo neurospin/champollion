@@ -127,8 +127,10 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     prediction_bias=False,
                     initial_kernel_size=config.initial_kernel_size,
                     initial_stride=config.initial_stride,
+                    maxpool_layer=config.maxpool_layer,
                     adaptive_pooling=config.adaptive_pooling,
-                    linear_in_backbone=config.linear_in_backbone))
+                    linear_in_backbone=config.linear_in_backbone,
+                    in_shape=config.data[i].input_size))
         elif config.backbone_name == 'convnext':
             for i in range(n_datasets):
                 self.backbones.append(ConvNeXt(

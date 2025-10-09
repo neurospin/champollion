@@ -820,18 +820,41 @@ if __name__ == "__main__":
     #         verbose=False)
             
     # #schz
-    embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/thickness_volume/STi-STs-STpol_left",
+    # embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/thickness_freesurfer_test/FCLp-subsc-FCLa-INSULA_left_16_16",
+    #                             dataset_localization="neurospin",
+    #                             datasets=["julien/schiz/FCLp-subsc-FCLa-INSULA_left"],
+    #                             idx_region_evaluation = None,
+    #                             labels=['diagnosis'],
+    #                             classifier_name='logistic',
+    #                             short_name='schiz', overwrite=True, embeddings=True,
+    #                             embeddings_only=True, use_best_model=False,
+    #                             subsets=['full'], epochs=[None], split='random', cv=5,
+    #                             splits_basedir='',
+    #                             verbose=False) 
+    # embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/thickness_freesurfer_test/INSULA_left_16_16",
+    #                             dataset_localization="neurospin",
+    #                             datasets=["julien/schiz/INSULA_left"],
+    #                             idx_region_evaluation = None,
+    #                             labels=['diagnosis'],
+    #                             classifier_name='logistic',
+    #                             short_name='schiz', overwrite=True, embeddings=True,
+    #                             embeddings_only=True, use_best_model=False,
+    #                             subsets=['full'], epochs=[None], split='random', cv=5,
+    #                             splits_basedir='',
+    #                             verbose=False)
+
+    #OCCIPITAL==============================================================
+    embeddings_pipeline("/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/thickness_freesurfer_test/OCCIPITAL_left_16_16",
                                 dataset_localization="neurospin",
-                                datasets=["julien/schiz/STi-STs-STpol_left"],
+                                datasets=["julien/UKB40/array_load/OCCIPITAL_left"],
                                 idx_region_evaluation = None,
-                                labels=['diagnosis'],
-                                classifier_name='logistic',
-                                short_name='schiz', overwrite=True, embeddings=True,
+                                labels=['thickness_freesurfer'],
+                                # classifier_name='logistic',
+                                short_name='ukb40_FCLp_no_classiffier', overwrite=True, embeddings=True,
                                 embeddings_only=True, use_best_model=False,
                                 subsets=['full'], epochs=[None], split='random', cv=5,
                                 splits_basedir='',
-                                verbose=False) 
-
+                                verbose=False)
     # regression on PGS=====================================================================
     # embeddings_pipeline('/neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/PGS/FCLp-subsc-FCLa-INSULA_left',
     #                 dataset_localization="neurospin",

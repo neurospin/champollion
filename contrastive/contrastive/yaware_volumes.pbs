@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#PBS -q gpu_prio
+#PBS -l walltime=80:00:00
+#PBS -N yaware_volume_diffrent_sigma_diffrent_batch
+#PBS -l ncpus=10
+#PBS -l ngpus=1
+#PBS -l mem=80g
+
+cd /neurospin/dico/babdelghani/Runs/02_champollion_v1/Program/
+source venv_kraken/bin/activate
+cd 2023_jlaval_STSbabies/contrastive
+python3 train.py +dataset=/julien/UKB40/array_load/CINGULATE_right +dataset_localization=neurospin +sigma_labels=0.5,1,2 batch_size=16,32,64,128 -m

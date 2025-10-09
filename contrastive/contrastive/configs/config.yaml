@@ -1,0 +1,60 @@
+defaults:
+  - _self_
+  - augmentations: mixed
+  - backbone: ConvNet
+  - classifier: svm
+  #- dataset/julien/UKB40/array_load/SOr_left_UKB40
+  #- dataset/julien/UKB40/sparse_load/SC-sylv_left_UKB40_sparse_load
+  #- dataset/julien/UKB40/sparse_load/CINGULATE_right_UKB40_sparse_load
+  #- dataset/julien/UKB40/sparse_load/FIP_right_UKB40_sparse_load
+  #- dataset/julien/UKB40/sparse_load/SOr_left_UKB40_sparse_load
+  #- dataset/julien/MICCAI_2024/training/FIP_right.yaml
+  #- dataset/julien/multiple_regions/training/5000cingulate_5000orbital_UKB.yaml
+  #- dataset/julien/multiple_regions/training/multiple_regions_UKB.yaml
+  #- dataset/julien/MICCAI_2024/training/cingulate_right_UKB.yaml
+  #- dataset/julien/MICCAI_2024/training/orbital_left_UKB.yaml
+  #- dataset/julien/sparse_load/_rotated/SOr_left_UKB_rotated_sparse_load.yaml
+  #- dataset/julien/MICCAI_2024/training/orbital_right_UKB.yaml
+  #- dataset/julien/hcp/FIP_right.yaml
+  #- dataset/julien/hcp/SC-sylv_right.yaml
+  #- dataset/julien/sparse_load/SOr_left_UKB_sparse_load.yaml
+  #- dataset/julien/sparse_load/FIP_right_UKB_sparse_load.yaml
+  #- dataset/julien/sparse_load/SC-sylv_left_UKB_sparse_load.yaml
+  #- dataset/julien/sparse_load/CINGULATE_right_UKB_sparse_load.yaml
+  #- dataset/julien/sparse_load/STs_right_UKB_sparse_load.yaml
+  #- dataset/julien/sparse_load/SFmedian-SFpoltr-SFsup_right_UKB_sparse_load.yaml
+  #- dataset/julien/sparse_load/5000_subjects/CINGULATE_right_UKB_sparse_load_5000.yaml
+  #- dataset/julien/sparse_load/5000_subjects/SOr_left_UKB_sparse_load_5000.yaml
+  #- dataset/julien/sparse_load/5000_subjects/FIP_right_UKB_sparse_load_5000.yaml
+  #- dataset/julien/sparse_load/5000_subjects/SC-sylv_right_UKB_sparse_load_5000.yaml
+  #- dataset/julien/sparse_load/5000_subjects/SFmedian-SFpoltr-SFsup_right_UKB_sparse_load_5000.yaml
+  #- dataset/julien/MICCAI_2024/training/cingulate_right_UKB_1-5mm.yaml
+  #- dataset/julien/cingulate_left_UKB_old.yaml
+  #- dataset/local_julien/1-5mm/STs_babies_UKB_right_1-5mm
+  #- dataset/local_julien/1-5mm/orbital_UKB_left_1-5mm
+  #- dataset/julien/MICCAI_2024/training/orbital_left_UKB_5000.yaml
+  #- dataset/julien/MICCAI_2024/training/orbital_left_UKB_1-5mm.yaml
+  #- dataset/julien/merged_ukb/cingulate_all_UKB.yaml
+  #- dataset/julien/merged_ukb/orbital_all_UKB.yaml
+  #- dataset/julien/MICCAI_2024/training/SC-sylv_left_UKB_rot
+  #- dataset/julien/MICCAI_2024/training/cingulate_left_UKB
+  #- dataset/julien/MICCAI_2024/supervised/orbital_left_hcp_supervised
+  #- dataset/julien/MICCAI_2024/supervised/cingulate_right_ACCpatterns_supervised
+  #- dataset/local_julien/1-5mm/cingulate_UKB_right_1-5mm.yaml
+  #- dataset/local_julien/old/STs_UkBioBank.yaml
+  #- dataset/occipital_schiz_L_strat_bis_threshold1
+  # - dataset/julien/UKB40/array_load/FCLp-subsc-FCLa-INSULA_left
+  # - dataset_localization: neurospin
+  - embeddings: embeddings
+  - hydra: local
+  - label: surface
+  - mode: encoder
+  - model: SimCLR_fusion
+  - platform: cuda_not_brainvisa
+  - projection_head: relu
+  - trainer: default
+  - wandb: identity
+  - override hydra/job_logging: custom
+
+data: ${oc.dict.values:dataset}
+datakey: ${oc.dict.keys:dataset}

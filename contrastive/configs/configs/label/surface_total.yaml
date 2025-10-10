@@ -1,4 +1,0 @@
-# @package _global_
-label_names: ['log_surface_total']
-label_type: continuous
-label_file_name: surface_total

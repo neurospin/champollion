@@ -1,3 +1,0 @@
-# @package _global_
-label_names: ["Flanker_AgeAdj"]
-label_scaling: 'MinMax'

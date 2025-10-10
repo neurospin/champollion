@@ -68,12 +68,15 @@ python3 train.py +dataset=julien/UKB40/array_load/FCLp-subsc-FCLa-INSULA_left +d
 
 bv python3 Anatomist_direction_visu.py OCCIPITAL L /neurospin/dico/data/deep_folding/current/datasets/UkBioBank40/Confidence.csv 6
 
-rsync -aP ulq59dy@jean-zay.idris.fr:/lustre/fsn1/projects/rech/tgu/ulq59dy/Runs/02_champollion_v1/Output/volume_seed/OCCIPITAL_left_32_16 /neurospin/dico/babdelghani/Runs/02_champollion_v1/Output/volume_seed
-rsync -aP ulq59dy@jean-zay.idris.fr:/lustre/fsn1/projects/rech/tgu/ulq59dy/Runs/02_champollion_v1/Program/abdelghani_branch/contrastive/diff_seed_train.py /neurospin/dico/babdelghani/Runs/02_champollion_v1/Program/2023_jlaval_STSbabies/contrastive/
-
+rsync -aP ulq59dy@jean-zay.idris.fr:/lustre/fsn1/projects/rech/tgu/ulq59dy/Runs/02_champollion_v1/Output/thickness_freesurfer_test /neurospin/dico/babdelghani/Runs/02_champollion_v1/Output
+rsync -aP ulq59dy@jean-zay.idris.fr:/lustre/fsn1/projects/rech/tgu/ulq59dy/Runs/02_champollion_v1/Program/abdelghani_branch2/contrastive/configs/label /neurospin/dico/babdelghani/Runs/02_champollion_v1/Program/2023_jlaval_STSbabies/contrastive/configs/label
+rsync -aP ulq59dy@jean-zay.idris.fr:/lustre/fsn1/projects/rech/tgu/ulq59dy/Runs/02_champollion_v1/Program/abdelghani_branch2/contrastive/configs/dataset/julien/UKB40/array_load /neurospin/dico/babdelghani/Runs/02_champollion_v1/Program/2023_jlaval_STSbabies/contrastive/configs/dataset/julien/UKB40
 rsync -aP ulq59dy@jean-zay.idris.fr:/lustre/fsn1/projects/rech/tgu/ulq59dy/Runs/02_champollion_v1/Output/volume_seed/FCLp-subsc-FCLa-INSULA_left_32_16/ /lustre/fsn1/projects/rech/tgu/ulq59dy/Runs/02_champollion_v1/Output/SIMCLR/FCLp-subsc-FCLa-INSULA_left_32_16/
 
-rsync -aP ulq59dy@jean-zay.idris.fr:/lustre/fsn1/projects/rech/tgu/ulq59dy/Runs/02_champollion_v1/Output/SIMCLR /neurospin/dico/babdelghani/Runs/02_champollion_v1/Output
+rsync -aP ulq59dy@jean-zay.idris.fr:/lustre/fsn1/projects/rech/tgu/ulq59dy/Runs/02_champollion_v1/Output/surface_seed_diagonal /neurospin/dico/babdelghani/Runs/02_champollion_v1/Output
 
 
 bv opengl=nv vglrun anatomist
+
+/neurospin/dico/data/human/aggregate_schizophrenia/derivatives/morphologist-2021/subjects2/sub-INVMG3JEL9H/
+/neurospin/dico/data/human/aggregate_schizophrenia/derivatives/morphologist-2021/subjects2/sub-INVMGJ3EL9H/

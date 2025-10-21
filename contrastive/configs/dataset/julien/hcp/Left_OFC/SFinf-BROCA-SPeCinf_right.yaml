@@ -1,0 +1,28 @@
+# @package dataset.SFinf-BROCA-SPeCinf_right
+dataset_name: SFinf-BROCA-SPeCinf_right
+pickle_normal: ${dataset_folder}/hcp/crops/2mm/S.F.inf.-BROCA-S.Pe.C.inf./mask/Rskeleton.pkl
+numpy_all: ${dataset_folder}/hcp/crops/2mm/S.F.inf.-BROCA-S.Pe.C.inf./mask/Rskeleton.npy
+subjects_all: ${dataset_folder}/hcp/crops/2mm/S.F.inf.-BROCA-S.Pe.C.inf./mask/Rskeleton_subject.csv
+crop_dir: ${dataset_folder}/hcp/crops/2mm/S.F.inf.-BROCA-S.Pe.C.inf./mask/Rcrops
+foldlabel_dir: ${dataset_folder}/hcp/crops/2mm/S.F.inf.-BROCA-S.Pe.C.inf./mask/Rlabels
+foldlabel_all: ${dataset_folder}/hcp/crops/2mm/S.F.inf.-BROCA-S.Pe.C.inf./mask/Rlabel.npy
+subjects_foldlabel_all: ${dataset_folder}/hcp/crops/2mm/S.F.inf.-BROCA-S.Pe.C.inf./mask/Rlabel_subject.csv
+distbottom_dir: ${dataset_folder}/hcp/crops/2mm/S.F.inf.-BROCA-S.Pe.C.inf./mask/Rdistbottom
+distbottom_all: ${dataset_folder}/hcp/crops/2mm/S.F.inf.-BROCA-S.Pe.C.inf./mask/Rdistbottom.npy
+extremity_dir: ${dataset_folder}/hcp/crops/2mm/S.F.inf.-BROCA-S.Pe.C.inf./mask/Rextremities
+extremity_all: ${dataset_folder}/hcp/crops/2mm/S.F.inf.-BROCA-S.Pe.C.inf./mask/Rextremities.npy
+subjects_extremity_all: ${dataset_folder}/hcp/crops/2mm/S.F.inf.-BROCA-S.Pe.C.inf./mask/Rextremities_subject.csv
+subjects_distbottom_all: ${dataset_folder}/hcp/crops/2mm/S.F.inf.-BROCA-S.Pe.C.inf./mask/Rdistbottom_subject.csv
+crop_file_suffix: _cropped_skeleton.nii.gz
+pickle_benchmark: 
+train_val_csv_file: ${dataset_folder}/orbital_patterns/Troiani/Left/union/fake_train_val.csv
+test_csv_file: ${dataset_folder}/orbital_patterns/Troiani/Left/union/union_custom_splits_train_val.csv
+#train_csv_file: ${dataset_folder}/orbital_patterns/Troiani/Left/train_split.csv
+#val_csv_file: ${dataset_folder}/orbital_patterns/Troiani/Left/val_split.csv
+#test_csv_file: ${dataset_folder}/orbital_patterns/Troiani/Left/test_split.csv
+subject_labels_file: ${dataset_folder}/hcp/hcp_OFC_labels.csv
+subject_column_name: 'Subject'
+cutout_mask_path:
+cutin_mask_path: ${dataset_folder}/hcp/crops/2mm/S.F.inf.-BROCA-S.Pe.C.inf./mask/Rmask.npy
+flip_dataset: False
+input_size: (1, 26, 40, 43)

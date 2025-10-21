@@ -48,7 +48,7 @@ setup(
                         git+https://git@github.com/neurospin/deep_folding',
                       ],
     },
-    url='https://github.com/neurospin-projects/2023_jlaval_STSbabies',
-    author='Julien Laval, Joël Chavas, Aymeric Gaudin',
-    author_email='julien.laval@cea.fr, joel.chavas@cea.fr, aymeric.gaudin@cea.fr'
+    url='https://github.com/neurospin/champollion_V1',
+    author='Julien Laval, Joël Chavas, Antoine Dufournet, Aymeric Gaudin',
+    author_email='julien.laval@cea.fr, joel.chavas@cea.fr, antoine.dufournet@cea.fr, aymeric.gaudin@cea.fr'
 )

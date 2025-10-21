@@ -38,6 +38,8 @@ def build_converter(config, concat_latent_spaces_size):
             pass
         else:
             raise ValueError(f"Such activation ({converter_activation}) is not handled for converter.")
+        
+        converter.append(nn.Dropout(p=config.ph_drop_rate))
     
     return converter, num_representation_features
 
@@ -80,7 +82,7 @@ def get_projection_head_shape(config, num_representation_features):
             output_shape = 1
         else:
             raise ValueError(f"Mode {config.mode} doesn't exist.")
-        layers_shapes = [num_representation_features] * (config.length_projection_head - 1) + [output_shape]
+        layers_shapes = [num_representation_features] * (config.length_projection_head) + [output_shape]
     
     return layers_shapes
 

@@ -1,0 +1,25 @@
+[1mdiff --git a/contrastive/configs/model/SimCLR_fusion.yaml b/contrastive/configs/model/SimCLR_fusion.yaml[m
+[1mindex f2ea3d4..c24b4a5 100644[m
+[1m--- a/contrastive/configs/model/SimCLR_fusion.yaml[m
+[1m+++ b/contrastive/configs/model/SimCLR_fusion.yaml[m
+[36m@@ -4,6 +4,7 @@[m [msigma_labels: 2.0[m
+ sigma: 5[m
+ drop_rate: 0.05[m
+ pretrained_model_path:[m
+[32m+[m[32m#pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Output/ChampollionV0_orbital_dev_branch/15-21-20_3/logs/lightning_logs/version_0/checkpoints/epoch=30-step=18321.ckpt[m
+ #pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Output/sparse_multiregion_multihead_test/14-33-26_58/logs/lightning_logs/version_0/checkpoints/epoch=80-step=95742.ckpt[m
+ #pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Output/2024-07-15/18-35-41_0/logs/lightning_logs/version_0/checkpoints/epoch=80-step=47952.ckpt[m
+ #pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Output/2024-07-18/14-42-30_193/logs/lightning_logs/version_0/checkpoints/epoch=250-step=148341.ckpt[m
+[36m@@ -18,9 +19,9 @@[m [mpretrained_model_path:[m
+ #pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Program/Output/2024-05-13/16-34-19_0/logs/lightning_logs/version_0/checkpoints/epoch=130-step=1572.ckpt #supervised[m
+ #pretrained_model_path: /volatile/jl277509/Runs/02_STS_babies/Program/Output/2024-04-30/BT_L256_0/logs/lightning_logs/version_0/checkpoints/epoch=249-step=148000.ckpt # Big BT[m
+ load_encoder_only: False[m
+[31m-load_convolutions_only: True[m
+[31m-freeze_loaded_layers: True[m
+[31m-freeze_bias: True[m
+[32m+[m[32mload_convolutions_only: False[m
+[32m+[m[32mfreeze_loaded_layers: False[m
+[32m+[m[32mfreeze_bias: False[m
+ freeze_encoders: False[m
+ fusioned_latent_space_size: -1  # if set to -1, then it will be the sum of the encoders' output sizes[m
+ converter_activation: relu[m

@@ -39,10 +39,11 @@ import os
 
 import numpy as np
 import pandas as pd
+import sparse
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
-from contrastive.utils.logs import set_file_logger
+from ..utils.logs import set_file_logger
 # only if foldlabel == True
 try:
     from deep_folding.brainvisa.utils.save_data import compare_array_aims_files
@@ -65,13 +66,25 @@ def read_npy_file(npy_file_path: str) -> np.ndarray:
 
 def read_subject_csv(csv_file_path: str) -> pd.DataFrame:
     """Reads csv subject file.
-    It contains on a column named \'Subject\' all subject names"""
+    It contains one column named \'Subject\' with all subject names"""
     subjects = pd.read_csv(csv_file_path)
     if 'Subject' in subjects.columns:
         return subjects
     else:
         raise ValueError(f"Column name of csv file {csv_file_path} must be "
                          f"\'Subject\'. Instead it is {subjects.columns}")
+    
+
+def convert_sparse_to_numpy(data, coords, input_size, dtype):
+    """
+    Convert coords and associated values to numpy array
+    """
+    s = sparse.COO(coords, data, shape=input_size)
+    arr = s.todense()
+    arr = np.expand_dims(arr, axis=-1)
+    arr = arr.astype(dtype)
+
+    return arr
 
 
 def length_object(object):
@@ -80,7 +93,7 @@ def length_object(object):
 
 
 def is_equal_length(object_1, object_2):
-    """Checks of the two objects have equal length"""
+    """Checks if the two objects have equal length"""
     len_1 = length_object(object_1)
     len_2 = length_object(object_2)
     return (len_1 == len_2)
@@ -127,6 +140,14 @@ def check_distbottom_npy_consistency(file_path_arr_crops, file_path_arr_distbott
         raise ValueError(
             f"Npy files (skel, distbottom) are {diff*100:.2f}% different:\n"
             f"This is greater than tolerance {tolerance*100:.2f}% threshold set.\n")
+    
+def check_extremity_npy_consistency(file_path_arr_crops, file_path_arr_extremity):
+    arr_crops = np.load(file_path_arr_crops)
+    arr_extremity = np.load(file_path_arr_extremity)
+    arr_crops = arr_crops != 0
+    arr_extremity = arr_extremity !=0
+    if not np.array_equal(np.logical_and(arr_crops, arr_extremity), arr_extremity):
+        raise ValueError('Npy extremity is not included in npy crops')
     
 
 def check_if_skeleton(a: np.array, key: str):
@@ -333,6 +354,10 @@ def split_data(normal_data, normal_subjects, sample_dir, config, reg):
     train_val_subjects, train_val_data = \
         extract_partial_numpy(normal_subjects, train_val_subjects,
                               normal_data, name='train_val')
+    
+    assert len(train_val_subjects), \
+        "train_val is empty. " \
+        "It could be a problem with the subject names"
 
     if config.environment == "brainvisa" and config.checking:
         compare_array_aims_files(train_subjects, train_data, sample_dir)

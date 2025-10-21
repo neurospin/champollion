@@ -1,4 +1,6 @@
 # @package _global_
 projection_head_name: relu
-proj_layers_shapes:        # priority over length_projection_head
-length_projection_head: 2
+#proj_layers_shapes:  # priority over length_projection_head
+proj_layers_shapes: [32,128,128,128]
+length_projection_head: 3
+ph_drop_rate: 0.

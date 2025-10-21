@@ -126,14 +126,25 @@ def train(config):
     if config.pretrained_model_path is not None:
         log.info(f"Load weigths stored at {config.pretrained_model_path}")
         model.load_pretrained_model(config.pretrained_model_path,
-                                    encoder_only=config.load_encoder_only)
+                                    encoder_only=config.load_encoder_only,
+                                    convolutions_only=config.load_convolutions_only,
+                                    freeze_loaded_layers=config.freeze_loaded_layers,
+                                    freeze_bias=config.freeze_bias)
 
-    dataset = list(config.dataset.keys())[0]
-    input_size = tuple([1] + list(config.dataset[dataset]['input_size']))
-    #print(f"Last linear layer dimension : \
+    #dataset = list(config.dataset.keys())[0]
+    # input_size = []
+    #input_size = tuple([1] + list(config.dataset[dataset]['input_size']))
+    # for dataset in config.dataset.keys():
+    #     input_size.extend(config.dataset[dataset]['input_size'][1:])
+    # print(f"Last linear layer dimension : \
     #      {model.state_dict()['backbones.0.encoder.Linear.weight'].shape}")
+    input_size = tuple([1] + list(config.data[0].input_size))
     if config.backbone_name != 'pointnet':
-        summary(model, input_data=input_size, device=config.device, depth=6)
+        if (len(config.dataset.keys()) == 1): # if one region
+            print(config.data[0].input_size)
+            summary(model, input_data=input_size, batch_dim=0, device=config.device, depth=6)
+        else:
+            summary(model, device=config.device, depth=6) # TODO : why 16 ?
     else:
         summary(model, device='cpu')
 
@@ -147,7 +158,7 @@ def train(config):
                       divergence_threshold=config.diff_auc_threshold,
                       patience=config.max_epochs)
 
-    callbacks = [early_stop_callback]
+    #callbacks = [early_stop_callback]
     if config.mode in ['classifier', 'regresser']:
         callbacks.append(early_stop_overfitting)
 
@@ -167,11 +178,12 @@ def train(config):
         accelerator='gpu',
         devices=1,
         max_epochs=config.max_epochs,
-        callbacks=callbacks,
+        #callbacks=callbacks,
         logger=loggers,
         #flush_logs_every_n_steps=config.nb_steps_per_flush_logs,
         log_every_n_steps=config.log_every_n_steps,
         #auto_lr_find=True
+        accumulate_grad_batches=config.accumulate_grad_batches
         )
 
     # start training

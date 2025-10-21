@@ -52,6 +52,7 @@ from contrastive.augmentations import ToPointnetTensor
 from contrastive.backbones.densenet import DenseNet
 from contrastive.backbones.convnet import ConvNet
 from contrastive.backbones.resnet import ResNet, BasicBlock
+from contrastive.backbones.convnext import ConvNeXt
 #from contrastive.backbones.pointnet import PointNetCls
 from contrastive.backbones.projection_heads import *
 from contrastive.data.utils import change_list_device
@@ -79,8 +80,13 @@ class ContrastiveLearnerFusion(pl.LightningModule):
     def __init__(self, config, sample_data, with_labels=False):
         super(ContrastiveLearnerFusion, self).__init__()
 
-        n_datasets = len(config.data)
-        log.info(f"n_datasets {n_datasets}")
+        if config.multiregion_single_encoder:
+            n_datasets = 1
+            n_regions = len(config.data)
+            log.info("n_datasets 1 because a single encoder is used for multiple regions")
+        else:
+            n_datasets = len(config.data)
+            log.info(f"n_datasets {n_datasets}")
 
         # define the encoder structure
         self.backbones = nn.ModuleList()
@@ -100,7 +106,11 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     filters=config.filters,
                     block_depth=config.block_depth,
                     initial_kernel_size=config.initial_kernel_size,
+                    initial_stride=config.initial_stride,
+                    max_pool=config.max_pool,
                     num_representation_features=config.backbone_output_size,
+                    linear = config.linear_in_backbone,
+                    adaptive_pooling=config.adaptive_pooling,
                     drop_rate=config.drop_rate,
                     in_shape=config.data[i].input_size))
         elif config.backbone_name == 'resnet':
@@ -116,14 +126,23 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     out_block=None,
                     prediction_bias=False,
                     initial_kernel_size=config.initial_kernel_size,
-                    initial_stride=config.initial_stride))
+                    initial_stride=config.initial_stride,
+                    adaptive_pooling=config.adaptive_pooling,
+                    linear_in_backbone=config.linear_in_backbone))
+        elif config.backbone_name == 'convnext':
+            for i in range(n_datasets):
+                self.backbones.append(ConvNeXt(
+                    in_chans=1,
+                    num_classes=config.backbone_output_size,
+                    nb_blocks=config.nb_blocks,
+                    depths=config.depth,
+                    dims=config.dims,
+                    initial_stride=config.initial_stride,
+                    initial_kernel_size=config.initial_kernel_size,
+                    kernel_size=config.kernel_size,
+                    adaptive_pooling=config.adaptive_pooling))
         # elif config.backbone_name == 'pointnet':
-        #     self.backbone = PointNetCls(
-        #         k=config.num_representation_features,
-        #         num_outputs=config.backbone_output_size,
-        #         projection_head_hidden_layers=config.projection_head_hidden_layers,
-        #         drop_rate=config.drop_rate,
-        #         feature_transform=False)
+        #     self.backbone = PointDataModule_LearningFalse)
         else:
             raise ValueError(f"No underlying backbone with backbone name {config.backbone_name}")
         
@@ -132,7 +151,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             for backbone in self.backbones:
                 backbone.freeze()
             log.info("The model's encoders weights are frozen. Set 'freeze_encoders' \
-in the config to False to unfreeze them.")
+                      in the config to False to unfreeze them.")
 
         # rename variables
         concat_latent_spaces_size = config.backbone_output_size * n_datasets
@@ -148,15 +167,45 @@ in the config to False to unfreeze them.")
         # set projection head activation
         activation = config.projection_head_name
         log.debug(f"activation = {activation}")
-        self.projection_head = ProjectionHead(
-            num_representation_features=num_representation_features,
-            layers_shapes=layers_shapes,
-            activation=activation)
+
+        if config.multiple_projection_heads:
+            # Evaluation: need to initialize the right number of projection heads for weight mapping
+            n_regions = len(config.data)
+            self.projection_head = nn.ModuleList()
+            for reg in range(n_regions):
+                if config.linear_in_backbone:
+                    self.projection_head.append(ProjectionHead(
+                    num_representation_features=num_representation_features,
+                    layers_shapes=layers_shapes,
+                    activation=activation,
+                    drop_rate=config.ph_drop_rate))
+                else:
+                    # add a variable size linear layer to each projection head
+                    layers_shapes_including_variable = layers_shapes.copy()
+                    # TODO: make it compatible with ResNet !
+                    backbone_output_shape = [config.data[reg].input_size[1] // 2**config.encoder_depth,
+                                            config.data[reg].input_size[2] // 2**config.encoder_depth,
+                                            config.data[reg].input_size[3] // 2**config.encoder_depth]
+                    backbone_output_shape = config.filters[-1]*np.prod(backbone_output_shape)
+                    layers_shapes_including_variable = [backbone_output_shape] + layers_shapes_including_variable
+                    self.projection_head.append(ProjectionHead(
+                        num_representation_features=num_representation_features,
+                        layers_shapes=layers_shapes_including_variable,
+                        activation=activation,
+                        drop_rate=config.ph_drop_rate))
+        else:
+            self.projection_head = ProjectionHead(
+                num_representation_features=num_representation_features,
+                layers_shapes=layers_shapes,
+                activation=activation,
+                drop_rate=config.ph_drop_rate)
 
         # set up class keywords
         self.config = config
         self.with_labels = with_labels
         self.n_datasets = n_datasets
+        if self.config.multiregion_single_encoder:
+            self.n_regions = n_regions
         self.sample_data = sample_data
         self.sample_i = np.array([])
         self.sample_j = np.array([])
@@ -176,16 +225,42 @@ in the config to False to unfreeze them.")
         # Keeps track of losses
         self.training_step_outputs = []
         self.validation_step_outputs = []
+        if self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
+            self.training_step_idxs_region = [] 
+            self.validation_step_idxs_region = []
+        if self.config.mode == "encoder" and self.config.contrastive_model=='BarlowTwins':
+            self.training_step_loss_inv = []
+            self.training_step_loss_redund = []
+            self.validation_step_loss_inv = []
+            self.validation_step_loss_redund = []
 
-    def forward(self, x):
+        # Output of intermediate layer of ProjectionHead
+        self.activation={}
+
+    def forward(self, x, idx_region=None):
+        # log.info(f"x shape: {x.shape}")
         embeddings = []
         for i in range(self.n_datasets):
             embedding = self.backbones[i].forward(x[i])
             embeddings.append(embedding)
         embeddings = torch.cat(embeddings, dim=1)
         embeddings = self.converter.forward(embeddings)
-        out = self.projection_head.forward(embeddings)
+        if idx_region is not None:
+            out = self.projection_head[idx_region].forward(embeddings)
+        else:
+            out = self.projection_head.forward(embeddings)
         return out
+    
+    def get_full_inputs_from_batch_with_region_idx(self, batch):
+        full_inputs = []
+        for (inputs, filenames, idx_region) in batch:  # loop over datasets
+            if self.config.backbone_name == 'pointnet':
+                inputs = torch.squeeze(inputs).to(torch.float)
+            full_inputs.append(inputs)
+        
+        inputs = full_inputs
+        idx_region = idx_region.detach().cpu().numpy()[0]
+        return (inputs, filenames, idx_region)
 
 
     def get_full_inputs_from_batch(self, batch):
@@ -213,12 +288,19 @@ in the config to False to unfreeze them.")
         return (inputs, filenames, labels, view3)
 
 
-    def load_pretrained_model(self, pretrained_model_path, encoder_only=False):
+    def load_pretrained_model(self, pretrained_model_path, encoder_only=False,
+                              convolutions_only=False, freeze_loaded_layers=False,
+                              freeze_bias=False):
         """Load weights stored in a state_dict at pretrained_model_path
         """
 
         pretrained_state_dict = torch.load(pretrained_model_path)['state_dict']
-        if encoder_only:
+        if convolutions_only:
+            pretrained_state_dict = OrderedDict(
+                {k: v for k, v in pretrained_state_dict.items()
+                 if 'encoder' in k and
+                 ('conv' in k or 'norm' in k)})
+        elif encoder_only:
             pretrained_state_dict = OrderedDict(
                 {k: v for k, v in pretrained_state_dict.items()
                  if 'encoder' in k})
@@ -237,6 +319,16 @@ in the config to False to unfreeze them.")
             key for key in model_dict.keys() if key not in loaded_layers]
         # print(f"Loaded layers = {loaded_layers}")
         log.info(f"Layers not loaded = {not_loaded_layers}")
+
+        # freeze loaded layers
+        if freeze_loaded_layers:
+            for name, para in self.named_parameters():
+                if name in loaded_layers:
+                    para.requires_grad = False
+                if 'bias' in name and not freeze_bias:
+                    para.requires_grad = True
+
+        
 
 
     def custom_histogram_adder(self):
@@ -354,13 +446,38 @@ in the config to False to unfreeze them.")
             return_dict["lr_scheduler"] = {"scheduler": scheduler,
                                            "interval": "epoch"}
 
+
+        """
+        if 'scheduler' in self.config.keys() and self.config.scheduler:  
+            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer,
+                mode='min',           # We want to minimize the loss
+                factor=self.config.factor, # Divide the learning rate by 3
+                patience=self.config.step_size, # Wait for 10 epochs without improvement
+                threshold=self.config.threshold_plateau, # Minimum loss reduction of 10% to be considered an improvement
+                threshold_mode='rel', # Relative threshold, i.e., 10% relative decrease in loss
+            )
+            return_dict["lr_scheduler"] = {"scheduler": scheduler,
+                                        "monitor": 'val_loss',
+                                        "interval": "epoch",
+                                        "frequency": 1}
+        """
         return return_dict
     
+    
     def barlow_twins_loss(self, z_i, z_j):
-        "Loss function for contrastive (BarlowTwins)"
-        loss = BarlowTwinsLoss(lambda_param=self.config.lambda_BT / float(self.config.backbone_output_size),
+        "Loss function for SSL (BarlowTwins)"
+        loss = BarlowTwinsLoss(lambda_param=self.config.lambda_BT,
                                correlation=self.config.BT_correlation,
                                device=self.config.device)
+        return loss.forward(z_i, z_j)
+    
+    def vic_reg_loss(self, z_i, z_j):
+        "Loss function for SSL (VicReg)"
+        loss = VicRegLoss(device=self.config.device,
+                          lmbd=self.config.lambda_VR / float(self.config.backbone_output_size),
+                          u=1,v=1,
+                          epsilon=self.config.epsilon_VR)
         return loss.forward(z_i, z_j)
 
     def nt_xen_loss(self, z_i, z_j):
@@ -400,14 +517,20 @@ in the config to False to unfreeze them.")
         if self.config.with_labels:
             inputs, filenames, labels, view3 = \
                 self.get_full_inputs_from_batch_with_labels(train_batch)
+        elif self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
+            inputs, filenames, idx_region = self.get_full_inputs_from_batch_with_region_idx(train_batch)
         else:
             inputs, filenames = self.get_full_inputs_from_batch(train_batch)
 
         # print("TRAINING STEP", inputs.shape)
         input_i = [inputs[i][:, 0, ...] for i in range(self.n_datasets)]
         input_j = [inputs[i][:, 1, ...] for i in range(self.n_datasets)]
-        z_i = self.forward(input_i)
-        z_j = self.forward(input_j)
+        if self.config.multiple_projection_heads:
+            z_i = self.forward(input_i, idx_region=idx_region)
+            z_j = self.forward(input_j, idx_region=idx_region)
+        else:
+            z_i = self.forward(input_i)
+            z_j = self.forward(input_j)
 
         # compute the right loss depending on the learning mode
         if self.config.mode == "decoder":
@@ -427,7 +550,9 @@ in the config to False to unfreeze them.")
         elif self.config.contrastive_model=='SimCLR':
             batch_loss, sim_zij, sim_zii, sim_zjj = self.nt_xen_loss(z_i, z_j)
         elif self.config.contrastive_model=='BarlowTwins':
-            batch_loss = self.barlow_twins_loss(z_i,z_j)
+            batch_loss, loss_invariance, loss_redundancy = self.barlow_twins_loss(z_i,z_j)
+        elif self.config.contrastive_model=='VicReg':
+            batch_loss = self.vic_reg_loss(z_i,z_j)
         #TODO: add error if None of these names
         #encoder peut être du contrastive supervisé !! gérer ce cas là...
 
@@ -436,6 +561,7 @@ in the config to False to unfreeze them.")
         #     self.loggers[0].experiment.add_graph(self, [input_i])
 
         # Records sample for first batch of each epoch
+        ## OBSOLETE
         if batch_idx == 0:
             self.sample_i = change_list_device(input_i, 'cpu')
             self.sample_j = change_list_device(input_j, 'cpu')
@@ -453,8 +579,17 @@ in the config to False to unfreeze them.")
         # logs - a dictionary
         #self.log('Loss/Train', float(batch_loss), on_epoch=True)
         logs = {"train_loss": float(batch_loss)}
+        if self.config.contrastive_model=='BarlowTwins':
+            logs["train_loss_inv"] = float(loss_invariance)
+            logs["train_loss_redund"] = float(loss_redundancy)
 
         self.training_step_outputs.append(batch_loss)
+        if self.config.contrastive_model=='BarlowTwins':
+            # decompose loss in invariance and redundancy term
+            self.training_step_loss_inv.append(loss_invariance)
+            self.training_step_loss_redund.append(loss_redundancy)
+        if self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
+            self.training_step_idxs_region.append(idx_region)
 
         batch_dictionary = {
             # REQUIRED: It is required for us to return "loss"
@@ -471,6 +606,19 @@ in the config to False to unfreeze them.")
             self.log('train_label_loss', float(batch_label_loss))
             logs['train_label_loss'] = float(batch_label_loss)
             batch_dictionary['label_loss'] = batch_label_loss
+
+        # if required, save views from first batch of first epoch (first dataset)
+        if self.config.save_views and self.current_epoch==0 and batch_idx==0:
+            sample_i = change_list_device(input_i, 'cpu')
+            sample_j = change_list_device(input_j, 'cpu')
+            sample_i = sample_i[0].numpy()
+            sample_j = sample_j[0].numpy()
+            print('saving augmented views')
+            dir_to_save = './logs/views/'
+            if not os.path.isdir(dir_to_save):
+                os.mkdir(dir_to_save)
+            np.save(os.path.join(dir_to_save, 'view1.npy'), sample_i)
+            np.save(os.path.join(dir_to_save, 'view2.npy'), sample_j)
 
         return batch_dictionary
 
@@ -492,6 +640,8 @@ in the config to False to unfreeze them.")
                 if self.config.with_labels:
                     inputs, filenames, labels, _ = \
                         self.get_full_inputs_from_batch_with_labels(batch)
+                elif self.config.multiple_projection_heads:
+                    inputs, filenames, idx_region = self.get_full_inputs_from_batch_with_region_idx(batch)
                 else:
                     inputs, filenames = self.get_full_inputs_from_batch(batch)
                 
@@ -503,9 +653,13 @@ in the config to False to unfreeze them.")
                 if self.config.backbone_name == 'pointnet':
                     input_i = transform(input_i.cpu()).cuda().to(torch.float)
                     input_j = transform(input_j.cpu()).cuda().to(torch.float)
-                X_i = self.forward(input_i)
-                # Second views of the whole batch
-                X_j = self.forward(input_j)
+                if self.config.multiple_projection_heads:
+                    X_i = self.forward(input_i, idx_region=idx_region)
+                    X_j = self.forward(input_j, idx_region=idx_region)
+                else:
+                    X_i = self.forward(input_i)
+                    # Second views of the whole batch
+                    X_j = self.forward(input_j)
 
                 # First views and second views are put side by side
                 X_reordered = torch.cat([X_i, X_j], dim=-1)
@@ -593,6 +747,8 @@ in the config to False to unfreeze them.")
             for batch in loader:
                 if self.config.with_labels:
                     (inputs, filenames, _, _) = self.get_full_inputs_from_batch_with_labels(batch)
+                elif self.config.multiple_projection_heads:
+                    (inputs, filenames, _) = self.get_full_inputs_from_batch_with_region_idx(batch)
                 else:
                     (inputs, filenames) = self.get_full_inputs_from_batch(batch)
                 # First views of the whole batch
@@ -608,12 +764,20 @@ in the config to False to unfreeze them.")
                 del inputs
 
         return X, filenames_list
+    
+
+    def get_activation(self, name):
+        def hook(model, input, output):
+            self.activation[name] = output.detach()
+        return hook
 
 
     def compute_representations(self, loader):
         """Computes representations for each crop.
 
-        Representation are before the projection head"""
+        Representation are before the projection head,
+        Or after the first projection head layer when
+        the linear layer is not in the backbone."""
 
         # Initialization
         X = torch.zeros(
@@ -653,6 +817,10 @@ in the config to False to unfreeze them.")
                     X_i.append(embedding)
                 X_i = torch.cat(X_i, dim=1)
                 X_i = self.converter.forward(X_i)
+                if self.config.multiple_projection_heads and not self.config.linear_in_backbone:
+                    self.projection_head[0].layers.Linear0.register_forward_hook(self.get_activation('Linear0'))
+                    self.projection_head[0].forward(X_i)
+                    X_i = self.activation['Linear0']
 
                 # Second views of the whole batch
                 X_j = []
@@ -661,6 +829,10 @@ in the config to False to unfreeze them.")
                     X_j.append(embedding)
                 X_j = torch.cat(X_j, dim=1)
                 X_j = self.converter.forward(X_j)
+                if self.config.multiple_projection_heads and not self.config.linear_in_backbone:
+                    self.projection_head[0].layers.Linear0.register_forward_hook(self.get_activation('Linear0'))
+                    self.projection_head[0].forward(X_j)
+                    X_j = self.activation['Linear0']
 
                 # First views and second views are put side by side
                 X_reordered = torch.cat([X_i, X_j], dim=-1)
@@ -908,6 +1080,31 @@ in the config to False to unfreeze them.")
             "Loss/Train",
             avg_loss,
             self.current_epoch)
+        
+        if self.config.contrastive_model=='BarlowTwins':
+            # visu the two loss components on tensorboard
+            avg_loss_inv = torch.stack([x for x in self.training_step_loss_inv]).mean()
+            avg_loss_redund = torch.stack([x for x in self.training_step_loss_redund]).mean()
+            self.loggers[0].experiment.add_scalar(
+                "LossInv/Train",
+                avg_loss_inv,
+                self.current_epoch)
+            self.loggers[0].experiment.add_scalar(
+                "LossRedund/Train",
+                avg_loss_redund,
+                self.current_epoch)
+
+        # if multiregion, train loss for each region
+        if self.config.multiregion_single_encoder:
+            for region in range(self.n_regions):
+                regional_loss = [x for x, idx in zip(self.training_step_outputs, self.training_step_idxs_region)
+                                if idx==region]
+                if len(regional_loss) > 0:
+                    regional_loss = torch.stack(regional_loss).mean()
+                    self.loggers[0].experiment.add_scalar(
+                    f"LossRegion{region}/Train",
+                    regional_loss,
+                    self.current_epoch)
 
         if self.config.scheduler:
             self.loggers[0].experiment.add_scalar(
@@ -924,8 +1121,16 @@ in the config to False to unfreeze them.")
         #         "Score/Train",
         #         score,
         #         self.current_epoch)
+        if self.config.mode == "encoder" and self.config.contrastive_model=='BarlowTwins':
+            avg_loss_inv = avg_loss_inv.detach().cpu().item()
+            avg_loss_redund = avg_loss_redund.detach().cpu().item()
 
         self.training_step_outputs.clear()  # free memory
+        if self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
+            self.training_step_idxs_region.clear()
+        if self.config.mode == "encoder" and self.config.contrastive_model=='BarlowTwins':
+            self.training_step_loss_inv.clear()
+            self.training_step_loss_redund.clear()
 
 
     def validation_step(self, val_batch, batch_idx):
@@ -933,13 +1138,19 @@ in the config to False to unfreeze them.")
         if self.config.with_labels:
             (inputs, _, labels, _) = \
                 self.get_full_inputs_from_batch_with_labels(val_batch)
+        elif self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
+            (inputs, _, idx_region) = self.get_full_inputs_from_batch_with_region_idx(val_batch)
         else:
             inputs, _ = self.get_full_inputs_from_batch(val_batch)
         
         input_i = [inputs[i][:, 0, ...] for i in range(self.n_datasets)]
         input_j = [inputs[i][:, 1, ...] for i in range(self.n_datasets)]
-        z_i = self.forward(input_i)
-        z_j = self.forward(input_j)
+        if self.config.multiple_projection_heads:
+            z_i = self.forward(input_i, idx_region=idx_region)
+            z_j = self.forward(input_j, idx_region=idx_region)
+        else:
+            z_i = self.forward(input_i)
+            z_j = self.forward(input_j)
 
         # compute the right loss depending on the learning mode
         if self.config.mode == "decoder":
@@ -958,7 +1169,9 @@ in the config to False to unfreeze them.")
         elif self.config.contrastive_model=='SimCLR':
             batch_loss, sim_zij, sim_zii, sim_zjj = self.nt_xen_loss(z_i, z_j)
         elif self.config.contrastive_model=='BarlowTwins':
-            batch_loss = self.barlow_twins_loss(z_i,z_j)
+            batch_loss, loss_invariance, loss_redundancy = self.barlow_twins_loss(z_i,z_j)
+        elif self.config.contrastive_model=='VicReg':
+            batch_loss = self.vic_reg_loss(z_i,z_j)
         #TODO: add error if None of these names
         
         # values useful for early stoppings
@@ -967,12 +1180,21 @@ in the config to False to unfreeze them.")
             self.log('diff_auc', float(0))
         # logs- a dictionary
         logs = {"val_loss": float(batch_loss)}
+        if self.config.contrastive_model=='BarlowTwins':
+            logs["val_loss_inv"] = float(loss_invariance)
+            logs["val_loss_redund"] = float(loss_redundancy)
         batch_dictionary = {
             # REQUIRED: It ie required for us to return "loss"
             "val_loss": batch_loss,
             # optional for batch logging purposes
             "log": logs}
         self.validation_step_outputs.append(batch_loss)
+        if self.config.contrastive_model=='BarlowTwins':
+            # decompose loss in invariance and redundancy term
+            self.validation_step_loss_inv.append(loss_invariance)
+            self.validation_step_loss_redund.append(loss_redundancy)
+        if self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
+            self.validation_step_idxs_region.append(idx_region)
 
         if self.config.with_labels and self.config.mode == 'encoder' \
         and self.config.proportion_pure_contrastive != 1:
@@ -1073,6 +1295,32 @@ in the config to False to unfreeze them.")
             "Loss/Val",
             avg_loss,
             self.current_epoch)
+        
+        if self.config.contrastive_model=='BarlowTwins':
+            # visu the two loss components on tensorboard
+            avg_loss_inv = torch.stack([x for x in self.validation_step_loss_inv]).mean()
+            avg_loss_redund = torch.stack([x for x in self.validation_step_loss_redund]).mean()
+            self.loggers[0].experiment.add_scalar(
+                "LossInv/Val",
+                avg_loss_inv,
+                self.current_epoch)
+            self.loggers[0].experiment.add_scalar(
+                "LossRedund/Val",
+                avg_loss_redund,
+                self.current_epoch)
+        
+        # if multiregion, val loss for each region
+        if self.config.multiregion_single_encoder:
+            for region in range(self.n_regions):
+                regional_loss = [x for x, idx in zip(self.validation_step_outputs, self.validation_step_idxs_region)
+                                if idx==region]
+                if len(regional_loss) > 0:
+                    regional_loss = torch.stack(regional_loss).mean()
+                    self.loggers[0].experiment.add_scalar(
+                    f"LossRegion{region}/Val",
+                    regional_loss,
+                    self.current_epoch)
+
         # use wandb logger (if present)
         if self.config.wandb.grid_search:
             self.loggers[1].log_metrics({'Loss/Val': avg_loss},
@@ -1104,5 +1352,13 @@ in the config to False to unfreeze them.")
                     'epoch': self.current_epoch, 'best_loss': avg_loss}
                 with open(save_path+"best_model_params.json", 'w') as file:
                     json.dump(best_model_params, file)
+            if self.config.mode == "encoder" and self.config.contrastive_model=='BarlowTwins':
+                avg_loss_inv = avg_loss_inv.detach().cpu().item()
+                avg_loss_redund = avg_loss_redund.detach().cpu().item()
 
         self.validation_step_outputs.clear()  # free memory
+        if self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
+            self.validation_step_idxs_region.clear()
+        if self.config.mode == "encoder" and self.config.contrastive_model=='BarlowTwins':
+            self.validation_step_loss_inv.clear()
+            self.validation_step_loss_redund.clear()

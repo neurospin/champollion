@@ -115,6 +115,7 @@ class BarlowTwinsLoss(nn.Module):
 
         N = z_a.size(0)
         D = z_a.size(1)
+        lbd = self.lambda_param / D
 
         if self.correlation=='cross':
             # cross-correlation matrix
@@ -122,8 +123,10 @@ class BarlowTwinsLoss(nn.Module):
             # loss
             c_diff = (c - torch.eye(D,device=self.device)).pow(2) # DxD
             # multiply off-diagonal elems of c_diff by lambda
-            c_diff[~torch.eye(D, dtype=bool)] *= self.lambda_param
-            loss = c_diff.sum()
+            c_diff[~torch.eye(D, dtype=bool)] *= lbd
+            loss_invariance = c_diff[torch.eye(D, dtype=bool)].sum()
+            loss_redundancy = c_diff[~torch.eye(D, dtype=bool)].sum()
+            loss = loss_invariance + loss_redundancy
         elif self.correlation=='auto':
             # auto-correlation matrix
             c1 = torch.mm(z_a_norm.T, z_a_norm) / N # DxD
@@ -136,11 +139,43 @@ class BarlowTwinsLoss(nn.Module):
             # loss
             c_diff = (c - torch.eye(D,device=self.device)).pow(2) # DxD
             c_diff[~torch.eye(D, dtype=bool)]=0
-            loss = c_diff.sum()
-            loss += self.lambda_param*redundancy_loss
+            loss_invariance = c_diff.sum()
+            loss_redundancy = self.lbd*redundancy_loss
+            loss = loss_invariance + loss_redundancy
         else:
             raise ValueError("Wrong correlation specified in BarlowTwins\
                              config: use cross or auto.")
+
+        return(loss, loss_invariance, loss_redundancy)
+
+
+class VicRegLoss(nn.Module):
+
+    def __init__(self, device=None, lmbd=5e-3, u=1, v=1, epsilon=1e-3):
+        super(VicRegLoss, self).__init__()
+        self.lmbd = lmbd
+        self.device = device
+        self.u = u
+        self.v = v
+        self.epsilon = epsilon
+
+    def forward(self, x, y):
+        
+        bs = x.size(0)
+        emb = x.size(1)
+
+        std_x = torch.sqrt(x.var(dim=0) + self.epsilon)
+        std_y = torch.sqrt(y.var(dim=0) + self.epsilon)
+        var_loss = torch.mean(func.relu(1 - std_x)) + torch.mean(func.relu(1 - std_y))
+
+        invar_loss = func.mse_loss(x, y)
+
+        xNorm = (x - x.mean(0)) / x.std(0)
+        yNorm = (y - y.mean(0)) / y.std(0)
+        crossCorMat = (xNorm.T@yNorm) / bs
+        cross_loss = (crossCorMat*self.lmbd - torch.eye(emb, device=torch.device('cuda'))*self.lmbd).pow(2).sum()
+        
+        loss = self.u*var_loss + self.v*invar_loss + cross_loss
 
         return loss
 

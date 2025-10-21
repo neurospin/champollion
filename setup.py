@@ -2,7 +2,7 @@ import os
 from setuptools import setup, find_packages
 
 setup(
-    name='2023_jlaval_STSbabies',
+    name='champollion_V1',
     version='0.0.1',
     packages=find_packages(
         exclude=['tests*', 'notebooks*']),
@@ -12,8 +12,8 @@ setup(
     long_description=open('README.rst').read(),
     install_requires=['pandas',
                       'scipy',
-		              'psutil',
-		              'orca',
+		      'psutil',
+		      'orca',
                       'matplotlib',
                       'torch',
                       'tqdm',
@@ -31,7 +31,7 @@ setup(
                       'lightly',
                       'plotly',
                       'toolz',
-		              'ipykernel',
+		      'ipykernel',
                       'kaleido',
                       'pytorch_ssim',
                       'seaborn',

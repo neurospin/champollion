@@ -12,7 +12,9 @@ Core developers
 
 The core developers are:
 
+* Julien Laval
 * Joël Chavas
+* Antoine Dufournet
 * Aymeric Gaudin
 
 Other contributors

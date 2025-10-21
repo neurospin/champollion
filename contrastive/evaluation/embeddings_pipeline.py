@@ -300,12 +300,12 @@ if __name__ == "__main__":
     # Cadasil, without supervision
     embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation",
         dataset_localization="neurospin",
-        datasets_root="julien/ABCD/array_load",
+        datasets_root="julien/TEST04",
         datasets=["toto"],
         idx_region_evaluation=None,
         labels=["Sex"],
         classifier_name='logistic',
-        short_name='abcd', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
+        short_name='test04', overwrite=True, embeddings=True, embeddings_only=True, use_best_model=False,
         subsets=['full'], epochs=[None], split='random', cv=5,
         splits_basedir='',
         verbose=False) 

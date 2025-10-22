@@ -45,6 +45,7 @@ setup(
                       'captum',
                       'kornia',
                       'timm',
+                      'sparse',
                       ],
     extras_require={"anatomist": ['deep_folding @ \
                         git+https://git@github.com/neurospin/deep_folding',

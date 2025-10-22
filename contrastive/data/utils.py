@@ -182,6 +182,7 @@ def read_subset_csv(csv_file_path: str, name='train_val') -> pd.DataFrame:
     The resulting dataframe gives the name 'Subject' to this column
     """
     subjects = pd.read_csv(csv_file_path, names=['Subject'])
+    subjects = subjects[subjects.Subject != 'Subject'] # in case the column was named Subject before
     log.debug(f"{name}_subjects = {subjects.head()}")
 
     return subjects
@@ -271,11 +272,18 @@ def extract_train_and_val_subjects(train_val_subjects, partition, seed):
         seed = None
         log.info("Train/val split has not fixed seed")
 
+    if size_partitions[-1] == 0:
+        test_size = 1
+        train_size = size_partitions[0]-1
+    else:
+        test_size = size_partitions[-1]
+        train_size=size_partitions[0]
+        
     # Split train and test
     train_subjects, val_subjects = \
         train_test_split(train_val_subjects,
-                         test_size=size_partitions[-1],
-                         train_size=size_partitions[0],
+                         test_size=test_size,
+                         train_size=train_size,
                          random_state=seed)
     log.debug(f"Size of train / val sets: "
               f"{len(train_subjects)} /  {len(val_subjects)}")

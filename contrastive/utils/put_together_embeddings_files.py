@@ -6,8 +6,8 @@ import tarfile
 import pandas as pd
 
 path_champollion = "/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation"
-embeddings_subpath = "test04_random_embeddings/full_embeddings.csv"
-output_path = "/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation/embeddings/TEST04_embeddings"
+embeddings_subpath = "testxx_random_embeddings/full_embeddings.csv"
+output_path = "/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation/embeddings/TESTXX_embeddings"
 
 # %%
 def is_it_a_file(sub_dir):

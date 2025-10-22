@@ -7,9 +7,9 @@ import json
 os.getcwd()
 
 # %%
-path = f"{os.getcwd()}/../configs/dataset/julien/TEST04"
+path = f"{os.getcwd()}/../configs/dataset/julien/TESTXX"
 ref_file = f"{path}/reference.yaml"
-crop_path = "/neurospin/dico/data/deep_folding/current/datasets/TEST04/crops/2mm"
+crop_path = "/neurospin/dico/data/deep_folding/current/datasets/TESTXX/crops/2mm"
 crop_dirs = glob.glob(f"{crop_path}/*")
 crop_drops = []
 

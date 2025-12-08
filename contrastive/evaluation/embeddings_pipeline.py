@@ -356,13 +356,12 @@ def preprocess_config(
     idx_region_evaluation,
     label,
     folder_name,
-    classifier_name="svm",
+    classifier_name='svm',
     epoch=None,
     split=None,
     cv=5,
     splits_basedir=None,
     verbose=False,
-    config_path=None,
 ):
     """Load and update the model config for embedding generation and classifier training."""
     cfg = omegaconf.OmegaConf.load(os.path.join(sub_dir, ".hydra", "config.yaml"))
@@ -372,13 +371,16 @@ def preprocess_config(
     change_config_label(cfg, label)
     change_config_dataset_localization(cfg, dataset_localization)
 
+    # Hardcoded path to classifier configs
+    CLASSIFIER_CONFIG_PATH = "../contrastive/configs/classifier/"
+
     # Load classifier config
-    with open(os.path.join(config_path, f"{classifier_name}.yaml"), "r") as file:
+    with open(os.path.join(CLASSIFIER_CONFIG_PATH, f"{classifier_name}.yaml"), "r") as file:
         classifier_yaml = yaml.load(file, yaml.FullLoader)
     for key in classifier_yaml:
         cfg[key] = classifier_yaml[key]
 
-    # Update paths and settings
+    # Rest of the function remains the same
     cfg.model_path = sub_dir
     cfg.embeddings_save_path = os.path.join(sub_dir, f"{folder_name}_embeddings")
     cfg.training_embeddings = os.path.join(sub_dir, f"{folder_name}_embeddings")
@@ -463,18 +465,17 @@ def embeddings_pipeline(
     idx_region_evaluation,
     labels,
     short_name=None,
-    classifier_name="svm",
+    classifier_name='svm',
     overwrite=False,
     embeddings=True,
     embeddings_only=False,
     use_best_model=False,
-    subsets=["full"],
+    subsets=['full'],
     epochs=[None],
-    split="random",
+    split='random',
     cv=5,
     splits_basedir=None,
     verbose=False,
-    config_path=None,
 ):
     """Generate embeddings and train classifiers for all models in `dir_path`."""
     print("/!\\ Convergence warnings are disabled")
@@ -515,8 +516,7 @@ def embeddings_pipeline(
                         split=split,
                         cv=cv,
                         splits_basedir=splits_basedir,
-                        verbose=verbose,
-                        config_path=config_path,
+                        verbose=verbose
                     )
                     print_config(cfg, verbose)
                     save_classifier_config(cfg, sub_dir)

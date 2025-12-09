@@ -306,8 +306,8 @@ if __name__ == "__main__":
 
     embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation",
         dataset_localization="neurospin",
-        datasets_root="julien/TESTXX",
-        short_name='testxx',
+        datasets_root="TEST_DRABCZUK",
+        short_name='test_drabczuk',
         overwrite=True,
         datasets=["toto"],
         idx_region_evaluation=None,

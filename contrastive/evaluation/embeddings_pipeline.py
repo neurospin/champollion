@@ -305,7 +305,7 @@ def embeddings_pipeline(dir_path, dataset_localization,
 if __name__ == "__main__":
 
     embeddings_pipeline("/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation",
-        dataset_localization="neurospin",
+        dataset_localization="local",
         datasets_root="TEST_DRABCZUK",
         short_name='test_drabczuk',
         overwrite=True,

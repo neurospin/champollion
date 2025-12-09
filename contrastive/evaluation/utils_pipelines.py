@@ -30,50 +30,29 @@ def get_save_folder_name(datasets, short_name):
     return folder_name
 
 
-# def change_config_datasets(config, new_datasets, new_datasets_root):
-#     """Replace the 'dataset' entry of a config 
-#     with the new target datasets. Works in place.
+def change_config_datasets(config, new_datasets, new_datasets_root):
+    """Replace the 'dataset' entry of a config 
+    with the new target datasets. Works in place.
     
-#     Arguments:
-#         - config: a config object (omegaconf).
-#         - new_datasets: list of str, each corresponding to the name 
-#         of a target yaml file.
-#         - new_datasets_root: if not none, takes the same regions as for training but with the new dataset"""
-    
-#     # replace the datasets
-    
-#     if new_datasets_root:
-#         new_datasets = [f"{new_datasets_root}/{region}"
-#                         for region in config['dataset']
-#                         ]
-
-#     # remove the keys of the older datasets
-#     config['dataset'] = {}
-
-#     # add the ones of the target datasets
-#     for dataset in new_datasets:
-#         with open(os.getcwd() + f'/configs/dataset/{dataset}.yaml', 'r') as file:
-#             dataset_yaml = yaml.load(file, yaml.FullLoader)
-#         config.dataset[dataset] = {}
-#         for key in dataset_yaml:
-#             config.dataset[dataset][key] = dataset_yaml[key]
-
-def change_config_datasets(config, new_datasets, datasets_root):
-    """Replace the 'dataset' entry of a config with the new target datasets.
-    Works in place.
-
     Arguments:
-        - config: A config object (omegaconf).
-        - new_datasets: List of dataset names (e.g., ["toto", "dataset2"]).
-        - datasets_root: Path to the directory containing dataset YAML files.
-    """
-    # Remove old dataset keys
-    config.dataset = {}
+        - config: a config object (omegaconf).
+        - new_datasets: list of str, each corresponding to the name 
+        of a target yaml file.
+        - new_datasets_root: if not none, takes the same regions as for training but with the new dataset"""
+    
+    # replace the datasets
+    
+    if new_datasets_root:
+        new_datasets = [f"{new_datasets_root}/{region}"
+                        for region in config['dataset']
+                        ]
 
-    # Add new datasets
+    # remove the keys of the older datasets
+    config['dataset'] = {}
+
+    # add the ones of the target datasets
     for dataset in new_datasets:
-        dataset_yaml_path = os.path.join(datasets_root, f"{dataset}.yaml")
-        with open(dataset_yaml_path, 'r') as file:
+        with open(os.getcwd() + f'/configs/dataset/{dataset}.yaml', 'r') as file:
             dataset_yaml = yaml.load(file, yaml.FullLoader)
         config.dataset[dataset] = {}
         for key in dataset_yaml:

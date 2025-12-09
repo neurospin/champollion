@@ -3,6 +3,7 @@ import os
 import shutil
 import logging
 import argparse
+import glob
 
 # path_champollion = "/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation"
 # embeddings_subpath = "testxx_random_embeddings/full_embeddings.csv"
@@ -62,6 +63,13 @@ def put_together_embeddings_files(embeddings_subpath, output_path, path_champoll
             if "] " in msg:
                 msg = msg.split("] ", 1)[1]
             print(f"The following warning can be normal if you have not generated this region in your dataset: {msg}")
+
+    nb_csv = len(glob.glob(f"{output_path}/*.csv"))
+    print(f"{nb_csv} embeddings copied in {output_path}")
+    if nb_csv > 0:
+        print("DONE!")
+    else:
+        print("WARNING: no embeddings in output directory {output_path}")
 
 # path_champollion = "/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation"
 # embeddings_subpath = "testxx_random_embeddings/full_embeddings.csv"

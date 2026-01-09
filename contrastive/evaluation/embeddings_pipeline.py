@@ -435,6 +435,7 @@ def check_if_compute_embedding(sub_dir, f_name, overwrite, embeddings, idx):
             return False, True
     return False, True
 
+
 def do_we_classify(valid_path, embeddings_only):
     if valid_path and not embeddings_only:
         return True
@@ -444,18 +445,50 @@ def do_we_classify(valid_path, embeddings_only):
     else:
         return False
 
+
+def prompt_create_directory(directory_path):
+    """
+    Prompts the user to create a directory if it doesn’t exist.
+    Returns:
+        bool: True if the directory exists or was created, False otherwise.
+    """
+    if os.path.exists(directory_path):
+        return True
+
+    print(f"\n  {directory_path} does not exist.")
+    while True:
+        user_input = input("Would you like to create it? [y/n]: ").strip().lower()
+        if user_input == 'y':
+            try:
+                os.makedirs(directory_path, exist_ok=True)
+                print(f"Directory created: {directory_path}")
+                return True
+            except OSError as e:
+                print(f"Failed to create directory: {e}")
+                return False
+        elif user_input == 'n':
+            print("Skipping directory creation.")
+            return False
+        else:
+            print("Please enter 'y' or 'n'.")
+
+
 @ignore_warnings(category=ConvergenceWarning)
 def embeddings_pipeline(models_path, dataset_localization, datasets_root, short_name,
                         datasets=["toto"], idx_region_evaluation=None, labels=["Sex"],
                         classifier_name='svm', overwrite=False, embeddings=True,
                         embeddings_only=False, use_best_model=False, subsets=['full'],
-                        epochs=[None], split='random', cv=5, splits_basedir=None, verbose=False):
+                        epochs=[None], split='random', cv=5, splits_basedir=None, verbose=False, ssh=False):
     """Pipeline to generate automatically the embeddings and compute the associated AUCs."""
     print("/!\\ Convergence warnings are disabled")
     # Gets function parameters to call it recursively with same parameters
     frame = inspect.currentframe()
     args, _, _, values = inspect.getargvalues(frame)
     args_function = {i: values[i] for i in args}
+    if not prompt_create_directory(models_path):
+        print("Aborting: directory was not created.")
+        exit(1)
+
     # walks recursively through the subfolders
     for name in os.listdir(models_path):
         sub_dir = models_path + '/' + name
@@ -665,8 +698,410 @@ def main():
         split=args.split,
         cv=args.cv,
         splits_basedir=args.splits_basedir if args.splits_basedir else None,
-        verbose=args.verbose
+        verbose=args.verbose,
     )
 
 if __name__ == "__main__":
     main()
+
+# #!/usr/bin/env python3
+# # -*- coding: utf-8 -*-
+# """
+# Script to generate embeddings and train classifiers for deep learning models.
+# """
+
+# import os
+# import sys
+# import yaml
+# import json
+# import omegaconf
+# import inspect
+# from abc import ABC, abstractmethod
+# from typing import List, Dict, Any, Optional
+# from sklearn.utils._testing import ignore_warnings
+# from sklearn.exceptions import ConvergenceWarning
+# from os.path import abspath, dirname, join, exists
+# from script_builder import ScriptBuilder
+# from generate_embeddings import compute_embeddings
+# from train_multiple_classifiers import train_classifiers
+# from utils_pipelines import get_save_folder_name, change_config_datasets, \
+#                           change_config_label, change_config_dataset_localization
+
+# # ====================== Population Strategy Pattern ======================
+
+# class PopulationStrategy(ABC):
+#     """Abstract base class for directory population strategies."""
+
+#     @abstractmethod
+#     def populate(self, source_path: str, target_path: str, **kwargs) -> bool:
+#         """Populate the target directory from the source."""
+#         pass
+
+# class LocalTarStrategy(PopulationStrategy):
+#     """Strategy to extract a local tar file."""
+
+#     def populate(self, source_path: str, target_path: str, **kwargs) -> bool:
+#         import tarfile
+#         if not exists(source_path):
+#             print(f"❌ Tar file not found: {source_path}")
+#             return False
+#         try:
+#             with tarfile.open(source_path, "r:*") as tar:
+#                 tar.extractall(path=target_path)
+#             print(f"✅ Extracted {source_path} to {target_path}")
+#             return True
+#         except Exception as e:
+#             print(f"❌ Failed to extract tar: {e}")
+#             return False
+
+# class HuggingFaceStrategy(PopulationStrategy):
+#     """Strategy to download from a Hugging Face repository."""
+
+#     def populate(self, source_path: str, target_path: str, **kwargs) -> bool:
+#         try:
+#             from huggingface_hub import snapshot_download
+#             token = kwargs.get("token", None)
+#             snapshot_download(
+#                 repo_id=source_path,
+#                 local_dir=target_path,
+#                 local_dir_use_symlinks=False,
+#                 token=token
+#             )
+#             print(f"✅ Downloaded {source_path} to {target_path}")
+#             return True
+#         except Exception as e:
+#             print(f"❌ Failed to download from Hugging Face: {e}")
+#             return False
+
+# class DirectoryPopulator:
+#     """Context to apply a population strategy."""
+
+#     def __init__(self, strategy: PopulationStrategy):
+#         self._strategy = strategy
+
+#     def set_strategy(self, strategy: PopulationStrategy):
+#         """Change the strategy at runtime."""
+#         self._strategy = strategy
+
+#     def populate(self, source_path: str, target_path: str, **kwargs) -> bool:
+#         """Ensure the directory exists and apply the strategy."""
+#         if not self._ensure_directory(target_path):
+#             return False
+#         return self._strategy.populate(source_path, target_path, **kwargs)
+
+#     @staticmethod
+#     def _ensure_directory(path: str) -> bool:
+#         """Create the directory if it doesn't exist."""
+#         try:
+#             os.makedirs(path, exist_ok=True)
+#             print(f"✅ Directory ready: {path}")
+#             return True
+#         except OSError as e:
+#             print(f"❌ Failed to create directory: {e}")
+#             return False
+
+# # ====================== Helper Functions ======================
+
+# def is_it_a_file(sub_dir: str) -> bool:
+#     """Check if path is a file."""
+#     if os.path.isdir(sub_dir):
+#         return False
+#     print(f"{sub_dir} is a file. Continue.")
+#     return True
+
+# def is_folder_a_model(sub_dir: str) -> bool:
+#     """Check if directory contains a model."""
+#     if exists(join(sub_dir, '.hydra', 'config.yaml')):
+#         return True
+#     print(f"\n{sub_dir} not associated to a model. Continue")
+#     return False
+
+# def is_folder_accepted_model(sub_dir: str) -> bool:
+#     """Check if model folder has an accepted structure."""
+#     if '#' in sub_dir:
+#         print("Model with an incompatible structure with the current one, because there is # in the name. Pass.")
+#         return False
+#     return True
+
+# def get_model_folder_name(epoch: Optional[int], folder_name: str) -> str:
+#     """Generate model folder name with epoch if specified."""
+#     if epoch is not None:
+#         return f"{folder_name}_epoch{epoch}"
+#     return folder_name
+
+# def print_config(cfg: omegaconf.OmegaConf, verbose: bool) -> None:
+#     """Print configuration if verbose mode is enabled."""
+#     if verbose:
+#         print("CONFIG FILE", type(cfg))
+#         print(json.dumps(omegaconf.OmegaConf.to_container(cfg, resolve=True), indent=4, sort_keys=True))
+
+# def save_classifier_config(cfg: omegaconf.OmegaConf, sub_dir: str) -> None:
+#     """Save classifier configuration to file."""
+#     with open(join(sub_dir, '.hydra', 'config_classifiers.yaml'), 'w') as file:
+#         yaml.dump(omegaconf.OmegaConf.to_yaml(cfg), file)
+
+# def reload_classifier_config(sub_dir: str) -> omegaconf.OmegaConf:
+#     """Reload classifier configuration."""
+#     return omegaconf.OmegaConf.load(join(sub_dir, '.hydra', 'config_classifiers.yaml'))
+
+# def check_if_compute_embedding(sub_dir: str, f_name: str, overwrite: bool, embeddings: bool, idx: int) -> tuple:
+#     """Check if embeddings need to be computed."""
+#     embeddings_path = join(sub_dir, f"{f_name}_embeddings")
+#     if exists(embeddings_path) and not overwrite:
+#         print(f"Model {f_name} already treated (existing folder with embeddings). Set overwrite to True if you still want to compute them.")
+#         return False, True
+
+#     if embeddings and idx == 0:
+#         return True, False
+#     return False, True
+
+# def do_we_classify(valid_path: bool, embeddings_only: bool) -> bool:
+#     """Determine if classification should be performed."""
+#     if valid_path and not embeddings_only:
+#         return True
+#     elif not valid_path:
+#         print('Invalid epoch number, skipped')
+#         return False
+#     return False
+
+# def preprocess_config(sub_dir: str, dataset_localization: str, datasets_root: str, datasets: List[str],
+#                      idx_region_evaluation: Optional[int], label: str, folder_name: str,
+#                      classifier_name: str = 'svm', epoch: Optional[int] = None,
+#                      split: str = 'random', cv: int = 5, splits_basedir: Optional[str] = None,
+#                      verbose: bool = False) -> omegaconf.OmegaConf:
+#     """Load and update model configuration."""
+#     if verbose:
+#         print(os.getcwd())
+
+#     cfg = omegaconf.OmegaConf.load(join(sub_dir, '.hydra', 'config.yaml'))
+
+#     # Update configuration
+#     change_config_datasets(cfg, datasets, datasets_root)
+#     change_config_label(cfg, label)
+#     change_config_dataset_localization(cfg, dataset_localization)
+
+#     # Load classifier config
+#     with open(join(os.getcwd(), f'configs/classifier/{classifier_name}.yaml'), 'r') as file:
+#         dataset_yaml = yaml.load(file, yaml.FullLoader)
+
+#     for key in dataset_yaml:
+#         cfg[key] = dataset_yaml[key]
+
+#     # Update paths and parameters
+#     cfg.model_path = sub_dir
+#     cfg.embeddings_save_path = join(sub_dir, f"{folder_name}_embeddings")
+#     cfg.training_embeddings = join(sub_dir, f"{folder_name}_embeddings")
+#     cfg.apply_transformations = False
+#     cfg.multiregion_single_encoder = False
+#     cfg.load_sparse = False
+
+#     if epoch is not None:
+#         cfg.epoch = epoch
+
+#     cfg.split = split
+#     if split == 'custom':
+#         cfg.splits_basedir = splits_basedir
+#     elif split == 'random':
+#         cfg.cv = cv
+
+#     if idx_region_evaluation is not None:
+#         cfg.idx_region_evaluation = idx_region_evaluation
+
+#     cfg.partition = [0.9, 0.1]
+#     return cfg
+
+# def process_model(sub_dir: str, **kwargs: Dict[str, Any]) -> None:
+#     """Process a single model directory."""
+#     print("\nTreating", sub_dir)
+
+#     # Extract parameters from kwargs
+#     dataset_localization = kwargs['dataset_localization']
+#     datasets_root = kwargs['datasets_root']
+#     datasets = kwargs['datasets']
+#     short_name = kwargs['short_name']
+#     split = kwargs['split']
+#     labels = kwargs['labels']
+#     classifier_name = kwargs['classifier_name']
+#     overwrite = kwargs['overwrite']
+#     embeddings = kwargs['embeddings']
+#     embeddings_only = kwargs['embeddings_only']
+#     use_best_model = kwargs['use_best_model']
+#     subsets = kwargs['subsets']
+#     epochs = kwargs['epochs']
+#     cv = kwargs['cv']
+#     splits_basedir = kwargs['splits_basedir']
+#     verbose = kwargs['verbose']
+#     idx_region_evaluation = kwargs['idx_region_evaluation']
+
+#     folder_name = get_save_folder_name(datasets=datasets, short_name=f"{short_name}_{split}")
+#     print("Start computing")
+
+#     for idx, label in enumerate(labels):
+#         for epoch in epochs:
+#             f_name = get_model_folder_name(epoch, folder_name)
+#             try:
+#                 # Preprocess config
+#                 cfg = preprocess_config(
+#                     sub_dir=sub_dir,
+#                     dataset_localization=dataset_localization,
+#                     datasets_root=datasets_root,
+#                     datasets=datasets,
+#                     idx_region_evaluation=idx_region_evaluation,
+#                     label=label,
+#                     folder_name=f_name,
+#                     classifier_name=classifier_name,
+#                     epoch=epoch,
+#                     split=split,
+#                     cv=cv,
+#                     splits_basedir=splits_basedir,
+#                     verbose=verbose
+#                 )
+
+#                 print_config(cfg, verbose)
+#                 save_classifier_config(cfg, sub_dir)
+
+#                 # Compute embeddings
+#                 do_we_compute_embeddings, valid_path = check_if_compute_embedding(
+#                     sub_dir, f_name, overwrite, embeddings, idx
+#                 )
+#                 if do_we_compute_embeddings:
+#                     valid_path = compute_embeddings(cfg, subsets=subsets)
+
+#                 # Train classifiers
+#                 cfg = reload_classifier_config(sub_dir)
+#                 if do_we_classify(valid_path, embeddings_only):
+#                     train_classifiers(cfg, subsets=subsets)
+
+#                 # Process best model if exists
+#                 best_model_path = join(sub_dir, 'logs', 'best_model_weights.pt')
+#                 if use_best_model and exists(best_model_path):
+#                     print("\nCOMPUTE AGAIN WITH THE BEST MODEL\n")
+#                     cfg = reload_classifier_config(sub_dir)
+#                     cfg.use_best_model = True
+
+#                     if embeddings and idx == 0:
+#                         _ = compute_embeddings(cfg, subsets=subsets)
+
+#                     cfg.training_embeddings = f"{cfg.embeddings_save_path}_best_model"
+#                     cfg.embeddings_save_path = f"{cfg.embeddings_save_path}_best_model"
+#                     train_classifiers(cfg, subsets=subsets)
+
+#             except OSError as e:
+#                 msg = str(e)
+#                 if "] " in msg:
+#                     msg = msg.split("] ", 1)[1]
+#                 print(f"The following warning can be normal if you have not generated this region in your dataset: {msg}")
+
+# def walk_models(models_path: str, callback: callable, **kwargs: Dict[str, Any]) -> None:
+#     """Recursively walk through models_path and apply callback to each valid model folder."""
+#     for name in os.listdir(models_path):
+#         sub_dir = join(models_path, name)
+
+#         if is_it_a_file(sub_dir):
+#             continue
+#         elif not is_folder_a_model(sub_dir):
+#             walk_models(sub_dir, callback, **kwargs)  # Recursive call
+#         elif not is_folder_accepted_model(sub_dir):
+#             continue
+#         else:
+#             callback(sub_dir, **kwargs)
+
+# # ====================== Main Script Class ======================
+
+# class RunEmbeddingsPipeline(ScriptBuilder):
+#     """Script for running embeddings pipeline to generate embeddings and train classifiers."""
+
+#     def __init__(self):
+#         super().__init__(
+#             script_name="run_embeddings_pipeline",
+#             description="Generating embeddings and training classifiers for deep learning models."
+#         )
+
+#         # Configure arguments using method chaining
+#         (self.add_required_argument("--models_path", "Path to the directory containing model folders.")
+#          .add_required_argument("--dataset_localization", "Key for dataset localization.")
+#          .add_required_argument("--datasets_root", "Root path to the dataset YAML configs.")
+#          .add_required_argument("--short_name", "Name of the directory where to store both embeddings and aucs.")
+#          .add_optional_argument("--datasets", "List of dataset names", default=["toto"], type_=str)
+#          .add_optional_argument("--labels", "List of labels", default=["Sex"], type_=str)
+#          .add_optional_argument("--classifier_name", "Classifier name", default="svm", type_=str)
+#          .add_flag("--overwrite", "Overwrite existing embeddings")
+#          .add_flag("--embeddings_only", "Only compute embeddings (skip classifiers)")
+#          .add_flag("--use_best_model", "Use the best model saved during training")
+#          .add_optional_argument("--subsets", "Subsets of data to train on", default=["full"], type_=str)
+#          .add_optional_argument("--epochs", "List of epochs to evaluate", default=["None"], type_=str)
+#          .add_optional_argument("--split", "Splitting strategy ('random' or 'custom')", default="random", type_=str)
+#          .add_optional_argument("--cv", "Number of cross-validation folds", default=5, type_=int)
+#          .add_optional_argument("--splits_basedir", "Directory for custom splits", default="", type_=str)
+#          .add_optional_argument("--idx_region_evaluation", "Index of the region to evaluate (for multi-head models)", default=None, type_=int)
+#          .add_flag("--verbose", "Enable verbose output")
+#          .add_optional_argument("--population_source", "Source for directory population ('local' or 'huggingface')", default=None, type_=str)
+#          .add_optional_argument("--population_source_path", "Path to the source for population (tar file or HF repo)", default=None, type_=str)
+#          .add_optional_argument("--hf_token", "Hugging Face token for private repositories", default=None, type_=str))
+
+#     @ignore_warnings(category=ConvergenceWarning)
+#     def run(self) -> int:
+#         """Execute the embeddings pipeline script."""
+#         print("/!\\ Convergence warnings are disabled")
+
+#         # Convert epochs to proper format
+#         epochs = []
+#         for epoch in self.args.epochs:
+#             if epoch.lower() == "none":
+#                 epochs.append(None)
+#             else:
+#                 epochs.append(int(epoch))
+
+#         # Validate paths
+#         if not self.validate_paths([self.args.models_path]):
+#             raise ValueError("Please input valid paths.")
+
+#         # Population step after directory validation
+#         if self.args.population_source:
+#             populator = DirectoryPopulator(LocalTarStrategy())  # Default to local tar
+
+#             if self.args.population_source == "huggingface":
+#                 populator.set_strategy(HuggingFaceStrategy())
+
+#             success = populator.populate(
+#                 source_path=self.args.population_source_path,
+#                 target_path=self.args.models_path,
+#                 token=self.args.hf_token
+#             )
+
+#             if not success:
+#                 print("❌ Failed to populate directory. Continuing with existing content.")
+
+#         # Prepare kwargs for the callback
+#         callback_kwargs = {
+#             'dataset_localization': self.args.dataset_localization,
+#             'datasets_root': self.args.datasets_root,
+#             'datasets': self.args.datasets,
+#             'short_name': self.args.short_name,
+#             'split': self.args.split,
+#             'labels': self.args.labels,
+#             'classifier_name': self.args.classifier_name,
+#             'overwrite': self.args.overwrite,
+#             'embeddings': True,
+#             'embeddings_only': self.args.embeddings_only,
+#             'use_best_model': self.args.use_best_model,
+#             'subsets': self.args.subsets,
+#             'epochs': epochs,
+#             'cv': self.args.cv,
+#             'splits_basedir': self.args.splits_basedir if self.args.splits_basedir else None,
+#             'verbose': self.args.verbose,
+#             'idx_region_evaluation': self.args.idx_region_evaluation
+#         }
+
+#         # Traverse directory and process models
+#         walk_models(self.args.models_path, process_model, **callback_kwargs)
+
+#         return 0
+
+# def main() -> int:
+#     """Main entry point."""
+#     script = RunEmbeddingsPipeline()
+#     return script.build().print_args().run()
+
+# if __name__ == "__main__":
+#     exit(main())

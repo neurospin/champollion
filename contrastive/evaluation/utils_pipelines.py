@@ -52,7 +52,8 @@ def change_config_datasets(config, new_datasets, new_datasets_root):
 
     # add the ones of the target datasets
     for dataset in new_datasets:
-        with open(os.getcwd() + f'/configs/dataset/{dataset}.yaml', 'r') as file:
+        with open("/volatile/home/bd285800/Documents/CEA_projects/champollion/data/TEST01/derivatives/champollion_V1", 'r') as file:
+        # with open(os.getcwd() + f'/configs/dataset/{dataset}.yaml', 'r') as file:
             dataset_yaml = yaml.load(file, yaml.FullLoader)
         config.dataset[dataset] = {}
         for key in dataset_yaml:
@@ -212,3 +213,21 @@ def save_outputs_as_csv(outputs, filenames, labels, csv_path=None, verbose=False
         df_outputs.to_csv(csv_path)
 
     return df_outputs
+
+# from contextlib import contextmanager
+# import subprocess
+# import getpass
+
+# @contextmanager
+# def sshfs_mount(remote_path, local_mount_point, ssh_user, ssh_host):
+#     """Context manager for SSHFS mounting."""
+#     os.makedirs(local_mount_point, exist_ok=True)
+#     password = getpass.getpass(f"Enter SSH password for {ssh_user}@{ssh_host}: ")
+#     mount_cmd = f"sshpass -p '{password}' sshfs {ssh_user}@{ssh_host}:{remote_path} {local_mount_point}"
+#     unmount_cmd = f"fusermount -u {local_mount_point}"
+
+#     try:
+#         subprocess.run(mount_cmd, shell=True, check=True)
+#         yield
+#     finally:
+#         subprocess.run(unmount_cmd, shell=True, check=True)

@@ -721,11 +721,15 @@ from typing import List, Dict, Any, Optional
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
 from os.path import abspath, dirname, join, exists
-from script_builder import ScriptBuilder
+from champollion_utils.script_builder import ScriptBuilder
 from generate_embeddings import compute_embeddings
 from train_multiple_classifiers import train_classifiers
 from utils_pipelines import get_save_folder_name, change_config_datasets, \
                           change_config_label, change_config_dataset_localization
+
+# Add parent directory to path to import config_manager
+sys.path.insert(0, dirname(dirname(abspath(__file__))))
+from config_manager import register_omegaconf_resolvers
 
 # ====================== Population Strategy Pattern ======================
 
@@ -1108,4 +1112,6 @@ def main() -> int:
     return script.build().print_args().run()
 
 if __name__ == "__main__":
+    # Register custom OmegaConf resolvers
+    register_omegaconf_resolvers()
     exit(main())

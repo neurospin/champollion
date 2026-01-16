@@ -9,6 +9,8 @@ replacing the hardcoded dataset references in utils_pipelines.py functions.
 
 import os
 import yaml
+import random as rd
+from datetime import datetime
 from typing import List, Dict, Optional, Any
 from omegaconf import DictConfig, OmegaConf
 import logging
@@ -16,6 +18,30 @@ import logging
 from .config_loader import ConfigLoader
 
 log = logging.getLogger(__name__)
+
+
+def register_omegaconf_resolvers():
+    """
+    Register custom OmegaConf resolvers needed by Champollion configs.
+
+    This function registers:
+    - 'now': Formats current datetime (e.g., ${now:%Y-%m-%d})
+    - 'get_train_seed': Returns random seed for training
+    """
+    # Check if resolvers are already registered to avoid duplicate registration
+    if not OmegaConf.has_resolver("now"):
+        OmegaConf.register_new_resolver(
+            "now",
+            lambda fmt: datetime.now().strftime(fmt)
+        )
+        log.debug("Registered 'now' OmegaConf resolver")
+
+    if not OmegaConf.has_resolver("get_train_seed"):
+        OmegaConf.register_new_resolver(
+            "get_train_seed",
+            lambda: rd.randint(0, 255)
+        )
+        log.debug("Registered 'get_train_seed' OmegaConf resolver")
 
 
 class HydraBridge:

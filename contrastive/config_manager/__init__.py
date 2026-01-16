@@ -9,7 +9,7 @@ more maintainable and flexible.
 from .dataset_registry import DatasetRegistry, DatasetConfig
 from .config_loader import ConfigLoader
 from .external_config_loader import ExternalConfigLoader
-from .hydra_bridge import HydraBridge
+from .hydra_bridge import HydraBridge, register_omegaconf_resolvers
 
 __all__ = [
     'DatasetRegistry',
@@ -17,4 +17,5 @@ __all__ = [
     'ConfigLoader',
     'ExternalConfigLoader',
     'HydraBridge',
+    'register_omegaconf_resolvers',
 ]

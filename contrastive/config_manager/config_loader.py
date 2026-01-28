@@ -31,8 +31,12 @@ class ConfigLoader:
         Initialize the config loader.
 
         Args:
-            config_root: Root directory for configuration files
+            config_root: Root directory for configuration files.
+                         If provided, dataset configs are loaded directly
+                         from this path. If None, uses default
+                         champollion_V1/contrastive/configs structure.
         """
+        self._external_config_root = config_root is not None
         self.config_root = config_root or self._get_default_config_root()
         self.dataset_registry = None
 
@@ -54,12 +58,19 @@ class ConfigLoader:
             DatasetRegistry instance
         """
         if self.dataset_registry is None or force_reload:
-            dataset_dir = os.path.join(self.config_root, "dataset")
+            # If using external config root, look directly in that directory
+            # If using default internal structure, look in config_root/dataset/
+            if self._external_config_root:
+                dataset_dir = self.config_root
+            else:
+                dataset_dir = os.path.join(self.config_root, "dataset")
+
             self.dataset_registry = DatasetRegistry(
                 config_dir=dataset_dir,
                 auto_discover=True
             )
-            log.info(f"Loaded {len(self.dataset_registry.list_datasets())} datasets")
+            n_datasets = len(self.dataset_registry.list_datasets())
+            log.info(f"Loaded {n_datasets} datasets from {dataset_dir}")
 
         return self.dataset_registry
 

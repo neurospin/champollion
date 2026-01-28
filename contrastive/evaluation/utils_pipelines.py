@@ -10,19 +10,32 @@ import pandas as pd
 from typing import List, Optional
 
 from contrastive.utils.logs import set_root_logger_level, set_file_logger
-from contrastive.config_manager import HydraBridge
+from contrastive.config_manager import HydraBridge, ConfigLoader
 
 log = set_file_logger(__file__)
 
 # Create global bridge instance for config management
 _bridge = None
+_current_config_root = None
 
 
-def _get_bridge() -> HydraBridge:
-    """Get or create global HydraBridge instance."""
-    global _bridge
-    if _bridge is None:
+def _get_bridge(config_root: Optional[str] = None) -> HydraBridge:
+    """Get or create HydraBridge instance.
+
+    Args:
+        config_root: Optional path to config directory. If provided and
+                     different from current, creates a new bridge instance.
+    """
+    global _bridge, _current_config_root
+
+    # If config_root is provided and different, create new bridge
+    if config_root is not None and config_root != _current_config_root:
+        _bridge = HydraBridge(ConfigLoader(config_root=config_root))
+        _current_config_root = config_root
+    elif _bridge is None:
         _bridge = HydraBridge()
+        _current_config_root = None
+
     return _bridge
 
 
@@ -44,7 +57,12 @@ def get_save_folder_name(datasets: List[str], short_name: Optional[str]) -> str:
     return bridge.get_save_folder_name(datasets, short_name)
 
 
-def change_config_datasets(config, new_datasets: List[str], new_datasets_root: Optional[str]):
+def change_config_datasets(
+    config,
+    new_datasets: List[str],
+    new_datasets_root: Optional[str],
+    config_root: Optional[str] = None
+):
     """Replace the 'dataset' entry of a config with the new target datasets.
 
     NOW USES CONFIG MANAGER: Loads datasets dynamically from DatasetRegistry
@@ -56,10 +74,11 @@ def change_config_datasets(config, new_datasets: List[str], new_datasets_root: O
           of a target yaml file or dataset in the registry.
         - new_datasets_root: if not None, takes the same regions as for training
           but with the new dataset.
+        - config_root: Optional path to dataset config directory.
 
     Works in place on the config object.
     """
-    bridge = _get_bridge()
+    bridge = _get_bridge(config_root)
     bridge.change_config_datasets(config, new_datasets, new_datasets_root)
 
 

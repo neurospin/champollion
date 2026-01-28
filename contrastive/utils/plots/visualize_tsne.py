@@ -67,11 +67,11 @@ def mscatter(x, y, ax=None, m=None, **kw):
 
 def compute_embeddings_skeletons(loader, model, num_outputs):
     X = torch.zeros([0, num_outputs]).cpu()
+    device = next(model.parameters()).device
     with torch.no_grad():
         for (inputs, filenames) in loader:
             # First views of the whole batch
-            inputs = inputs.cuda()
-            model = model.cuda()
+            inputs = inputs.to(device)
             X_i = model.forward(inputs[:, 0, :])
             # Second views of the whole batch
             X_j = model.forward(inputs[:, 1, :])

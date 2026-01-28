@@ -1009,7 +1009,8 @@ def process_model(sub_dir: str, **kwargs: Dict[str, Any]) -> None:
 
                     cfg.training_embeddings = f"{cfg.embeddings_save_path}_best_model"
                     cfg.embeddings_save_path = f"{cfg.embeddings_save_path}_best_model"
-                    train_classifiers(cfg, subsets=subsets)
+                    if do_we_classify(valid_path, embeddings_only):
+                        train_classifiers(cfg, subsets=subsets)
 
             except OSError as e:
                 msg = str(e)

@@ -160,3 +160,5 @@ sh_kraken
 
 # privacy
 # contrastive/configs/wandb/sweep.yaml
+
+*.prof

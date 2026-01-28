@@ -75,19 +75,29 @@ class HydraBridge:
 
         Args:
             config: OmegaConf config object
-            new_datasets: List of dataset names
-            new_datasets_root: Optional root path for datasets
+            new_datasets: List of dataset names (region names like 'SPoC_left')
+            new_datasets_root: Ignored for external configs. Dataset names are
+                               used directly as they correspond to region config files.
 
         Works in place on the config object.
         """
-        # If datasets_root is provided, use same regions as training but with new dataset
-        if new_datasets_root:
-            # Get current dataset regions
+        # For external configs, dataset names are used directly (e.g., 'SPoC_left')
+        # The datasets_root parameter is ignored since external configs don't use
+        # nested directory structures - they're flat files named by region.
+        #
+        # When datasets_root is provided but we're using external configs,
+        # we extract the region names from the current config and look them up directly.
+        if new_datasets_root and self.config_loader._external_config_root:
+            # Get current dataset regions (keys like 'old_dataset/SPoC_left')
             current_regions = list(config.get('dataset', {}).keys())
-
-            # Build new dataset paths
+            # Extract just the region part (last component)
+            new_datasets = [region.split('/')[-1] for region in current_regions]
+            log.debug(f"External config: using region names directly: {new_datasets}")
+        elif new_datasets_root:
+            # Internal config structure: prepend datasets_root to regions
+            current_regions = list(config.get('dataset', {}).keys())
             new_datasets = [
-                f"{new_datasets_root}/{region}" for region in current_regions
+                f"{new_datasets_root}/{region.split('/')[-1]}" for region in current_regions
             ]
 
         # Load datasets using registry
@@ -111,6 +121,9 @@ class HydraBridge:
 
         Drop-in replacement for utils_pipelines.change_config_label().
 
+        For external configs without label YAML files, this method simply sets
+        the label_names directly without loading additional config keys.
+
         Args:
             config: OmegaConf config object
             new_label: Name of target label
@@ -126,14 +139,20 @@ class HydraBridge:
                     if key in config:
                         del config[key]
             except FileNotFoundError:
-                log.warning(f"Old label config not found: {current_label}")
+                log.debug(f"Old label config not found (this is normal for external configs): {current_label}")
 
-        # Load and apply new label config
-        label_config = self.config_loader.load_label_config(new_label)
-        for key, value in label_config.items():
-            config[key] = value
-
-        log.info(f"Changed config label to: {new_label}")
+        # Try to load and apply new label config
+        try:
+            label_config = self.config_loader.load_label_config(new_label)
+            for key, value in label_config.items():
+                config[key] = value
+            log.info(f"Changed config label to: {new_label}")
+        except FileNotFoundError:
+            # For external configs, label YAML files may not exist.
+            # Just set label_names directly - the label column should exist in the data.
+            log.debug(f"Label config file not found for '{new_label}' - setting label_names directly")
+            config.label_names = [new_label]
+            log.info(f"Set label_names to: [{new_label}]")
 
     def change_config_dataset_localization(
         self,
@@ -145,14 +164,27 @@ class HydraBridge:
 
         Drop-in replacement for utils_pipelines.change_config_dataset_localization().
 
+        For external configs, dataset_localization files (like local.yaml) typically
+        don't exist in the external path. This method falls back to loading from
+        the internal champollion configs.
+
         Args:
             config: OmegaConf config object
             new_localization: Name of target localization
 
         Works in place on the config object.
         """
-        # Load and apply localization config
-        localization_config = self.config_loader.load_dataset_localization(new_localization)
+        # Try to load localization config, falling back to internal configs if needed
+        try:
+            localization_config = self.config_loader.load_dataset_localization(new_localization)
+        except FileNotFoundError:
+            if self.config_loader._external_config_root:
+                # Fall back to internal champollion configs for localization
+                log.debug(f"Localization config not found in external path, falling back to internal configs")
+                internal_loader = ConfigLoader()  # Uses default internal config root
+                localization_config = internal_loader.load_dataset_localization(new_localization)
+            else:
+                raise
 
         for key, value in localization_config.items():
             config[key] = value

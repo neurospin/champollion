@@ -173,7 +173,7 @@ class VicRegLoss(nn.Module):
         xNorm = (x - x.mean(0)) / x.std(0)
         yNorm = (y - y.mean(0)) / y.std(0)
         crossCorMat = (xNorm.T@yNorm) / bs
-        cross_loss = (crossCorMat*self.lmbd - torch.eye(emb, device=torch.device('cuda'))*self.lmbd).pow(2).sum()
+        cross_loss = (crossCorMat*self.lmbd - torch.eye(emb, device=self.device)*self.lmbd).pow(2).sum()
         
         loss = self.u*var_loss + self.v*invar_loss + cross_loss
 

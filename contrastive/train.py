@@ -46,6 +46,7 @@ import numpy.random as rd
 import pytorch_lightning as pl
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.profilers import PyTorchProfiler, SimpleProfiler
 import wandb
 import omegaconf
 from torch.utils.tensorboard import SummaryWriter
@@ -174,16 +175,41 @@ def train(config):
                                               save_dir=os.getcwd())
         loggers.append(wandb_logger)
 
+    # Configure device (CPU or GPU)
+    if config.device == 'cuda':
+        accelerator = 'gpu'
+        devices = 1
+    else:
+        accelerator = 'cpu'
+        devices = 'auto'
+
+    # Configure profiler if enabled
+    profiler = None
+    if config.get('enable_profiling', False):
+        profiler_type = config.get('profiler_type', 'pytorch')
+        output_dir = config.get('profiler_output_dir', './profiler_logs')
+
+        if profiler_type == 'simple':
+            profiler = SimpleProfiler(dirpath=output_dir, filename="simple_profiler")
+        else:
+            profiler = PyTorchProfiler(
+                dirpath=output_dir,
+                filename="pytorch_profiler",
+                export_to_chrome=config.get('export_chrome_trace', True),
+                row_limit=20
+            )
+
     trainer = pl.Trainer(
-        accelerator='gpu',
-        devices=1,
+        accelerator=accelerator,
+        devices=devices,
         max_epochs=config.max_epochs,
         #callbacks=callbacks,
         logger=loggers,
         #flush_logs_every_n_steps=config.nb_steps_per_flush_logs,
         log_every_n_steps=config.log_every_n_steps,
         #auto_lr_find=True
-        accumulate_grad_batches=config.accumulate_grad_batches
+        accumulate_grad_batches=config.accumulate_grad_batches,
+        profiler=profiler
         )
 
     # start training

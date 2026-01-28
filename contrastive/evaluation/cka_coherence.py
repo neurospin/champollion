@@ -503,16 +503,15 @@ def test_models_coherence_from_directory(
     Test coherence of all models in a directory.
 
     This is a convenience function that automatically discovers models
-    in a directory structure and tests their coherence.
+    in a directory structure and tests their coherence using recursive search.
 
     Parameters
     ----------
     models_dir : str
         Directory containing model subdirectories.
-        Each subdirectory should contain embeddings CSV files.
+        CSV files are searched recursively within this directory.
     embedding_filename : str, optional
-        Name of the embedding file to look for in each model directory.
-        Default is 'full_embeddings.csv'.
+        Name of the embedding file to look for. Default is 'full_embeddings.csv'.
     output_dir : str, optional
         Directory to save results. If None, uses models_dir/cka_coherence.
     subject_column : str, optional
@@ -533,30 +532,36 @@ def test_models_coherence_from_directory(
     ... )
     >>> print(f"Mean coherence: {stats['mean_cka']:.4f}")
     """
-    models_dir = Path(models_dir)
+    models_dir_path = Path(models_dir)
 
-    if not models_dir.exists():
+    if not models_dir_path.exists():
         raise FileNotFoundError(f"Models directory not found: {models_dir}")
 
-    # Discover embedding files
+    # Recursively search for embedding files
     embedding_paths = {}
-    for model_subdir in models_dir.iterdir():
-        if not model_subdir.is_dir():
-            continue
+    found_files = list(models_dir_path.rglob(embedding_filename))
 
-        embedding_file = model_subdir / embedding_filename
-        if embedding_file.exists():
-            model_name = model_subdir.name
-            embedding_paths[model_name] = str(embedding_file)
-            log.info(f"Found embeddings for model: {model_name}")
-
-    if not embedding_paths:
+    if not found_files:
         raise ValueError(
-            f"No embedding files found in {models_dir}. "
-            f"Looking for files named '{embedding_filename}'"
+            f"No embedding files named '{embedding_filename}' found "
+            f"recursively in {models_dir}"
         )
 
-    log.info(f"Found {len(embedding_paths)} models with embeddings")
+    for embedding_file in found_files:
+        # Extract model name from the directory containing the CSV
+        # Use the immediate parent directory name as the model name
+        model_name = embedding_file.parent.name
+
+        # Handle duplicate model names by using more path context
+        if model_name in embedding_paths:
+            # Use relative path to disambiguate
+            relative_path = embedding_file.relative_to(models_dir_path)
+            model_name = str(relative_path.parent).replace('/', '_')
+
+        embedding_paths[model_name] = str(embedding_file)
+        log.info(f"Found embeddings for model: {model_name} at {embedding_file}")
+
+    log.info(f"Found {len(embedding_paths)} models with embeddings (recursive search)")
 
     # Run analysis
     tester = CKACoherenceTester(embedding_paths, subject_column)
@@ -564,7 +569,7 @@ def test_models_coherence_from_directory(
 
     # Save results
     if output_dir is None:
-        output_dir = models_dir / 'cka_coherence'
+        output_dir = str(models_dir_path / 'cka_coherence')
 
     os.makedirs(output_dir, exist_ok=True)
     tester.save_results(str(output_dir))

@@ -628,9 +628,10 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         This includes the projection head"""
 
         # Initialization
-        X = torch.zeros([0, self.output_shape]).cuda()
+        device = torch.device(self.config.device)
+        X = torch.zeros([0, self.output_shape]).to(device)
         labels_all = torch.zeros(
-            [0, len(self.config.label_names)]).cuda()
+            [0, len(self.config.label_names)]).to(device)
         filenames_list = []
         transform = ToPointnetTensor()
 
@@ -644,15 +645,15 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     inputs, filenames, idx_region = self.get_full_inputs_from_batch_with_region_idx(batch)
                 else:
                     inputs, filenames = self.get_full_inputs_from_batch(batch)
-                
+
                 # First views of the whole batch
-                inputs = change_list_device(inputs, 'cuda')
+                inputs = change_list_device(inputs, self.config.device)
                 # model = self.cuda()
                 input_i = [inputs[i][:, 0, ...] for i in range(self.n_datasets)]
                 input_j = [inputs[i][:, 1, ...] for i in range(self.n_datasets)]
                 if self.config.backbone_name == 'pointnet':
-                    input_i = transform(input_i.cpu()).cuda().to(torch.float)
-                    input_j = transform(input_j.cpu()).cuda().to(torch.float)
+                    input_i = transform(input_i.cpu()).to(device).to(torch.float)
+                    input_j = transform(input_j.cpu()).to(device).to(torch.float)
                 if self.config.multiple_projection_heads:
                     X_i = self.forward(input_i, idx_region=idx_region)
                     X_j = self.forward(input_j, idx_region=idx_region)
@@ -664,7 +665,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                 # First views and second views are put side by side
                 X_reordered = torch.cat([X_i, X_j], dim=-1)
                 X_reordered = X_reordered.view(-1, X_i.shape[-1])
-                X = torch.cat((X, X_reordered.cuda()), dim=0)
+                X = torch.cat((X, X_reordered.to(device)), dim=0)
 
                 # concat filenames
                 filenames_duplicate = [item
@@ -679,7 +680,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     labels_reordered = torch.cat([labels, labels], dim=-1)
                     labels_reordered = labels_reordered.view(-1, labels.shape[-1])
                     # At the end, labels are concatenated
-                    labels_all = torch.cat((labels_all, labels_reordered.cuda()),
+                    labels_all = torch.cat((labels_all, labels_reordered.to(device)),
                                         dim=0)
         
         if self.config.with_labels:
@@ -739,6 +740,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         This includes the projection head"""
 
         # Initialization
+        device = torch.device(self.config.device)
         X = torch.zeros([0, 2, 20, 40, 40]).cpu()
         filenames_list = []
 
@@ -752,8 +754,8 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                 else:
                     (inputs, filenames) = self.get_full_inputs_from_batch(batch)
                 # First views of the whole batch
-                inputs = change_list_device(inputs, 'cuda')
-                model = self.cuda()
+                inputs = change_list_device(inputs, self.config.device)
+                model = self.to(device)
                 X_i = model.forward(inputs[:, 0, :])
                 print(f"shape X and X_i: {X.shape}, {X_i.shape}")
                 # First views re put side by side
@@ -780,10 +782,11 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         the linear layer is not in the backbone."""
 
         # Initialization
+        device = torch.device(self.config.device)
         X = torch.zeros(
-            [0, self.num_representation_features]).cuda()
+            [0, self.num_representation_features]).to(device)
         labels_all = torch.zeros(
-            [0, len(self.config.label_names)]).cuda()
+            [0, len(self.config.label_names)]).to(device)
         filenames_list = []
 
         # Computes representation (without gradient computation)
@@ -795,14 +798,8 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     inputs, filenames = self.get_full_inputs_from_batch(batch)
                 
                # deal with devices
-                if self.config.device != 'cpu':
-                    inputs = change_list_device(inputs, 'cuda')
-                else:
-                    inputs = change_list_device(inputs, 'cpu')
-                if self.config.device != 'cpu':
-                    model = self.cuda()
-                else:
-                    model = self.cpu()
+                inputs = change_list_device(inputs, self.config.device)
+                model = self.to(device)
                 # deal with pointnet
                 if self.config.backbone_name == 'pointnet':
                     inputs = torch.squeeze(inputs).to(torch.float)
@@ -837,7 +834,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                 # First views and second views are put side by side
                 X_reordered = torch.cat([X_i, X_j], dim=-1)
                 X_reordered = X_reordered.view(-1, X_i.shape[-1])
-                X = torch.cat((X, X_reordered.cuda()), dim=0)
+                X = torch.cat((X, X_reordered.to(device)), dim=0)
                 # print(f"filenames = {filenames}")
                 filenames_duplicate = [
                     item for item in filenames
@@ -851,7 +848,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     labels_reordered = torch.cat([labels, labels], dim=-1)
                     labels_reordered = labels_reordered.view(-1, labels.shape[-1])
                     # At the end, labels are concatenated
-                    labels_all = torch.cat((labels_all, labels_reordered.cuda()),
+                    labels_all = torch.cat((labels_all, labels_reordered.to(device)),
                                         dim=0)
         
         if self.config.with_labels:

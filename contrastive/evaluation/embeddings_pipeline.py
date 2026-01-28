@@ -868,11 +868,23 @@ def do_we_classify(valid_path: bool, embeddings_only: bool) -> bool:
         return False
     return False
 
-def preprocess_config(sub_dir: str, dataset_localization: str, datasets_root: str, datasets: List[str],
-                     idx_region_evaluation: Optional[int], label: str, folder_name: str,
-                     classifier_name: str = 'svm', epoch: Optional[int] = None,
-                     split: str = 'random', cv: int = 5, splits_basedir: Optional[str] = None,
-                     verbose: bool = False) -> omegaconf.OmegaConf:
+def preprocess_config(
+    sub_dir: str,
+    dataset_localization: str,
+    datasets_root: str,
+    datasets: List[str],
+    idx_region_evaluation: Optional[int],
+    label: str,
+    folder_name: str,
+    classifier_name: str = 'svm',
+    epoch: Optional[int] = None,
+    split: str = 'random',
+    cv: int = 5,
+    splits_basedir: Optional[str] = None,
+    verbose: bool = False,
+    config_path: Optional[str] = None,
+    cpu: bool = False
+) -> omegaconf.OmegaConf:
     """Load and update model configuration."""
     if verbose:
         print(os.getcwd())
@@ -880,7 +892,7 @@ def preprocess_config(sub_dir: str, dataset_localization: str, datasets_root: st
     cfg = omegaconf.OmegaConf.load(join(sub_dir, '.hydra', 'config.yaml'))
 
     # Update configuration
-    change_config_datasets(cfg, datasets, datasets_root)
+    change_config_datasets(cfg, datasets, datasets_root, config_root=config_path)
     change_config_label(cfg, label)
     change_config_dataset_localization(cfg, dataset_localization)
 
@@ -912,6 +924,11 @@ def preprocess_config(sub_dir: str, dataset_localization: str, datasets_root: st
         cfg.idx_region_evaluation = idx_region_evaluation
 
     cfg.partition = [0.9, 0.1]
+
+    # Override device if CPU mode is requested
+    if cpu:
+        cfg.device = 'cpu'
+
     return cfg
 
 def process_model(sub_dir: str, **kwargs: Dict[str, Any]) -> None:
@@ -936,6 +953,8 @@ def process_model(sub_dir: str, **kwargs: Dict[str, Any]) -> None:
     splits_basedir = kwargs['splits_basedir']
     verbose = kwargs['verbose']
     idx_region_evaluation = kwargs['idx_region_evaluation']
+    config_path = kwargs.get('config_path')
+    cpu = kwargs.get('cpu', False)
 
     folder_name = get_save_folder_name(datasets=datasets, short_name=f"{short_name}_{split}")
     print("Start computing")
@@ -958,7 +977,9 @@ def process_model(sub_dir: str, **kwargs: Dict[str, Any]) -> None:
                     split=split,
                     cv=cv,
                     splits_basedir=splits_basedir,
-                    verbose=verbose
+                    verbose=verbose,
+                    config_path=config_path,
+                    cpu=cpu
                 )
 
                 print_config(cfg, verbose)
@@ -1045,7 +1066,9 @@ class RunEmbeddingsPipeline(ScriptBuilder):
          .add_flag("--verbose", "Enable verbose output")
          .add_optional_argument("--population_source", "Source for directory population ('local' or 'huggingface')", default=None, type_=str)
          .add_optional_argument("--population_source_path", "Path to the source for population (tar file or HF repo)", default=None, type_=str)
-         .add_optional_argument("--hf_token", "Hugging Face token for private repositories", default=None, type_=str))
+         .add_optional_argument("--hf_token", "Hugging Face token for private repositories", default=None, type_=str)
+         .add_optional_argument("--config_path", "Path to dataset config directory", default=None, type_=str)
+         .add_flag("--cpu", "Force CPU usage (disable CUDA)"))
 
     @ignore_warnings(category=ConvergenceWarning)
     def run(self) -> int:
@@ -1098,7 +1121,9 @@ class RunEmbeddingsPipeline(ScriptBuilder):
             'cv': self.args.cv,
             'splits_basedir': self.args.splits_basedir if self.args.splits_basedir else None,
             'verbose': self.args.verbose,
-            'idx_region_evaluation': self.args.idx_region_evaluation
+            'idx_region_evaluation': self.args.idx_region_evaluation,
+            'config_path': self.args.config_path,
+            'cpu': self.args.cpu
         }
 
         # Traverse directory and process models

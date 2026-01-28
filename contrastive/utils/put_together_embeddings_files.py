@@ -46,15 +46,19 @@ def put_together_embeddings_files(embeddings_subpath, output_path, path_champoll
 
     model_paths = get_model_paths(path_champollion)
 
-    model_paths
-
     if not os.path.exists(output_path):
         os.mkdir(output_path)
 
+    # Normalize path_champollion for consistent splitting
+    path_champollion_normalized = path_champollion.rstrip('/')
+
     for model_path in model_paths:
         file_input_name = f"{model_path}/{embeddings_subpath}"
-        region = model_path.split('Champollion_V1_after_ablation/')[1].split('/')[0]
-        model = model_path.split(region+'/')[1].replace("/", "--").replace("_", "--")
+        # Extract region and model from relative path within path_champollion
+        relative_path = model_path.replace(path_champollion_normalized + '/', '')
+        parts = relative_path.split('/')
+        region = parts[0] if parts else 'unknown'
+        model = '--'.join(parts[1:]).replace("_", "--") if len(parts) > 1 else 'model'
         file_output_name = f"{output_path}/{region}_{model}_embeddings.csv"
         try:
             shutil.copyfile(file_input_name, file_output_name)

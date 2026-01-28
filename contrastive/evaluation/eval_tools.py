@@ -227,7 +227,7 @@ def compute_loss(dico_set_loaders, model, loss_type, root_dir):
     torch.backends.cudnn.benchmark = False
 
     list_loss = []
-    device = torch.device("cuda", index=0)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     model.eval()
     encoded_out = True
@@ -400,7 +400,7 @@ def test_model(skeleton, dico_set_loaders, model, loss_type):
 
     """
     list_loss = []
-    device = torch.device("cuda", index=0)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     model.eval()
     encoded_out = True

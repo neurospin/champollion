@@ -1,102 +1,116 @@
 # File that contains auxiliary functions needed for either (or both) embeddings_pipeline
 # and supervised_pipeline
+#
+# UPDATED: Now uses Config Manager for dynamic dataset loading instead of hardcoded paths
 
 import os
 import yaml
 import re
 import pandas as pd
+from typing import List, Optional
 
 from contrastive.utils.logs import set_root_logger_level, set_file_logger
+from contrastive.config_manager import HydraBridge, ConfigLoader
 
 log = set_file_logger(__file__)
 
+# Create global bridge instance for config management
+_bridge = None
+_current_config_root = None
 
 
-def get_save_folder_name(datasets, short_name):
+def _get_bridge(config_root: Optional[str] = None) -> HydraBridge:
+    """Get or create HydraBridge instance.
+
+    Args:
+        config_root: Optional path to config directory. If provided and
+                     different from current, creates a new bridge instance.
+    """
+    global _bridge, _current_config_root
+
+    # If config_root is provided and different, create new bridge
+    if config_root is not None and config_root != _current_config_root:
+        _bridge = HydraBridge(ConfigLoader(config_root=config_root))
+        _current_config_root = config_root
+    elif _bridge is None:
+        _bridge = HydraBridge()
+        _current_config_root = None
+
+    return _bridge
+
+
+# ====================== Config Management Functions ======================
+# These functions now use the Config Manager for dynamic dataset loading
+
+def get_save_folder_name(datasets: List[str], short_name: Optional[str]) -> str:
     """Creates a file name from the names of the target datasets or an
     explicit option.
-    
+
     Arguments:
         - datasets: list of str. Contains the names of the target datasets.
-        - short_name: str or None. Default answer by the algorithm if not None."""
-    if short_name is not None:
-        folder_name = short_name
-    else:
-        folder_name = ''
-        for dataset in datasets:
-            folder_name = folder_name + dataset + '_'
-        folder_name = folder_name[:-1]  # remove the last _
-    
-    return folder_name
+        - short_name: str or None. Default answer by the algorithm if not None.
+
+    Returns:
+        - folder_name: str. The generated folder name.
+    """
+    bridge = _get_bridge()
+    return bridge.get_save_folder_name(datasets, short_name)
 
 
-def change_config_datasets(config, new_datasets, new_datasets_root):
-    """Replace the 'dataset' entry of a config 
-    with the new target datasets. Works in place.
-    
+def change_config_datasets(
+    config,
+    new_datasets: List[str],
+    new_datasets_root: Optional[str],
+    config_root: Optional[str] = None
+):
+    """Replace the 'dataset' entry of a config with the new target datasets.
+
+    NOW USES CONFIG MANAGER: Loads datasets dynamically from DatasetRegistry
+    instead of using hardcoded paths.
+
     Arguments:
         - config: a config object (omegaconf).
-        - new_datasets: list of str, each corresponding to the name 
-        of a target yaml file.
-        - new_datasets_root: if not none, takes the same regions as for training but with the new dataset"""
-    
-    # replace the datasets
-    
-    if new_datasets_root:
-        new_datasets = [f"{new_datasets_root}/{region}"
-                        for region in config['dataset']
-                        ]
+        - new_datasets: list of str, each corresponding to the name
+          of a target yaml file or dataset in the registry.
+        - new_datasets_root: if not None, takes the same regions as for training
+          but with the new dataset.
+        - config_root: Optional path to dataset config directory.
 
-    # remove the keys of the older datasets
-    config['dataset'] = {}
-
-    # add the ones of the target datasets
-    for dataset in new_datasets:
-        with open("/volatile/home/bd285800/Documents/CEA_projects/champollion/data/TEST01/derivatives/champollion_V1", 'r') as file:
-        # with open(os.getcwd() + f'/configs/dataset/{dataset}.yaml', 'r') as file:
-            dataset_yaml = yaml.load(file, yaml.FullLoader)
-        config.dataset[dataset] = {}
-        for key in dataset_yaml:
-            config.dataset[dataset][key] = dataset_yaml[key]
+    Works in place on the config object.
+    """
+    bridge = _get_bridge(config_root)
+    bridge.change_config_datasets(config, new_datasets, new_datasets_root)
 
 
-def change_config_label(config, new_label):
-    """Replace the 'label' entry of a config 
-    with the new target label. Works in place.
-    
+def change_config_label(config, new_label: str):
+    """Replace the 'label' entry of a config with the new target label.
+
+    NOW USES CONFIG MANAGER: Loads label config from ConfigLoader.
+
     Arguments:
         - config: a config object (omegaconf).
-        - new_label: str corresponding to the name 
-        of a target yaml file."""
-    
-    # remove the keywords of the old label
-    if 'label_names' in config.keys():
-        current_label = config.label_names[0]
-        with open(os.getcwd() + f'/configs/label/{current_label}.yaml', 'r') as file:
-            old_label_yaml = yaml.load(file, yaml.FullLoader)
-        for key in old_label_yaml:
-            config.pop(key)
+        - new_label: str corresponding to the name of a target yaml file.
 
-    # add the ones of the target label
-    with open(os.getcwd() + f'/configs/label/{new_label}.yaml', 'r') as file:
-        label_yaml = yaml.load(file, yaml.FullLoader)
-    for key in label_yaml:
-        config[key] = label_yaml[key]
+    Works in place on the config object.
+    """
+    bridge = _get_bridge()
+    bridge.change_config_label(config, new_label)
 
 
-def change_config_dataset_localization(config, new_localization):
-    """Replace the 'dataset_localization' entry of a config 
-    with the new target dataset localization. Works in place.
-    
+def change_config_dataset_localization(config, new_localization: str):
+    """Replace the 'dataset_localization' entry of a config with the new
+    target dataset localization.
+
+    NOW USES CONFIG MANAGER: Loads localization config from ConfigLoader.
+
     Arguments:
         - config: a config object (omegaconf).
-        - new_localization: str corresponding to the name 
-        of a target yaml file."""
-    
-    # Replaces datset_localization with the new localization
-    with open(os.getcwd() + f'/configs/dataset_localization/{new_localization}.yaml', 'r') as file:
-        dataset_localization_yaml = yaml.load(file, yaml.FullLoader)
-    config["dataset_folder"] = dataset_localization_yaml["dataset_folder"]
+        - new_localization: str corresponding to the name of a target yaml file.
+
+    Works in place on the config object.
+    """
+    bridge = _get_bridge()
+    bridge.change_config_dataset_localization(config, new_localization)
 
 
 def save_used_datasets(save_path, datasets):

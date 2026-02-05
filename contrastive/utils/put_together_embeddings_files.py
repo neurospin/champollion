@@ -45,6 +45,11 @@ def get_model_paths(dir_path, result = None):
 def put_together_embeddings_files(embeddings_subpath, output_path, path_champollion):
 
     model_paths = get_model_paths(path_champollion)
+    print(f"Found {len(model_paths)} model(s) in {path_champollion}")
+
+    if not model_paths:
+        print("WARNING: No models found. Check that path_champollion contains folders with .hydra/config.yaml")
+        return
 
     if not os.path.exists(output_path):
         os.mkdir(output_path)
@@ -52,6 +57,7 @@ def put_together_embeddings_files(embeddings_subpath, output_path, path_champoll
     # Normalize path_champollion for consistent splitting
     path_champollion_normalized = path_champollion.rstrip('/')
 
+    copied_count = 0
     for model_path in model_paths:
         file_input_name = f"{model_path}/{embeddings_subpath}"
         # Extract region and model from relative path within path_champollion
@@ -60,20 +66,24 @@ def put_together_embeddings_files(embeddings_subpath, output_path, path_champoll
         region = parts[0] if parts else 'unknown'
         model = '--'.join(parts[1:]).replace("_", "--") if len(parts) > 1 else 'model'
         file_output_name = f"{output_path}/{region}_{model}_embeddings.csv"
+
+        if not os.path.exists(file_input_name):
+            print(f"  Skipping (not found): {file_input_name}")
+            continue
+
         try:
             shutil.copyfile(file_input_name, file_output_name)
+            copied_count += 1
+            print(f"  Copied: {region}_{model}_embeddings.csv")
         except OSError as e:
-            msg = str(e)
-            if "] " in msg:
-                msg = msg.split("] ", 1)[1]
-            print(f"The following warning can be normal if you have not generated this region in your dataset: {msg}")
+            print(f"  Error copying {file_input_name}: {e}")
 
     nb_csv = len(glob.glob(f"{output_path}/*.csv"))
-    print(f"{nb_csv} embeddings copied in {output_path}")
+    print(f"\n{copied_count} file(s) copied, {nb_csv} CSV(s) in {output_path}")
     if nb_csv > 0:
         print("DONE!")
     else:
-        print("WARNING: no embeddings in output directory {output_path}")
+        print(f"WARNING: no embeddings in output directory {output_path}")
 
 # path_champollion = "/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation"
 # embeddings_subpath = "testxx_random_embeddings/full_embeddings.csv"

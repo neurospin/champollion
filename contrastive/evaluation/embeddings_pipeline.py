@@ -934,6 +934,18 @@ def preprocess_config(
     if nb_jobs is not None:
         cfg.num_cpu_workers = nb_jobs
 
+    # Safety cap: never exceed available CPUs
+    try:
+        available = len(os.sched_getaffinity(0))
+        if cfg.num_cpu_workers > available:
+            print(
+                f"  Capping num_cpu_workers from "
+                f"{cfg.num_cpu_workers} to {available}"
+            )
+            cfg.num_cpu_workers = available
+    except (AttributeError, OSError):
+        pass  # sched_getaffinity not available on all platforms
+
     return cfg
 
 def process_model(sub_dir: str, **kwargs: Dict[str, Any]) -> None:

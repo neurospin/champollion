@@ -883,7 +883,8 @@ def preprocess_config(
     splits_basedir: Optional[str] = None,
     verbose: bool = False,
     config_path: Optional[str] = None,
-    cpu: bool = False
+    cpu: bool = False,
+    nb_jobs: Optional[int] = None
 ) -> omegaconf.OmegaConf:
     """Load and update model configuration."""
     if verbose:
@@ -929,6 +930,10 @@ def preprocess_config(
     if cpu:
         cfg.device = 'cpu'
 
+    # Override num_cpu_workers if specified via CLI
+    if nb_jobs is not None:
+        cfg.num_cpu_workers = nb_jobs
+
     return cfg
 
 def process_model(sub_dir: str, **kwargs: Dict[str, Any]) -> None:
@@ -955,6 +960,7 @@ def process_model(sub_dir: str, **kwargs: Dict[str, Any]) -> None:
     idx_region_evaluation = kwargs['idx_region_evaluation']
     config_path = kwargs.get('config_path')
     cpu = kwargs.get('cpu', False)
+    nb_jobs = kwargs.get('nb_jobs')
 
     folder_name = get_save_folder_name(datasets=datasets, short_name=f"{short_name}_{split}")
     print("Start computing")
@@ -979,7 +985,8 @@ def process_model(sub_dir: str, **kwargs: Dict[str, Any]) -> None:
                     splits_basedir=splits_basedir,
                     verbose=verbose,
                     config_path=config_path,
-                    cpu=cpu
+                    cpu=cpu,
+                    nb_jobs=nb_jobs
                 )
 
                 print_config(cfg, verbose)
@@ -1069,7 +1076,8 @@ class RunEmbeddingsPipeline(ScriptBuilder):
          .add_optional_argument("--population_source_path", "Path to the source for population (tar file or HF repo)", default=None, type_=str)
          .add_optional_argument("--hf_token", "Hugging Face token for private repositories", default=None, type_=str)
          .add_optional_argument("--config_path", "Path to dataset config directory", default=None, type_=str)
-         .add_flag("--cpu", "Force CPU usage (disable CUDA)"))
+         .add_flag("--cpu", "Force CPU usage (disable CUDA)")
+         .add_optional_argument("--nb_jobs", "Number of CPU workers for DataLoader", default=None, type_=int))
 
     @ignore_warnings(category=ConvergenceWarning)
     def run(self) -> int:
@@ -1124,7 +1132,8 @@ class RunEmbeddingsPipeline(ScriptBuilder):
             'verbose': self.args.verbose,
             'idx_region_evaluation': self.args.idx_region_evaluation,
             'config_path': self.args.config_path,
-            'cpu': self.args.cpu
+            'cpu': self.args.cpu,
+            'nb_jobs': self.args.nb_jobs
         }
 
         # Traverse directory and process models

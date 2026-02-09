@@ -716,6 +716,7 @@ import yaml
 import json
 import omegaconf
 import inspect
+import torch
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional
 from sklearn.utils._testing import ignore_warnings
@@ -944,7 +945,24 @@ def preprocess_config(
             )
             cfg.num_cpu_workers = available
     except (AttributeError, OSError):
-        pass  # sched_getaffinity not available on all platforms
+        available = None
+
+    # Container-only optimisations: reduce overhead for single-subject
+    # inference on constrained hardware (e.g. 2-CPU HuggingFace Spaces).
+    if os.environ.get("CHAMPOLLION_CONTAINER"):
+        ncpus = available if available is not None else 2
+        torch.set_num_threads(ncpus)
+        torch.set_num_interop_threads(1)
+        os.environ["OMP_NUM_THREADS"] = str(ncpus)
+        os.environ["MKL_NUM_THREADS"] = str(ncpus)
+
+        cfg.num_cpu_workers = 0   # in-process loading, no fork overhead
+        cfg.pin_mem = False       # pin_memory is useless on CPU
+
+        print(
+            f"  Container mode: torch threads={ncpus}, "
+            f"num_cpu_workers=0, pin_mem=False"
+        )
 
     return cfg
 

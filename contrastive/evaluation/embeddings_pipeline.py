@@ -952,7 +952,10 @@ def preprocess_config(
     if os.environ.get("CHAMPOLLION_CONTAINER"):
         ncpus = available if available is not None else 2
         torch.set_num_threads(ncpus)
-        torch.set_num_interop_threads(1)
+        try:
+            torch.set_num_interop_threads(1)
+        except RuntimeError:
+            pass  # Already configured on a previous model
         os.environ["OMP_NUM_THREADS"] = str(ncpus)
         os.environ["MKL_NUM_THREADS"] = str(ncpus)
 

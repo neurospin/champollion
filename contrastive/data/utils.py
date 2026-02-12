@@ -259,6 +259,11 @@ def extract_labels(subject_labels, subjects):
 
 def extract_train_and_val_subjects(train_val_subjects, partition, seed):
     """Extracts traing and validation dataset from a train_val dataset"""
+    # Single subject (or empty): skip split, put all in train
+    if len(train_val_subjects) <= 1:
+        log.info("Single subject: skipping train/val split, all assigned to train.")
+        return train_val_subjects, pd.DataFrame([], columns=train_val_subjects.columns)
+
     # Split training/val set into train and validation set
     size_partitions = [round(i * (len(train_val_subjects))) for i in partition]
     # to be sure the sum of train and val sizes is train_val's one

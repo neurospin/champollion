@@ -44,6 +44,12 @@ and classifiers training), looped on a given directory.
 requires no config modification, as the relevant information is either taken from
 the model config, or directly specified in the script.
 
+cka_coherence.py
+----------------
+``cka_coherence`` computes pairwise Linear CKA (Centered Kernel Alignment) between
+embedding matrices from different models to measure representation similarity.
+It recursively discovers ``full_embeddings.csv`` files in a directory, aligns subjects
+across models, and outputs a CKA similarity matrix with summary statistics.
 
 
 Yaml files

@@ -146,7 +146,7 @@ def preprocess_config(sub_dir, dataset_localization, datasets_root, datasets, ..
 # utils_pipelines.py - Line 55
 def change_config_datasets(config, new_datasets, new_datasets_root):
     for dataset in new_datasets:
-        with open("/volatile/home/bd285800/Documents/CEA_projects/champollion/data/TEST01/derivatives/champollion_V1", 'r') as file:
+        with open("/path/to/configs/dataset/<name>.yaml", 'r') as file:
             dataset_yaml = yaml.load(file, yaml.FullLoader)  # ❌ Hardcoded path!
 ```
 

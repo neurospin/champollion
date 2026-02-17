@@ -135,9 +135,32 @@ The python files involved are:
 * ``evaluation/embeddings_pipeline.py``
 * ``evaluation/supervised_pipeline.py``
 * ``evaluation/utils_pipeline.py``
+* ``evaluation/cka_coherence.py``
 
-More information about these programs and the related yaml files is available in the 
+More information about these programs and the related yaml files is available in the
 ``evaluation/README_classifier.rst``.
+
+
+Tutorial: CKA coherence testing
+================================
+
+To measure the similarity between representations learned by different models,
+CKA (Centered Kernel Alignment) can be used. The module ``evaluation/cka_coherence.py``
+computes pairwise linear CKA scores between embedding matrices.
+
+Given a directory containing multiple models with ``full_embeddings.csv`` files,
+the convenience function discovers all embeddings, aligns subjects across models,
+and produces a pairwise CKA similarity matrix.
+
+.. code-block:: python
+
+    from contrastive.evaluation.cka_coherence import test_models_coherence_from_directory
+
+    cka_matrix, stats = test_models_coherence_from_directory(
+        models_dir='path/to/models',
+        embedding_filename='full_embeddings.csv'
+    )
+    print(f"Mean coherence: {stats['mean_cka']:.4f}")
 
 **/!\\** To use most of these programs, you have to set up the ``config_no_save.yaml`` file instead of config.yaml. (The reason is to avoid to save countless small networks, that can then be confused with the SimCLR.)
 

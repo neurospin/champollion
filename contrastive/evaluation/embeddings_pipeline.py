@@ -995,7 +995,8 @@ def process_model(sub_dir: str, **kwargs: Dict[str, Any]) -> None:
     cpu = kwargs.get('cpu', False)
     nb_jobs = kwargs.get('nb_jobs')
 
-    folder_name = get_save_folder_name(datasets=datasets, short_name=f"{short_name}_{split}")
+    name_prefix = f"{short_name}_{split}" if short_name else split
+    folder_name = get_save_folder_name(datasets=datasets, short_name=name_prefix)
     print("Start computing")
 
     for idx, label in enumerate(labels):

@@ -74,6 +74,115 @@ def linear_CKA(X: np.ndarray, Y: np.ndarray) -> float:
     return numerator / denom if denom > 0 else 0.0
 
 
+def load_embeddings_pt(
+    pt_path: str,
+    embeddings_key: str = 'embeddings',
+    subject_key: str = 'subject_ids',
+) -> Tuple[None, np.ndarray, List[str]]:
+    """
+    Load embeddings from a PyTorch .pt file.
+
+    Parameters
+    ----------
+    pt_path : str
+        Path to the .pt file. The file may contain either:
+        - A plain tensor of shape (n_samples, n_features), or
+        - A dict with at least an ``embeddings_key`` entry (tensor or array)
+          and optionally a ``subject_key`` entry (list/tensor of IDs).
+    embeddings_key : str, optional
+        Dict key for the embedding tensor when the file contains a dict.
+        Default is ``'embeddings'``.
+    subject_key : str, optional
+        Dict key for subject IDs when the file contains a dict.
+        Default is ``'subject_ids'``.
+
+    Returns
+    -------
+    data : None
+        Placeholder for API compatibility with :func:`load_embeddings_csv`
+        (which returns a DataFrame). Always ``None`` for PT files.
+    embeddings : np.ndarray
+        Embedding matrix of shape (n_samples, n_features).
+    subject_ids : list of str
+        Subject IDs. Falls back to ``['0', '1', ...]`` when not present.
+    """
+    try:
+        import torch
+    except ImportError as exc:
+        raise ImportError("PyTorch is required to load .pt files: pip install torch") from exc
+
+    if not os.path.exists(pt_path):
+        raise FileNotFoundError(f"PT file not found: {pt_path}")
+
+    data = torch.load(pt_path, map_location='cpu', weights_only=False)
+
+    if isinstance(data, dict):
+        if embeddings_key not in data:
+            raise KeyError(
+                f"Key '{embeddings_key}' not found in {pt_path}. "
+                f"Available keys: {list(data.keys())}"
+            )
+        raw_embeddings = data[embeddings_key]
+        raw_ids = data.get(subject_key, None)
+    else:
+        raw_embeddings = data
+        raw_ids = None
+
+    # Convert to numpy
+    if hasattr(raw_embeddings, 'numpy'):
+        embeddings = raw_embeddings.detach().float().numpy()
+    else:
+        embeddings = np.asarray(raw_embeddings, dtype=np.float32)
+
+    if raw_ids is not None:
+        if hasattr(raw_ids, 'tolist'):
+            subject_ids = [str(x) for x in raw_ids.tolist()]
+        else:
+            subject_ids = [str(x) for x in raw_ids]
+    else:
+        subject_ids = [str(i) for i in range(len(embeddings))]
+
+    log.info(
+        f"Loaded embeddings from {pt_path}: "
+        f"shape={embeddings.shape}, n_subjects={len(subject_ids)}"
+    )
+
+    return None, embeddings, subject_ids
+
+
+def load_embeddings(
+    path: str,
+    subject_column: str = 'ID',
+    embeddings_key: str = 'embeddings',
+    subject_key: str = 'subject_ids',
+) -> Tuple[Optional[pd.DataFrame], np.ndarray, List[str]]:
+    """
+    Load embeddings from a CSV or PT file, dispatching on the file extension.
+
+    Parameters
+    ----------
+    path : str
+        Path to a ``.csv`` or ``.pt`` file.
+    subject_column : str, optional
+        Column name for subject IDs in CSV files.
+    embeddings_key : str, optional
+        Dict key for embeddings in PT files.
+    subject_key : str, optional
+        Dict key for subject IDs in PT files.
+
+    Returns
+    -------
+    Same as :func:`load_embeddings_csv` / :func:`load_embeddings_pt`.
+    """
+    suffix = Path(path).suffix.lower()
+    if suffix == '.pt':
+        return load_embeddings_pt(path, embeddings_key=embeddings_key, subject_key=subject_key)
+    elif suffix == '.csv':
+        return load_embeddings_csv(path, subject_column=subject_column)
+    else:
+        raise ValueError(f"Unsupported file format '{suffix}'. Expected .csv or .pt.")
+
+
 def load_embeddings_csv(csv_path: str,
                         subject_column: str = 'ID') -> Tuple[pd.DataFrame, np.ndarray, List[str]]:
     """
@@ -318,9 +427,13 @@ class CKACoherenceTester:
 
     def __init__(self,
                  embedding_paths: Dict[str, str],
-                 subject_column: str = 'ID'):
+                 subject_column: str = 'ID',
+                 embeddings_key: str = 'embeddings',
+                 subject_key: str = 'subject_ids'):
         self.embedding_paths = embedding_paths
         self.subject_column = subject_column
+        self.embeddings_key = embeddings_key
+        self.subject_key = subject_key
         self.model_names = list(embedding_paths.keys())
 
         self.embeddings_dict = {}
@@ -336,8 +449,11 @@ class CKACoherenceTester:
 
         for model_name, csv_path in self.embedding_paths.items():
             try:
-                df, embeddings, subject_ids = load_embeddings_csv(
-                    csv_path, self.subject_column
+                df, embeddings, subject_ids = load_embeddings(
+                    csv_path,
+                    subject_column=self.subject_column,
+                    embeddings_key=self.embeddings_key,
+                    subject_key=self.subject_key,
                 )
                 self.embeddings_dict[model_name] = {
                     'df': df,
@@ -497,25 +613,33 @@ def test_models_coherence_from_directory(
     models_dir: str,
     embedding_filename: str = 'full_embeddings.csv',
     output_dir: Optional[str] = None,
-    subject_column: str = 'ID'
+    subject_column: str = 'ID',
+    embeddings_key: str = 'embeddings',
+    subject_key: str = 'subject_ids',
 ) -> Tuple[pd.DataFrame, Dict[str, float]]:
     """
     Test coherence of all models in a directory.
 
     This is a convenience function that automatically discovers models
     in a directory structure and tests their coherence using recursive search.
+    Both CSV (``.csv``) and PyTorch (``.pt``) embedding files are supported.
 
     Parameters
     ----------
     models_dir : str
         Directory containing model subdirectories.
-        CSV files are searched recursively within this directory.
+        Files are searched recursively within this directory.
     embedding_filename : str, optional
         Name of the embedding file to look for. Default is 'full_embeddings.csv'.
+        Use e.g. ``'embeddings.pt'`` to search for PyTorch files instead.
     output_dir : str, optional
         Directory to save results. If None, uses models_dir/cka_coherence.
     subject_column : str, optional
-        Name of the column containing subject IDs. Default is 'ID'.
+        Column name for subject IDs in CSV files. Default is 'ID'.
+    embeddings_key : str, optional
+        Dict key for the embedding tensor in PT files. Default is 'embeddings'.
+    subject_key : str, optional
+        Dict key for subject IDs in PT files. Default is 'subject_ids'.
 
     Returns
     -------
@@ -526,9 +650,14 @@ def test_models_coherence_from_directory(
 
     Examples
     --------
+    >>> # CSV (default)
     >>> cka_matrix, stats = test_models_coherence_from_directory(
     ...     'data/TEST01/derivatives/champollion_V1/models',
-    ...     embedding_filename='full_embeddings.csv'
+    ... )
+    >>> # PyTorch .pt files
+    >>> cka_matrix, stats = test_models_coherence_from_directory(
+    ...     'data/TEST01/derivatives/champollion_V1/models',
+    ...     embedding_filename='embeddings.pt',
     ... )
     >>> print(f"Mean coherence: {stats['mean_cka']:.4f}")
     """
@@ -548,13 +677,10 @@ def test_models_coherence_from_directory(
         )
 
     for embedding_file in found_files:
-        # Extract model name from the directory containing the CSV
-        # Use the immediate parent directory name as the model name
         model_name = embedding_file.parent.name
 
         # Handle duplicate model names by using more path context
         if model_name in embedding_paths:
-            # Use relative path to disambiguate
             relative_path = embedding_file.relative_to(models_dir_path)
             model_name = str(relative_path.parent).replace('/', '_')
 
@@ -564,7 +690,12 @@ def test_models_coherence_from_directory(
     log.info(f"Found {len(embedding_paths)} models with embeddings (recursive search)")
 
     # Run analysis
-    tester = CKACoherenceTester(embedding_paths, subject_column)
+    tester = CKACoherenceTester(
+        embedding_paths,
+        subject_column=subject_column,
+        embeddings_key=embeddings_key,
+        subject_key=subject_key,
+    )
     cka_matrix, stats = tester.run_full_analysis()
 
     # Save results

@@ -707,3 +707,106 @@ def test_models_coherence_from_directory(
     tester.print_summary()
 
     return cka_matrix, stats
+
+
+def _build_parser():
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Compute pairwise CKA coherence between model embeddings.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Two explicit files
+  python -m contrastive.evaluation.cka_coherence \\
+      model_a:path/to/a.pt model_b:path/to/b.pt
+
+  # Discover all embeddings.pt files under a directory
+  python -m contrastive.evaluation.cka_coherence \\
+      --dir data/models --filename embeddings.pt
+
+  # CSV files (default filename)
+  python -m contrastive.evaluation.cka_coherence --dir data/models
+""",
+    )
+
+    parser.add_argument(
+        'files',
+        nargs='*',
+        metavar='NAME:PATH',
+        help="Embedding files as name:path pairs (CSV or PT). "
+             "Mutually exclusive with --dir.",
+    )
+    parser.add_argument(
+        '--dir',
+        metavar='DIR',
+        help="Directory to search recursively for embedding files.",
+    )
+    parser.add_argument(
+        '--filename',
+        default='full_embeddings.csv',
+        metavar='FILENAME',
+        help="Filename to search for when using --dir (default: full_embeddings.csv).",
+    )
+    parser.add_argument(
+        '--output-dir', '-o',
+        metavar='DIR',
+        help="Directory to save results (default: <dir>/cka_coherence or ./cka_coherence).",
+    )
+    parser.add_argument(
+        '--subject-column',
+        default='ID',
+        metavar='COL',
+        help="Subject ID column name for CSV files (default: ID).",
+    )
+    parser.add_argument(
+        '--embeddings-key',
+        default='embeddings',
+        metavar='KEY',
+        help="Dict key for embeddings in PT files (default: embeddings).",
+    )
+    parser.add_argument(
+        '--subject-key',
+        default='subject_ids',
+        metavar='KEY',
+        help="Dict key for subject IDs in PT files (default: subject_ids).",
+    )
+    return parser
+
+
+if __name__ == '__main__':
+    parser = _build_parser()
+    args = parser.parse_args()
+
+    if args.dir and args.files:
+        parser.error("Specify either positional NAME:PATH files or --dir, not both.")
+    if not args.dir and not args.files:
+        parser.error("Provide at least one NAME:PATH file or use --dir.")
+
+    if args.dir:
+        test_models_coherence_from_directory(
+            args.dir,
+            embedding_filename=args.filename,
+            output_dir=args.output_dir,
+            subject_column=args.subject_column,
+            embeddings_key=args.embeddings_key,
+            subject_key=args.subject_key,
+        )
+    else:
+        embedding_paths = {}
+        for token in args.files:
+            if ':' not in token:
+                parser.error(f"Expected NAME:PATH, got '{token}'")
+            name, path = token.split(':', 1)
+            embedding_paths[name] = path
+
+        output_dir = args.output_dir or './cka_coherence'
+        tester = CKACoherenceTester(
+            embedding_paths,
+            subject_column=args.subject_column,
+            embeddings_key=args.embeddings_key,
+            subject_key=args.subject_key,
+        )
+        tester.run_full_analysis()
+        tester.save_results(output_dir)
+        tester.print_summary()

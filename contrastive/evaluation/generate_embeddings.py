@@ -102,13 +102,28 @@ def compute_embeddings(config, subsets=None):
         #assert os.path.isfile(ckpt_path), f"No weights for selected epoch {config.epoch}"
         valid_path = os.path.isfile(ckpt_path) # check if weights exist for selected epoch
     else:
-        paths = config.model_path+"/*logs/*/version_0/checkpoints"+r'/*.ckpt'
         if 'use_best_model' in config.keys():
-            paths = config.model_path+"/logs/best_model_weights.pt"
-        files = glob.glob(paths)
-        #print("model_weights:", files[0])
-        ckpt_path = files[0]
-        valid_path=True
+            best_path = config.model_path+"/logs/best_model_weights.pt"
+            if os.path.isfile(best_path):
+                ckpt_path = best_path
+                valid_path = True
+            else:
+                print("WARNING: best_model_weights.pt not found, falling back to latest checkpoint.")
+                ckpt_files = glob.glob(
+                    config.model_path+"/*logs/*/version_*/checkpoints"+r'/*.ckpt')
+                ckpt_files.sort(
+                    key=lambda p: int(p.split('/version_')[1].split('/')[0])
+                    if '/version_' in p else -1)
+                ckpt_path = ckpt_files[-1] if ckpt_files else None
+                valid_path = bool(ckpt_files)
+        else:
+            ckpt_files = glob.glob(
+                config.model_path+"/*logs/*/version_*/checkpoints"+r'/*.ckpt')
+            ckpt_files.sort(
+                key=lambda p: int(p.split('/version_')[1].split('/')[0])
+                if '/version_' in p else -1)
+            ckpt_path = ckpt_files[-1] if ckpt_files else None
+            valid_path = bool(ckpt_files)
 
     if not valid_path:
         pass

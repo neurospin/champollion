@@ -709,174 +709,24 @@ def test_models_coherence_from_directory(
     return cka_matrix, stats
 
 
-def load_state_dict_pt(pt_path: str) -> Dict[str, np.ndarray]:
-    """
-    Load a model checkpoint and return its weight tensors as numpy arrays.
-
-    Only 2-D-compatible parameters (weight matrices and conv kernels) are
-    kept; 1-D parameters (biases, batch-norm scales) are skipped because
-    CKA requires at least 2 rows.
-
-    Parameters
-    ----------
-    pt_path : str
-        Path to a ``.pt`` checkpoint containing either a raw ``state_dict``
-        or a dict with a ``'state_dict'`` key.
-
-    Returns
-    -------
-    weights : dict
-        Mapping from layer name to numpy array of shape (n_rows, n_cols).
-    """
-    try:
-        import torch
-    except ImportError as exc:
-        raise ImportError("PyTorch is required to load .pt files: pip install torch") from exc
-
-    if not os.path.exists(pt_path):
-        raise FileNotFoundError(f"Checkpoint not found: {pt_path}")
-
-    data = torch.load(pt_path, map_location='cpu', weights_only=False)
-
-    state_dict = data.get('state_dict', data) if isinstance(data, dict) else data
-    if not isinstance(state_dict, dict):
-        raise ValueError(
-            f"Expected a dict or a dict with 'state_dict', got {type(data)} in {pt_path}"
-        )
-
-    weights = {}
-    for name, tensor in state_dict.items():
-        arr = tensor.detach().float().numpy()
-        if arr.ndim == 1:
-            continue  # skip biases / 1-D params
-        # Reshape conv kernels (out, in, *spatial) → (out, in*spatial)
-        weights[name] = arr.reshape(arr.shape[0], -1)
-
-    log.info(f"Loaded {len(weights)} weight matrices from {pt_path}")
-    return weights
-
-
-def compute_weight_cka(
-    path_a: str,
-    name_a: str,
-    path_b: str,
-    name_b: str,
-    output_dir: Optional[str] = None,
-) -> Tuple[pd.DataFrame, Dict[str, float]]:
-    """
-    Compare two model checkpoints layer-by-layer using linear CKA.
-
-    Parameters
-    ----------
-    path_a, path_b : str
-        Paths to ``.pt`` checkpoint files.
-    name_a, name_b : str
-        Display names for the two models.
-    output_dir : str, optional
-        Directory to save per-layer results and stats JSON.
-        Defaults to ``./cka_coherence_weights``.
-
-    Returns
-    -------
-    results : pd.DataFrame
-        Per-layer CKA scores with columns ``['layer', 'cka']``.
-    stats : dict
-        Summary statistics (mean, median, std, min, max).
-    """
-    weights_a = load_state_dict_pt(path_a)
-    weights_b = load_state_dict_pt(path_b)
-
-    common_layers = [l for l in weights_a if l in weights_b]
-    skipped = []
-
-    if not common_layers:
-        raise ValueError(
-            f"No common layer names found between {name_a} and {name_b}. "
-            f"Layers in {name_a}: {list(weights_a.keys())[:5]} …"
-        )
-
-    rows = []
-    for layer in common_layers:
-        W1, W2 = weights_a[layer], weights_b[layer]
-        if W1.shape != W2.shape:
-            skipped.append((layer, W1.shape, W2.shape))
-            continue
-        if W1.shape[0] < 2:
-            skipped.append((layer, W1.shape, W2.shape))
-            continue
-        cka = linear_CKA(W1, W2)
-        rows.append({'layer': layer, 'cka': cka})
-        log.debug(f"CKA({layer}) = {cka:.4f}")
-
-    if skipped:
-        log.warning(
-            f"Skipped {len(skipped)} layers (shape mismatch or too few rows): "
-            + ", ".join(l for l, *_ in skipped[:5])
-            + (" …" if len(skipped) > 5 else "")
-        )
-
-    if not rows:
-        raise ValueError("No valid common layers found to compute CKA.")
-
-    results = pd.DataFrame(rows)
-    cka_values = results['cka'].values
-    stats = {
-        'mean_cka': float(np.mean(cka_values)),
-        'median_cka': float(np.median(cka_values)),
-        'std_cka': float(np.std(cka_values)),
-        'min_cka': float(np.min(cka_values)),
-        'max_cka': float(np.max(cka_values)),
-        'n_layers': len(rows),
-        'n_skipped': len(skipped),
-    }
-
-    # Print summary
-    print("\n" + "=" * 70)
-    print(f"WEIGHT CKA: {name_a}  vs  {name_b}")
-    print("=" * 70)
-    print(f"\nLayers compared : {stats['n_layers']}  (skipped: {stats['n_skipped']})")
-    print(f"\nPer-layer CKA scores:")
-    for _, row in results.iterrows():
-        print(f"  {row['layer']:<60s}  {row['cka']:.4f}")
-    print(f"\nSummary:")
-    print(f"  Mean CKA:   {stats['mean_cka']:.4f}")
-    print(f"  Median CKA: {stats['median_cka']:.4f}")
-    print(f"  Std CKA:    {stats['std_cka']:.4f}")
-    print(f"  Min CKA:    {stats['min_cka']:.4f}  ({results.loc[results['cka'].idxmin(), 'layer']})")
-    print(f"  Max CKA:    {stats['max_cka']:.4f}  ({results.loc[results['cka'].idxmax(), 'layer']})")
-    print("=" * 70 + "\n")
-
-    # Save
-    if output_dir is None:
-        output_dir = './cka_coherence_weights'
-    os.makedirs(output_dir, exist_ok=True)
-    results.to_csv(os.path.join(output_dir, 'weight_cka_per_layer.csv'), index=False)
-    with open(os.path.join(output_dir, 'weight_cka_stats.json'), 'w') as f:
-        json.dump(stats, f, indent=2)
-    log.info(f"Results saved to {output_dir}")
-
-    return results, stats
-
-
 def _build_parser():
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Compute pairwise CKA coherence between model embeddings or weights.",
+        description="Compute pairwise CKA coherence between model embeddings.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Embedding files (CSV or PT)
+  # Two explicit files
   python -m contrastive.evaluation.cka_coherence \\
       model_a:path/to/a.pt model_b:path/to/b.pt
 
-  # Discover all embedding files under a directory
+  # Discover all embeddings.pt files under a directory
   python -m contrastive.evaluation.cka_coherence \\
       --dir data/models --filename embeddings.pt
 
-  # Weight (state_dict) comparison between two checkpoints
-  python -m contrastive.evaluation.cka_coherence --weights \\
-      model_a:path/to/best_model_weights.pt model_b:path/to/best_model_weights.pt
+  # CSV files (default filename)
+  python -m contrastive.evaluation.cka_coherence --dir data/models
 """,
     )
 
@@ -921,11 +771,6 @@ Examples:
         metavar='KEY',
         help="Dict key for subject IDs in PT files (default: subject_ids).",
     )
-    parser.add_argument(
-        '--weights',
-        action='store_true',
-        help="Compare model checkpoints (state_dict) layer-by-layer instead of embeddings.",
-    )
     return parser
 
 
@@ -933,55 +778,35 @@ if __name__ == '__main__':
     parser = _build_parser()
     args = parser.parse_args()
 
-    if args.weights:
-        # --- weight CKA mode ---
-        if args.dir:
-            parser.error("--dir is not supported with --weights; pass two NAME:PATH files.")
-        if len(args.files) != 2:
-            parser.error("--weights requires exactly two NAME:PATH arguments.")
-        tokens = []
+    if args.dir and args.files:
+        parser.error("Specify either positional NAME:PATH files or --dir, not both.")
+    if not args.dir and not args.files:
+        parser.error("Provide at least one NAME:PATH file or use --dir.")
+
+    if args.dir:
+        test_models_coherence_from_directory(
+            args.dir,
+            embedding_filename=args.filename,
+            output_dir=args.output_dir,
+            subject_column=args.subject_column,
+            embeddings_key=args.embeddings_key,
+            subject_key=args.subject_key,
+        )
+    else:
+        embedding_paths = {}
         for token in args.files:
             if ':' not in token:
                 parser.error(f"Expected NAME:PATH, got '{token}'")
             name, path = token.split(':', 1)
-            tokens.append((name, path))
-        (name_a, path_a), (name_b, path_b) = tokens
-        compute_weight_cka(
-            path_a, name_a,
-            path_b, name_b,
-            output_dir=args.output_dir,
+            embedding_paths[name] = path
+
+        output_dir = args.output_dir or './cka_coherence'
+        tester = CKACoherenceTester(
+            embedding_paths,
+            subject_column=args.subject_column,
+            embeddings_key=args.embeddings_key,
+            subject_key=args.subject_key,
         )
-    else:
-        # --- embedding CKA mode ---
-        if args.dir and args.files:
-            parser.error("Specify either positional NAME:PATH files or --dir, not both.")
-        if not args.dir and not args.files:
-            parser.error("Provide at least one NAME:PATH file or use --dir.")
-
-        if args.dir:
-            test_models_coherence_from_directory(
-                args.dir,
-                embedding_filename=args.filename,
-                output_dir=args.output_dir,
-                subject_column=args.subject_column,
-                embeddings_key=args.embeddings_key,
-                subject_key=args.subject_key,
-            )
-        else:
-            embedding_paths = {}
-            for token in args.files:
-                if ':' not in token:
-                    parser.error(f"Expected NAME:PATH, got '{token}'")
-                name, path = token.split(':', 1)
-                embedding_paths[name] = path
-
-            output_dir = args.output_dir or './cka_coherence'
-            tester = CKACoherenceTester(
-                embedding_paths,
-                subject_column=args.subject_column,
-                embeddings_key=args.embeddings_key,
-                subject_key=args.subject_key,
-            )
-            tester.run_full_analysis()
-            tester.save_results(output_dir)
-            tester.print_summary()
+        tester.run_full_analysis()
+        tester.save_results(output_dir)
+        tester.print_summary()

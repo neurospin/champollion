@@ -774,7 +774,7 @@ Examples:
     return parser
 
 
-if __name__ == '__main__':
+def main():
     parser = _build_parser()
     args = parser.parse_args()
 
@@ -810,3 +810,7 @@ if __name__ == '__main__':
         tester.run_full_analysis()
         tester.save_results(output_dir)
         tester.print_summary()
+
+
+if __name__ == '__main__':
+    main()

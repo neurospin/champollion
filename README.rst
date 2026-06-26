@@ -2,7 +2,7 @@
 Self-supervised learning for preterm-specific variability of cortical folding in the right superior temporal sulcus region
 ###########################################################################
 
-This repository is based on https://github.com/neurospin-projects/2023_agaudin_jchavas_folding_supervised. It aims to apply the self-supervised deep learning pipepline to preterm-specific folding pattern analysis and explore explainability methods.
+This repository aims to apply the self-supervised deep learning pipeline to preterm-specific folding pattern analysis and explore explainability methods.
 Official Pytorch implementation for Unsupervised Learning and Cortical Folding (`paper <https://openreview.net/forum?id=ueRZzvQ_K6u>`_).
 
 
@@ -20,8 +20,8 @@ First, the repository can be cloned thanks to:
 
 .. code-block:: shell
 
-    git clone https://github.com/neurospin-projects/2023_jlaval_STSbabies/
-    cd 2023_jlaval_STSbabies
+    git clone https://github.com/neurospin/champollion
+    cd champollion
 
 Then, install a virtual environment through the following command lines:
 

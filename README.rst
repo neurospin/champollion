@@ -1,69 +1,114 @@
 
-Self-supervised learning for preterm-specific variability of cortical folding in the right superior temporal sulcus region
-###########################################################################
+Champollion V1
+==============
 
-This repository aims to apply the self-supervised deep learning pipeline to preterm-specific folding pattern analysis and explore explainability methods.
-Official Pytorch implementation for Unsupervised Learning and Cortical Folding (`paper <https://openreview.net/forum?id=ueRZzvQ_K6u>`_).
+Self-supervised Barlow Twins models for generating embeddings of cortical folding patterns from T1 MRI brain scans.
+
+This repository is used as a **git submodule** inside `champollion_pipeline <https://github.com/neurospin/champollion_pipeline>`_.
+It is not meant to be cloned or run standalone — refer to the pipeline for the full workflow.
+
+Pre-trained models are published on Hugging Face: `neurospin/Champollion_V1 <https://huggingface.co/neurospin/Champollion_V1>`_.
 
 
-Dependencies
+What it does
 ------------
-- python >= 3.6
-- pytorch >= 1.4.0
-- numpy >= 1.16.6
-- pandas >= 0.23.3
+
+Given preprocessed 3D brain crops of sulcal regions, each model fold produces a fixed-size embedding vector per subject.
+The repository covers 56 sulcal regions (28 regions × 2 hemispheres), matching the regions defined in
+``champollion_pipeline/sulci_regions_champollion_V1.json``.
+
+- **Architecture**: Barlow Twins (self-supervised learning) with a CNN backbone
+- **Input**: 3D numpy crops of sulcal regions
+- **Output**: Fixed-size embedding vectors (one per subject per region)
+- **Training data**: UKBioBank (42,433 subjects)
 
 
-Set up the work environment
----------------------------
-First, the repository can be cloned thanks to:
+Installation
+------------
 
-.. code-block:: shell
-
-    git clone https://github.com/neurospin/champollion
-    cd champollion
-
-Then, install a virtual environment through the following command lines:
-
-.. code-block:: shell
-
-    python3 -m venv venv
-    . venv/bin/activate
-    pip3 install --upgrade pip
-    pip3 install -e .
-
-Note that you might need a `BrainVISA <https://brainvisa.info>`_ environment to run
-some of the functions or notebooks.
-
-Preterm analysis requires training on UkBioBank, using SimCLR. A comprehensive description is given in contrastive/README.rst.
+This submodule is installed automatically by ``champollion_pipeline``:
 
 .. code-block:: shell
 
-    cd contrastive
-    python3 train.py mode=encoder
+    git clone https://github.com/neurospin/champollion_pipeline.git
+    cd champollion_pipeline
+    pixi run install-all
 
-Once the model is trained, the model performances can be assessed using SVC running:
+``install-all`` initialises the submodule and installs it in editable mode.
+Do not install this package directly with ``pip`` outside of that workflow.
+
+
+Configuration system
+--------------------
+
+The submodule uses Hydra-style YAML configs located in ``contrastive/configs/``.
+
+Two files are updated at runtime by ``generate_champollion_config.py`` (step 4 of the pipeline):
+
+- ``contrastive/configs/local.yaml`` — sets ``dataset_folder`` to the crop directory on disk
+- ``contrastive/configs/dataset_localization/local.yaml`` — selects the ``local`` localization preset
+
+Pass ``--external-config`` in read-only environments (Apptainer/Docker) to write these files
+to a writable path instead.
+
+
+Mask versions
+-------------
+
+Models are organised by mask version inside the Hugging Face repo:
+
++-----------------------------+----------------------------------------------------------+
+| Version                     | Description                                              |
++=============================+==========================================================+
+| ``canonical_25``            | Original mask version used for the first training run.   |
++-----------------------------+----------------------------------------------------------+
+| ``canonical_corrected_26_1``| Updated labelling with reduced region boundary artefacts.|
+|                             | **Recommended for new datasets.**                        |
++-----------------------------+----------------------------------------------------------+
+
+The mask version to use is selected via the ``--masks`` flag in ``run_cortical_tiles.py`` (step 3)
+and must match the model version downloaded in step 5.
+
+
+Training
+--------
+
+To retrain models on a new dataset, use ``train_champollion.py`` from ``champollion_pipeline``:
 
 .. code-block:: shell
 
-    cd contrastive
-    python3 evaluation/embeddings_pipeline.py
+    pixi run python3 src/train_champollion.py \
+        /path/to/crops/2mm \
+        --dataset dataset_name \
+        --region SC-sylv_left
 
-To compute Grad-CAM heatmaps, we first train a linear classifier with the frozen self-supervised backbone.
-It can be done on multiple iterrations of the UkBioBank-trained model serially using the command : 
+See ``champollion_pipeline`` documentation for the full training workflow.
 
-.. code-block:: shell
+For details on the training architecture, augmentations, and evaluation scripts,
+see `contrastive/README.rst <contrastive/README.rst>`_.
 
-    cd contrastive
-    python3 train.py --multirun mode=classifier augmentations=no_augmentation label=Preterm_28 drop_rate=0.0 load_encoder_only=True freeze_encoders=True fusioned_latent_space_size=-1 projection_head=linear max_epochs=50 lr=0.01 early_stopping_patience=25 pretrained_model_path=\"/neurospin/dico/jlaval/Runs/02_STS_babies/Program/Output/2023-11-29/09-59-38_188/logs/lightning_logs/version_0/checkpoints/epoch=249-step=296250.ckpt\",\"/neurospin/dico/jlaval/Runs/02_STS_babies/Program/Output/2023-11-29/15-49-36_0/logs/lightning_logs/version_0/checkpoints/epoch=249-step=296250.ckpt\",\"/neurospin/dico/jlaval/Runs/02_STS_babies/Program/Output/2023-11-29/15-49-36_1/logs/lightning_logs/version_0/checkpoints/epoch=249-step=296250.ckpt\",\"/neurospin/dico/jlaval/Runs/02_STS_babies/Program/Output/2023-11-29/15-49-36_2/logs/lightning_logs/version_0/checkpoints/epoch=249-step=296250.ckpt\"
 
-In the current version, this needs to be run twice by switching the train and test sets manually to perform cross-validation.
+Repository structure
+--------------------
 
-Then, the Grad-CAM heatmaps are obtained running:
+.. code-block:: text
 
-.. code-block:: shell
+    champollion_V1/
+        contrastive/
+            configs/
+                dataset_localization/
+                    local.yaml          # Updated by generate_champollion_config.py
+                local.yaml              # Updated by generate_champollion_config.py
+            backbones/                  # CNN backbone definitions
+            data/                       # Dataset and DataModule classes
+            models/                     # Barlow Twins model definitions
+            evaluation/                 # Embedding evaluation scripts
+            train.py                    # Training entry point
+        setup.cfg
+        LICENSE
 
-    cd contrastive
-    python3 evaluation/supervised_pipeline.py
 
-And can be visualised in : contrastive/notebooks/julien/plot_grad_cam.ipynb
+License
+-------
+
+Released under the `CeCILL-B <LICENSE>`_ license.

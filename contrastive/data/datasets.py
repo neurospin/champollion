@@ -42,11 +42,7 @@ import sparse
 
 from contrastive.utils.logs import set_file_logger
 
-from contrastive.data.transforms import \
-    transform_foldlabel, transform_cutin, transform_cutout, \
-    transform_nothing_done, transform_only_padding,\
-    transform_trimdepth, transform_random, transform_mixed,\
-    transform_cropresize
+from contrastive.data.transforms import transform_only_padding, transform_mixed
 
 from contrastive.data.utils import convert_sparse_to_numpy
 
@@ -422,80 +418,20 @@ class ContrastiveDatasetFusion():
         # compute the transforms
         for reg, cutout_mask_path, cutin_mask_path, input_size, flip in zip(regs, cutout_mask_paths, cutin_mask_paths, input_sizes, flips):
             if self.transform:
-                # mix of branch clipping, cutout, cutin, trimdepth, and trimextremities
-                if self.config.random_choice:
-                    transform1 = transform_random(
-                        sample_foldlabels[reg],
-                        sample_distbottoms[reg],
-                        sample_extremities[reg],
-                        cutout_mask_path=cutout_mask_path,
-                        cutin_mask_path=cutin_mask_path,
-                        input_size=input_size,
-                        flip_dataset=flip,
-                        config=self.config)
-                    transform2 = transform_random(
-                        sample_foldlabels[reg],
-                        sample_distbottoms[reg],
-                        sample_extremities[reg],
-                        cutout_mask_path=cutout_mask_path,
-                        cutin_mask_path=cutin_mask_path,
-                        input_size=input_size,
-                        flip_dataset=flip,
-                        config=self.config)
-                elif self.config.mixed:
-                    transform1 = transform_mixed(
-                        sample_foldlabels[reg],
-                        sample_distbottoms[reg],
-                        sample_extremities[reg],
-                        cutin_mask_path=cutin_mask_path,
-                        input_size=input_size,
-                        config=self.config)
-                    transform2 = transform_mixed(
-                        sample_foldlabels[reg],
-                        sample_distbottoms[reg],
-                        sample_extremities[reg],
-                        cutin_mask_path=cutin_mask_path,
-                        input_size=input_size,
-                        config=self.config)
-                # branch clipping
-                elif self.config.foldlabel:
-                    transform1 = transform_foldlabel(
-                        sample_foldlabels[reg],
-                        input_size,
-                        self.config)
-                    transform2 = transform_foldlabel(
-                        sample_foldlabels[reg],
-                        input_size,
-                        self.config)
-                # trimdepth
-                elif self.config.trimdepth:
-                        transform1 = transform_trimdepth(
-                            sample_distbottoms[reg],
-                            sample_foldlabels[reg],
-                            input_size,
-                            self.config)
-                        transform2 = transform_trimdepth(
-                            sample_distbottoms[reg],
-                            sample_foldlabels[reg],
-                            input_size,
-                            self.config)
-                # cropresize
-                elif self.config.cropresize:
-                    transform1 = transform_cropresize(
-                        input_size, self.config)
-                    transform2 = transform_cropresize(
-                        input_size, self.config)
-                # cutout with or without noise
-                else:
-                    transform1 = transform_cutout(
-                        mask_path=mask_path,
-                        input_size=input_size,
-                        config=self.config)
-                    transform2 = transform_cutin(
-                        mask_path=mask_path,
-                        input_size=input_size,
-                        config=self.config)
-                    
+                transform1 = transform_mixed(
+                    sample_foldlabels[reg],
+                    sample_distbottoms[reg],
+                    sample_extremities[reg],
+                    cutin_mask_path=cutin_mask_path,
+                    input_size=input_size,
+                    config=self.config)
+                transform2 = transform_mixed(
+                    sample_foldlabels[reg],
+                    sample_distbottoms[reg],
+                    sample_extremities[reg],
+                    cutin_mask_path=cutin_mask_path,
+                    input_size=input_size,
+                    config=self.config)        
             else:
                 transform1 = transform_only_padding(
                     input_size, flip, self.config)
@@ -503,21 +439,6 @@ class ContrastiveDatasetFusion():
                     input_size, flip, self.config)
             self.transform1.append(transform1)
             self.transform2.append(transform2)
-
-            if self.config.with_labels:
-                if self.config.mode == "decoder":
-                    transform3 = transform_only_padding(
-                        input_size,
-                        flip,
-                        self.config)
-                else:
-                    transform3 = transform_nothing_done()
-                    if not self.transform:
-                        transform3 = transform_only_padding(
-                            input_size,
-                            flip,
-                            self.config)
-                self.transform3.append(transform3)
 
         # Computes the views
         view1 = []
@@ -530,27 +451,12 @@ class ContrastiveDatasetFusion():
         concatenated_tuple = ()
         # loop over input datasets
         for reg in range(len(filenames)):
-            if self.config.mode == "decoder":
-                view3 = self.transform3(samples[reg])
-                views = torch.stack((view1, view2, view3), dim=0)
-                if self.config.with_labels:
-                    tuple_with_path = ((views, filenames[reg], labels),)
-                elif self.config.multiregion_single_encoder and \
-                    self.config.multiple_projection_heads:
-                    tuple_with_path = ((views, filenames[reg], idx_region),) # does it make sens for decoder ?
-                else:
-                    tuple_with_path = ((views, filenames[reg]),)
+            views = torch.stack((view1[reg], view2[reg]), dim=0)
+            if self.config.multiregion_single_encoder or \
+                self.config.multiple_projection_heads:
+                tuple_with_path = ((views, filenames[reg], idx_region),)
             else:
-                views = torch.stack((view1[reg], view2[reg]), dim=0)
-                if self.config.with_labels:
-                    view3 = self.transform3[reg](samples[reg])
-                    tuple_with_path = (
-                        (views, filenames[reg], labels[reg], view3),)
-                elif self.config.multiregion_single_encoder or \
-                    self.config.multiple_projection_heads:
-                    tuple_with_path = ((views, filenames[reg], idx_region),)
-                else:
-                    tuple_with_path = ((views, filenames[reg]),)
+                tuple_with_path = ((views, filenames[reg]),)
             concatenated_tuple += tuple_with_path
 
         return concatenated_tuple

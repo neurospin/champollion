@@ -54,13 +54,12 @@ def transform_only_padding(input_size, config):
     
     
 
-def transform_mixed(sample_foldlabel, sample_distbottom,
-                    sample_extremities, cutin_mask_path, input_size, config):
+def transform_mixed(sample_foldlabel, cutin_mask_path, input_size, config):
     mask=np.load(cutin_mask_path)
     transforms_list = [SimplifyTensor(),
                        PaddingTensor(shape=input_size,
                                      fill_value=config.fill_value),
-                       ConcatTensor(sample_foldlabel, sample_distbottom, sample_extremities, mask)]
+                       ConcatTensor(sample_foldlabel, mask)]
     np.random.seed()
     r = np.random.uniform()    
     if r < config.proba_rotation:

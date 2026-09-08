@@ -179,22 +179,18 @@ class ReduceTensor(object):
     
 
 class ConcatTensor(object):
-    """Concat skeleton with foldlabel, distbottom and edges.
+    """Concat skeleton with foldlabel.
     """
 
-    def __init__(self, sample_foldlabel, sample_distbottom, sample_extremities, mask):
+    def __init__(self, sample_foldlabel, mask):
         self.sample_foldlabel = sample_foldlabel
-        self.sample_distbottom = sample_distbottom
-        self.sample_extremities = sample_extremities
         self.mask = mask
 
     def __call__(self, tensor):
         arr = tensor.numpy()
         arr_foldlabel = self.sample_foldlabel.numpy()
-        arr_distbottom = self.sample_distbottom.numpy()
-        arr_extremities = self.sample_extremities.numpy()
         arr_mask = self.mask
-        arr_concat = np.stack((arr, arr_foldlabel, arr_distbottom, arr_extremities, arr_mask))
+        arr_concat = np.stack((arr, arr_foldlabel, arr_mask))
 
         return torch.from_numpy(arr_concat)
     

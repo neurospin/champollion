@@ -110,71 +110,6 @@ def read_numpy_data_and_subject_csv(npy_file_path, csv_file_path):
     return npy_data, subjects
 
 
-def check_subject_consistency(csv_file_path_1, csv_file_path_2, name):
-    subjects_1 = read_subject_csv(csv_file_path_1)
-    subjects_2 = read_subject_csv(csv_file_path_2)
-    if not subjects_1.equals(subjects_2):
-        raise ValueError(
-            f"Both subject files (skel, {name}) are not equal:\n"
-            f"subjects_1 head = {subjects_1.head()}\n"
-            f"subjects_2 head = {subjects_2.head()}\n")
-
-    
-def check_foldlabel_npy_consistency(file_path_arr1, file_path_arr2):
-    arr1 = np.load(file_path_arr1)
-    arr2 = np.load(file_path_arr2)
-    arr1 = arr1 != 0
-    arr2 = arr2 != 0
-    if not np.array_equal(arr1, arr2):
-        raise ValueError(
-            f"Both npy files (skel, foldlabel) are not equal:\n"
-            f"Total voxel difference: {np.sum(arr1!=arr2)}\n")
-    
-def check_distbottom_npy_consistency(file_path_arr_crops, file_path_arr_distbottom, tolerance=0.10):
-    arr_crops = np.load(file_path_arr_crops)
-    arr_dist = np.load(file_path_arr_distbottom)
-    arr_crops = arr_crops != 0
-    arr_distbottom = np.logical_and(arr_dist!=32500, arr_dist!=32501)
-    diff = np.sum(arr_crops!=arr_distbottom)/np.sum(arr_crops)
-    if diff > tolerance:
-        raise ValueError(
-            f"Npy files (skel, distbottom) are {diff*100:.2f}% different:\n"
-            f"This is greater than tolerance {tolerance*100:.2f}% threshold set.\n")
-    
-def check_extremity_npy_consistency(file_path_arr_crops, file_path_arr_extremity):
-    arr_crops = np.load(file_path_arr_crops)
-    arr_extremity = np.load(file_path_arr_extremity)
-    arr_crops = arr_crops != 0
-    arr_extremity = arr_extremity !=0
-    if not np.array_equal(np.logical_and(arr_crops, arr_extremity), arr_extremity):
-        raise ValueError('Npy extremity is not included in npy crops')
-    
-
-def check_if_skeleton(a: np.array, key: str):
-    """Checks if values are compatible with skeletons"""
-    is_skeleton = ((a == 0) +
-                   (a == 10) +
-                   (a == 20) +
-                   (a == 11) +
-                   (a == 30) +
-                   (a == 35) +
-                   (a == 40) +
-                   (a == 50) +
-                   (a == 60) +
-                   (a == 70) +
-                   (a == 80) +
-                   (a == 90) +
-                   (a == 100) +
-                   (a == 110) +
-                   (a == 120)).all()
-    log.debug(f"Values of {key} crops are in: {np.unique(a)}")
-    if not is_skeleton:
-        raise ValueError(
-            f"Input array values of {key} are not compatible with skeletons"
-            f"np.unique of input array = {np.unique(a)}"
-        )
-
-
 def read_subset_csv(csv_file_path: str, name='train_val') -> pd.DataFrame:
     """Reads a subset subject csv.
 
@@ -243,18 +178,6 @@ def extract_partial_numpy(normal_subjects, target_subjects, normal_data,
     target_data = normal_data[target_normal_index]
     target_normal_subjects = target_normal_subjects.reset_index(drop=True)
     return target_normal_subjects, target_data
-
-
-def extract_labels(subject_labels, subjects):
-    """Extracts subject_labels corresponding to test_subject
-
-    For this, we compare the subjects listed in column 'Subject'
-    """
-    selected_subject_labels = subject_labels[subject_labels.Subject.isin(
-        subjects.Subject)]
-    selected_subject_labels = \
-        sort_labels_according_to_normal(selected_subject_labels, subjects)
-    return selected_subject_labels
 
 
 def extract_train_and_val_subjects(train_val_subjects, partition, seed):
@@ -408,25 +331,6 @@ def extract_data(npy_file_path, sample_dir, config, reg):
     return split_data(normal_data, normal_subjects, sample_dir, config, reg)
 
 
-def check_if_same_subjects(subjects_1, subjects_2, keyword):
-    """Checks if the dataframes subjects_1 and subjects_2 are equal"""
-    log.debug(f"Both heads (must be equal) of {keyword} subjects = \n"
-              f"{subjects_1.head()}\n"
-              f"and \n{subjects_2.head()}")
-    if not subjects_1.reset_index(drop=True).equals(subjects_2.reset_index(drop=True)):
-        log.error(f"subjects_1 head = {subjects_1.head()}")
-        log.error(f"subjects_2 head = {subjects_2.head()}")
-        raise ValueError(f"Both {keyword} subject dataframes are not equal")
-
-
-def check_if_same_shape(arr1, arr2, keyword):
-    """Checks if the two numpy arrays have the same shape"""
-    if not (arr1.shape == arr2.shape):
-        log.error(f"Shapes are {arr1.shape} and {arr2.shape}")
-        raise ValueError(f"Both {keyword} numpy arrays "
-                         "don't have the same shape")
-
-
 def read_labels(subject_labels_file, subject_column_name,
                 label_names, label_scaling):
     """Extracts labels from label file. Returns a dataframe with labels"""
@@ -469,112 +373,6 @@ def read_labels(subject_labels_file, subject_column_name,
             subject_labels[label_names])
 
     return subject_labels
-
-
-def select_subject_also_present_in_subject_labels(subject_labels,
-                                                  normal_subjects):
-    normal_subjects = normal_subjects.copy(deep=True)
-    normal_subjects_index = normal_subjects[
-        normal_subjects.Subject.isin(subject_labels.Subject)].index
-    normal_subjects = normal_subjects.loc[normal_subjects_index]
-    normal_subjects = normal_subjects.reset_index(drop=True)
-
-    return normal_subjects, normal_subjects_index
-
-
-def sort_labels_according_to_normal(subject_labels, normal_subjects):
-    """Sort subject labels according to normal_subjects order
-
-    Returns reordered subject_labels
-    """
-    normal_subjects, _ = select_subject_also_present_in_subject_labels(
-        subject_labels, normal_subjects)
-    subject_labels = subject_labels.set_index('Subject')
-    subject_labels = subject_labels.reindex(index=normal_subjects.Subject)
-
-    # Removes subjects that have no label
-    # (=not present in initial subject_labels)
-    # subject_labels = subject_labels.dropna()
-    subject_labels = subject_labels.reset_index('Subject')
-
-    # Checks if there is a null value in subject_labels
-
-    for column_name in subject_labels.columns:
-        criterion = subject_labels[column_name].isnull().any()
-        if criterion:
-            raise ValueError(
-                f"There is at least one NaN value in {column_name} "
-                f"from subject_labels\n"
-                "NaN values are for subjects:\n"
-                f"{subject_labels[subject_labels[column_name].isnull()]}"
-            )
-
-    # Checks if label subject names and subjects names are the same
-    log.debug(f"Head of normal_subjects = \n{normal_subjects.head()}")
-    log.debug(f"Head of subject_labels = \n{subject_labels.head()}")
-    if not normal_subjects.Subject.reset_index(drop=True).\
-            equals(subject_labels.Subject):
-        raise ValueError(
-            "Names of subject in subject labels are not included "
-            "or are not in the same order as the csv file of the subjects")
-
-    return subject_labels
-
-
-def extract_data_with_labels(npy_file_path, subject_labels,
-                             sample_dir, config, reg):
-    """Extracts train_val and test data and subjects from npy and csv file
-
-    Args:
-        config (Omegaconf dict): contains configuration parameters
-    Returns (subjects as dataframe, data as numpy array):
-        train_val_subjects, train_val_data, test_subjects, test_data (tuple)
-    """
-
-    # Reads numpy data and subject list
-    # normal_data corresponds to all data ('normal' != 'benchmark')
-    normal_data, normal_subjects = \
-        read_numpy_data_and_subject_csv(npy_file_path,
-                                        config.data[reg].subjects_all)
-
-    # Selects subjects also present in subject_labels
-    log.debug(f"Head of normal_subjects before label selection = \n"
-              f"{normal_subjects.head()}")
-    normal_subjects, normal_subjects_index = \
-        select_subject_also_present_in_subject_labels(
-            subject_labels, normal_subjects)
-    normal_data = normal_data[normal_subjects_index]
-
-    output = split_data(normal_data, normal_subjects, sample_dir,
-                        config, reg)
-
-    if config.environment == "brainvisa" and config.checking:
-        compare_array_aims_files(normal_subjects, normal_data, sample_dir)
-
-    # Sort subject_labels according to normal_subjects
-    subject_labels = \
-        sort_labels_according_to_normal(subject_labels, normal_subjects)
-
-    # extract labels
-    train_labels = extract_labels(subject_labels, output['train'][0])
-    val_labels = extract_labels(subject_labels, output['val'][0])
-    train_val_labels = extract_labels(subject_labels, output['train_val'][0])
-    if 'test_intra_csv_file' in config.data[reg].keys():
-        test_intra_labels = extract_labels(
-            subject_labels, output['test_intra'][0])
-    else:
-        test_intra_labels = pd.DataFrame([])
-    test_labels = extract_labels(subject_labels, output['test'][0])
-
-    output['train'].append(train_labels)
-    output['val'].append(val_labels)
-    output['train_val'].append(train_val_labels)
-    output['test_intra'].append(test_intra_labels)
-    output['test'].append(test_labels)
-
-    log.debug(f"length of output train = {len(output['train'])}")
-
-    return output
 
 
 def change_list_device(list_of_tensors, device):

@@ -5,7 +5,6 @@ Champollion V1
 Self-supervised Barlow Twins models for generating embeddings of cortical folding patterns from T1 MRI brain scans.
 
 This repository is used as a **git submodule** inside `champollion_pipeline <https://github.com/neurospin/champollion_pipeline>`_.
-It is not meant to be cloned or run standalone — refer to the pipeline for the full workflow.
 
 Pre-trained models are published on Hugging Face: `neurospin/Champollion_V1 <https://huggingface.co/neurospin/Champollion_V1>`_.
 
@@ -30,13 +29,9 @@ This submodule is installed automatically by ``champollion_pipeline``:
 
 .. code-block:: shell
 
-    git clone https://github.com/neurospin/champollion_pipeline.git
-    cd champollion_pipeline
-    pixi run install-all
-
-``install-all`` initialises the submodule and installs it in editable mode.
-Do not install this package directly with ``pip`` outside of that workflow.
-
+    git clone https://github.com/neurospin/champollion.git
+    cd champollion
+    
 
 Configuration system
 --------------------

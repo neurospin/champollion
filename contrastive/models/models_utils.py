@@ -1,10 +1,5 @@
 import numpy as np
 import torch.nn as nn
-try:
-    from soma import aims
-except ImportError:
-    print("INFO: you are not in a brainvisa environment. Probably OK.")
-
 
 
 def build_converter(config, concat_latent_spaces_size):

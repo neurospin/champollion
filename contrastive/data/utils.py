@@ -44,11 +44,6 @@ import sparse
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from ..utils.logs import set_file_logger
-# only if foldlabel == True
-try:
-    from deep_folding.brainvisa.utils.save_data import compare_array_aims_files
-except ImportError:
-    print("INFO: you cannot use deep_folding in brainvisa. Probably OK.")
 
 _ALL_SUBJECTS = -1
 
@@ -221,9 +216,6 @@ def extract_train_and_val_subjects(train_val_subjects, partition, seed):
 
 def split_data(normal_data, normal_subjects, sample_dir, config, reg):
 
-    if config.environment == "brainvisa" and config.checking:
-        compare_array_aims_files(normal_subjects, normal_data, sample_dir)
-
     # Gets train_val subjects as dataframe from csv file
     if 'train_val_csv_file' in config.data[reg].keys():
         train_val_subjects = read_subset_csv(
@@ -294,15 +286,6 @@ def split_data(normal_data, normal_subjects, sample_dir, config, reg):
     assert len(train_val_subjects), \
         "train_val is empty. " \
         "It could be a problem with the subject names"
-
-    if config.environment == "brainvisa" and config.checking:
-        compare_array_aims_files(train_subjects, train_data, sample_dir)
-        compare_array_aims_files(val_subjects, val_data, sample_dir)
-        compare_array_aims_files(
-            train_val_subjects, train_val_data, sample_dir)
-        compare_array_aims_files(
-            test_intra_subjects, test_intra_data, sample_dir)
-        compare_array_aims_files(test_subjects, test_data, sample_dir)
 
     output = {'train': [train_subjects, train_data],
               'val': [val_subjects, val_data],

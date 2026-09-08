@@ -9,7 +9,7 @@ defaults:
   - label: diagnosis
   - mode: classifier
   - model: SimCLR_fusion
-  - platform: cuda_not_brainvisa
+  - platform: cuda
   - projection_head: relu
   - trainer: default
   - wandb/identity

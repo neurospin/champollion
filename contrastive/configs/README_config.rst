@@ -74,7 +74,7 @@ multiple encoder are used).
 
 platform
 --------
-Parameters related to the environment set for training (choice between cpu and gpu, number of workers, use of BrainVISA).
+Parameters related to the environment set for training (choice between cpu and gpu, number of workers).
 
 projection_head
 ---------------

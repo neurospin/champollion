@@ -105,7 +105,7 @@ def train(config):
                     'keep_extremity', 'uniform_trim', 'binary_trim', 'growth_rate',
                     'block_config', 'num_init_features','backbone_output_size',
                     'fusioned_latent_space_size','num_outputs',
-                    'environment', 'batch_size', 'pin_mem', 'partition',
+                    'batch_size', 'pin_mem', 'partition',
                     'lr', 'gamma', 'weight_decay', 'max_epochs',
                     'early_stopping_patience', 'random_state', 'seed',
                     'backbone_name', 'sigma_labels', 'label_names',

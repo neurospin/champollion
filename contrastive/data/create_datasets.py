@@ -41,14 +41,7 @@ import numpy as np
 import os
 import copy
 
-# only if foldlabel == True
-try:
-    from deep_folding.brainvisa.utils.save_data import quality_checks
-    from deep_folding.brainvisa.utils.save_data import compare_array_aims_files
-except ImportError:
-    print("INFO: you cannot use deep_folding in brainvisa. Probably OK.")
-
-from ..utils.logs import set_file_logger, set_root_logger_level
+from ..utils.logs import set_file_logger
 
 from .datasets import ContrastiveDatasetFusion
 

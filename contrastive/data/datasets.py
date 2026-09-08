@@ -78,18 +78,6 @@ def get_filename(filenames, idx):
     return filename
 
 
-def get_label(labels, idx):
-    """"Returns labels corresponding to indices idx
-
-    labels: dataframe with column name 'Subject'
-    """
-    label = labels.drop(columns='Subject').values[idx]
-    log.debug(f"idx = {idx}, labels[idx] = {label}")
-    log.debug(f"{idx} in labels = {idx in labels.index}")
-
-    return label
-
-
 def check_consistency(filename, labels, idx):
     """Checks if filenames are identical"""
     filename_label = labels.Subject[idx]
@@ -393,16 +381,9 @@ class ContrastiveDatasetFusion():
                            for reg, sample_extremity in enumerate(sample_extremities)]
             #for s, f in zip(samples, sample_extremities):
             #    check_equal_non_zero_voxels(s, f, "extremity") TODO: check inclusion only ?
-        
-
-        if self.labels is not None:
-            for reg in range(len(filenames)):
-                check_consistency(filenames[reg], self.labels[reg], idx)
-            labels = [get_label(label, idx) for label in self.labels]
 
         self.transform1 = []
         self.transform2 = []
-        self.transform3 = []
 
         if self.config.multiregion_single_encoder:
             regs = [0]

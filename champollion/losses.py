@@ -37,7 +37,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as func
 from sklearn.metrics.pairwise import rbf_kernel
-from contrastive.utils import logs
+from champollion.utils import logs
 
 log = logs.set_file_logger(__file__)
 

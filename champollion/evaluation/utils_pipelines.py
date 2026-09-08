@@ -9,8 +9,8 @@ import re
 import pandas as pd
 from typing import List, Optional
 
-from contrastive.utils.logs import set_root_logger_level, set_file_logger
-from contrastive.config_manager import HydraBridge, ConfigLoader
+from champollion.utils.logs import set_root_logger_level, set_file_logger
+from champollion.config_manager import HydraBridge, ConfigLoader
 
 log = set_file_logger(__file__)
 

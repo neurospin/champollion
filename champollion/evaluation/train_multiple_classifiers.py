@@ -19,18 +19,18 @@ from joblib import cpu_count
 from functools import partial
 
 from sklearn.preprocessing import StandardScaler
-# from contrastive.models.binary_classifier import BinaryClassifier
+# from champollion.models.binary_classifier import BinaryClassifier
 from sklearn.linear_model import LogisticRegression, LinearRegression, ElasticNet
 from sklearn.svm import SVC, SVR
 from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
 
-from contrastive.data.utils import read_labels
+from champollion.data.utils import read_labels
 
-from contrastive.utils.config import process_config
-from contrastive.utils.logs import set_root_logger_level, set_file_logger
-from contrastive.evaluation.utils_pipelines import save_used_label
-from contrastive.evaluation.auc_score import regression_roc_auc_score
+from champollion.utils.config import process_config
+from champollion.utils.logs import set_root_logger_level, set_file_logger
+from champollion.evaluation.utils_pipelines import save_used_label
+from champollion.evaluation.auc_score import regression_roc_auc_score
 
 from sklearn.utils._testing import ignore_warnings
 from sklearn.metrics import r2_score

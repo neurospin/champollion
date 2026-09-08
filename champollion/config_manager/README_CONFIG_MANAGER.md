@@ -8,7 +8,7 @@ This module provides a decoupled configuration management system for Champollion
 Manages dataset configurations dynamically without hardcoding paths.
 
 ```python
-from contrastive.config_manager import DatasetRegistry
+from champollion.config_manager import DatasetRegistry
 
 # Auto-discover all datasets in configs/dataset directory
 registry = DatasetRegistry(config_dir="./configs/dataset", auto_discover=True)
@@ -27,7 +27,7 @@ hcp_datasets = registry.filter_datasets("*/hcp*")
 Loads configurations from external YAML files.
 
 ```python
-from contrastive.config_manager import ConfigLoader
+from champollion.config_manager import ConfigLoader
 
 loader = ConfigLoader()
 
@@ -57,7 +57,7 @@ config = loader.create_evaluation_config(
 Provides drop-in replacements for `utils_pipelines.py` functions.
 
 ```python
-from contrastive.config_manager import HydraBridge
+from champollion.config_manager import HydraBridge
 
 bridge = HydraBridge()
 
@@ -84,14 +84,14 @@ This provides drop-in replacements that work exactly like the original functions
 
 ```python
 # OLD CODE (utils_pipelines.py)
-from contrastive.evaluation.utils_pipelines import (
+from champollion.evaluation.utils_pipelines import (
     change_config_datasets,
     change_config_label,
     get_save_folder_name
 )
 
 # NEW CODE (utils_pipelines_new.py)
-from contrastive.evaluation.utils_pipelines_new import (
+from champollion.evaluation.utils_pipelines_new import (
     change_config_datasets,  # Now uses DatasetRegistry
     change_config_label,     # Now uses ConfigLoader
     get_save_folder_name
@@ -123,7 +123,7 @@ That's it! No other code changes needed.
 For more control, use HydraBridge directly:
 
 ```python
-from contrastive.config_manager import HydraBridge
+from champollion.config_manager import HydraBridge
 
 bridge = HydraBridge()
 
@@ -197,7 +197,7 @@ python champollion_pipeline/src/generate_champollion_config.py \
 ### Method 3: Use HydraBridge Programmatically
 
 ```python
-from contrastive.config_manager import HydraBridge
+from champollion.config_manager import HydraBridge
 
 bridge = HydraBridge()
 
@@ -238,7 +238,7 @@ from utils_pipelines_new import (
 ### Example 2: List Available Datasets
 
 ```python
-from contrastive.config_manager import HydraBridge
+from champollion.config_manager import HydraBridge
 
 bridge = HydraBridge()
 
@@ -256,7 +256,7 @@ classifiers = bridge.list_available_classifiers(format_output=True)
 ### Example 3: Create Config for Evaluation
 
 ```python
-from contrastive.config_manager import ConfigLoader
+from champollion.config_manager import ConfigLoader
 
 loader = ConfigLoader()
 
@@ -297,17 +297,17 @@ In files that use `utils_pipelines.py`, change imports:
 
 ```python
 # OLD
-from contrastive.evaluation.utils_pipelines import change_config_datasets
+from champollion.evaluation.utils_pipelines import change_config_datasets
 
 # NEW
-from contrastive.evaluation.utils_pipelines_new import change_config_datasets
+from champollion.evaluation.utils_pipelines_new import change_config_datasets
 ```
 
 ### Step 3: Test
 
 ```python
 # Test that datasets are loaded correctly
-from contrastive.config_manager import DatasetRegistry
+from champollion.config_manager import DatasetRegistry
 
 registry = DatasetRegistry(config_dir="./contrastive/configs/dataset")
 print(f"Loaded {len(registry.list_datasets())} datasets")
@@ -321,7 +321,7 @@ print(registry.list_datasets()[:10])  # Print first 10
 **Solution:** Check dataset path and reload registry:
 
 ```python
-from contrastive.config_manager import ConfigLoader
+from champollion.config_manager import ConfigLoader
 
 loader = ConfigLoader()
 registry = loader.get_dataset_registry(force_reload=True)
@@ -333,7 +333,7 @@ print(registry.list_datasets())
 **Solution:** Verify config_root is correct:
 
 ```python
-from contrastive.config_manager import ConfigLoader
+from champollion.config_manager import ConfigLoader
 
 loader = ConfigLoader()
 print(f"Config root: {loader.config_root}")
@@ -346,7 +346,7 @@ print(f"Dataset dir: {loader.config_root}/dataset")
 
 ```python
 # Import from new module
-from contrastive.evaluation.utils_pipelines_new import change_config_datasets
+from champollion.evaluation.utils_pipelines_new import change_config_datasets
 ```
 
 ## 📚 API Reference
@@ -373,7 +373,7 @@ The main pipeline orchestrator (`main.py` at project root) can use this module t
 
 ```python
 # In main.py or pipeline stages
-from champollion_pipeline.external.champollion_V1.contrastive.config_manager import ConfigLoader
+from champollion_pipeline.external.champollion_V1.champollion.config_manager import ConfigLoader
 
 loader = ConfigLoader()
 

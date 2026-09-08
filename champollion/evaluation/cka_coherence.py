@@ -15,7 +15,7 @@ from typing import List, Dict, Tuple, Optional, Union
 import json
 import warnings
 
-from contrastive.utils.logs import set_file_logger
+from champollion.utils.logs import set_file_logger
 
 log = set_file_logger(__file__)
 
@@ -718,15 +718,15 @@ def _build_parser():
         epilog="""
 Examples:
   # Two explicit files
-  python -m contrastive.evaluation.cka_coherence \\
+  python -m champollion.evaluation.cka_coherence \\
       model_a:path/to/a.pt model_b:path/to/b.pt
 
   # Discover all embeddings.pt files under a directory
-  python -m contrastive.evaluation.cka_coherence \\
+  python -m champollion.evaluation.cka_coherence \\
       --dir data/models --filename embeddings.pt
 
   # CSV files (default filename)
-  python -m contrastive.evaluation.cka_coherence --dir data/models
+  python -m champollion.evaluation.cka_coherence --dir data/models
 """,
     )
 

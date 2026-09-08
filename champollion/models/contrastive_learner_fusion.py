@@ -44,14 +44,14 @@ import torch
 import pytorch_lightning as pl
 from collections import OrderedDict
 
-from contrastive.backbones.convnet import ConvNet
-from contrastive.backbones.resnet import ResNet, BasicBlock
-from contrastive.backbones.projection_heads import *
-from contrastive.data.utils import change_list_device
-from contrastive.models.models_utils import *
-from contrastive.losses import *
+from champollion.backbones.convnet import ConvNet
+from champollion.backbones.resnet import ResNet, BasicBlock
+from champollion.backbones.projection_heads import *
+from champollion.data.utils import change_list_device
+from champollion.models.models_utils import *
+from champollion.losses import *
 
-from contrastive.utils.logs import set_file_logger
+from champollion.utils.logs import set_file_logger
 log = set_file_logger(__file__)
 
 

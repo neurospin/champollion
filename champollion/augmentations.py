@@ -41,8 +41,8 @@ import torch
 from scipy.ndimage import rotate
 from sklearn.preprocessing import OneHotEncoder
 
-from contrastive.utils import logs
-from contrastive.data.utils import zero_padding, repeat_padding, pad, convert_sparse_to_numpy
+from champollion.utils import logs
+from champollion.data.utils import zero_padding, repeat_padding, pad, convert_sparse_to_numpy
 
 log = logs.set_file_logger(__file__)
 

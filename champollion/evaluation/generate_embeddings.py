@@ -27,10 +27,10 @@ import pandas as pd
 import os
 import glob
 
-from contrastive.utils.config import process_config
-from contrastive.data.datamodule import DataModule_Evaluation
-from contrastive.evaluation.utils_pipelines import save_used_datasets
-from contrastive.models.contrastive_learner_fusion import \
+from champollion.utils.config import process_config
+from champollion.data.datamodule import DataModule_Evaluation
+from champollion.evaluation.utils_pipelines import save_used_datasets
+from champollion.models.contrastive_learner_fusion import \
     ContrastiveLearnerFusion
 
 

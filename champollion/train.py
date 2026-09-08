@@ -52,12 +52,12 @@ import omegaconf
 from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
 
-from contrastive.data.datamodule import DataModule_Learning
-from contrastive.models.contrastive_learner_fusion import ContrastiveLearnerFusion
+from champollion.data.datamodule import DataModule_Learning
+from champollion.models.contrastive_learner_fusion import ContrastiveLearnerFusion
 
-from contrastive.utils.config import create_accessible_config, process_config,\
+from champollion.utils.config import create_accessible_config, process_config,\
     get_config_diff
-from contrastive.utils.logs import set_root_logger_level, \
+from champollion.utils.logs import set_root_logger_level, \
     set_file_log_handler, set_file_logger
 
 tb_logger = pl_loggers.TensorBoardLogger('logs')

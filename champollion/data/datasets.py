@@ -38,13 +38,13 @@ Tools to create pytorch dataloaders
 import torch
 import numpy as np
 
-from contrastive.utils.logs import set_file_logger
+from champollion.utils.logs import set_file_logger
 
-from contrastive.data.transforms import transform_only_padding, transform_mixed
+from champollion.data.transforms import transform_only_padding, transform_mixed
 
-from contrastive.data.utils import convert_sparse_to_numpy
+from champollion.data.utils import convert_sparse_to_numpy
 
-from contrastive.augmentations import PaddingTensor
+from champollion.augmentations import PaddingTensor
 
 log = set_file_logger(__file__)
 

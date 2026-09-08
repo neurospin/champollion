@@ -40,7 +40,7 @@ import torchvision.transforms as transforms
 from skimage.morphology import ball
 import numpy as np
 
-from contrastive.augmentations import *
+from champollion.augmentations import *
 
 
 def transform_only_padding(input_size, config):

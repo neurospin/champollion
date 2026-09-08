@@ -154,7 +154,7 @@ and produces a pairwise CKA similarity matrix.
 
 .. code-block:: python
 
-    from contrastive.evaluation.cka_coherence import test_models_coherence_from_directory
+    from champollion.evaluation.cka_coherence import test_models_coherence_from_directory
 
     cka_matrix, stats = test_models_coherence_from_directory(
         models_dir='path/to/models',

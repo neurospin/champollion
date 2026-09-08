@@ -39,7 +39,6 @@ from torch.utils.data import RandomSampler, BatchSampler
 from torch.utils.data.sampler import Sampler
 import random
 
-from .create_datasets import create_sets_with_labels
 from .create_datasets import create_sets_without_labels
 from .create_datasets import create_sets_without_labels_without_load
 
@@ -114,13 +113,10 @@ class DataModule(pl.LightningDataModule):
         self.config = config
 
     def setup(self, stage=None, mode=None):
-        if self.config.with_labels:
-            datasets = create_sets_with_labels(self.config)
+        if self.config.load_sparse:
+            datasets = create_sets_without_labels_without_load(self.config)
         else:
-            if self.config.load_sparse:
-                datasets = create_sets_without_labels_without_load(self.config)
-            else:
-                datasets = create_sets_without_labels(self.config)
+            datasets = create_sets_without_labels(self.config)
 
         self.dataset_train = datasets['train']
         self.dataset_val = datasets['val']

@@ -415,9 +415,9 @@ class ContrastiveDatasetFusion():
                     config=self.config)        
             else:
                 transform1 = transform_only_padding(
-                    input_size, flip, self.config)
+                    input_size, self.config)
                 transform2 = transform_only_padding(
-                    input_size, flip, self.config)
+                    input_size, self.config)
             self.transform1.append(transform1)
             self.transform2.append(transform2)
 

@@ -43,14 +43,12 @@ import numpy as np
 from contrastive.augmentations import *
 
 
-def transform_only_padding(input_size, flip_dataset, config):
+def transform_only_padding(input_size, config):
     transforms_list = [
             SimplifyTensor(),
             PaddingTensor(shape=input_size,
                             fill_value=config.fill_value),
             BinarizeTensor()]
-    if flip_dataset:
-        transforms_list.append(FlipFirstAxisTensor())
     transforms_list.append(EndTensor())
     return transforms.Compose(transforms_list)
     
@@ -64,34 +62,6 @@ def transform_mixed(sample_foldlabel, sample_distbottom,
                                      fill_value=config.fill_value),
                        ConcatTensor(sample_foldlabel, sample_distbottom, sample_extremities, mask)]
     np.random.seed()
-    r = np.random.uniform()
-    if r < config.proba_trimdepth:
-        transforms_list.append(
-            TrimDepthTensor(
-                max_distance=config.max_distance,
-                delta=config.trimdepth_delta,
-                input_size=input_size,
-                keep_extremity=config.keep_extremity_trimdepth,
-                uniform=config.uniform_trim,
-                binary=config.binary_trim,
-                binary_proba=config.binary_proba_trim,
-                pepper=config.proba_pepper_trimdepth,
-                redefine_bottom=config.redefine_bottom)
-        )
-    r = np.random.uniform()
-    if r < config.proba_trimextremities:
-        if config.ball_radius==0:
-            protective_structure=None
-        else:
-            protective_structure=np.expand_dims(ball(config.ball_radius), axis=-1)
-        transforms_list.append(
-            HighlightExtremitiesTensor(
-                                    input_size=input_size,
-                                    protective_structure=protective_structure,
-                                    p=config.proba_trimedges,
-                                    pepper=config.proba_pepper_trimedges,
-                                    keep_extremity=None)
-        )
     r = np.random.uniform()    
     if r < config.proba_rotation:
         transforms_list.append(RotateTensor(config.max_angle))

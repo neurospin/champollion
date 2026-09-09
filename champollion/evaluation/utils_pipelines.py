@@ -157,39 +157,6 @@ def save_used_label(save_path, config):
         file.write(label)
 
 
-def detect_collision(run_path):
-    """Detects if two models have been saved in the same folder during
-    a wandb grid search. Returns True if it is the case.
-    
-    Arguments:
-        - run_path: folder associated to a model to be inspected."""
-    log_path = os.path.join(run_path, 'wandb')
-    try:
-        files = os.listdir(log_path)
-    except:
-        # not a model
-        return False
-    count = 0
-    for file in files:
-        if re.match(r'run*', file) is not None:
-            count+=1
-    if count > 1:
-        return True
-    return False
-
-
-def detect_collisions(sweep_path):
-    """Loops detect_collision over a folder at sweep_path.
-    Prints all the folder names where there is a collision (two models
-    saved in the same folder)."""
-    runs = os.listdir(sweep_path)
-    for run in runs:
-        run_path = os.path.join(sweep_path, run)
-        if os.path.isdir(run_path):
-            if detect_collision(run_path):
-                print(run)
-
-
 def save_outputs_as_csv(outputs, filenames, labels, csv_path=None, verbose=False):
     """Save and returns outputs of a model to its canonical form from a tensor. If
     the given save_path doesn't exist, creates it.

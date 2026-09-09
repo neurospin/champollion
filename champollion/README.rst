@@ -91,37 +91,6 @@ Then run the command line:
 * The path where the results are stored is written in the ``configs/hydra/local.yaml``. Section run is for normal run and sweep for multirun.
 
 
-Use WandB to perform a grid search
-==================================
-
-The training method is compatible with WandB, which means it is possible to get their models' displays and analyses, either individually or collectively through what is called sweeps. WandB logging is activated by default, and you have to set the config parameter grid_search to False in the wandb/identity yaml in order to get rid of it. If you do use it, you need to create your own account, and then you will have some information about the model such as loss/AUC curves available on their site.
-
-If you want to perform a grid search, you have to set up the parameters you want to vary during the search in the configs/sweep.yaml file. Get more info about the syntax of this file on their `online documentation <https://docs.wandb.ai/guides/sweeps/define-sweep-configuration>`_. You then have to initialize a sweep with the command line:
-
-.. code-block:: shell
-
-    wandb sweep configs/sweep.yaml
-
-Once this is done, you get as an output another command line looking like ``wandb agent entity/project/sweep_id`` that you have to run to perform the grid search. You can add the keyword ``--count n_runs`` to the command line to set the number of models you want to run (it is especially crucial when your grid search does not limit the number of runs by default).
-
-**/!\\** When you run a sweep with wandb, only the parameters in the ``sweep.yaml`` are saved by wandb, which means you can't change the other parameters during a run, otherwise they will change for the future runs of the sweep. It is also true if you run several sweeps using different shells.
-
-
-Use WandB to perform multiple gridsearch at a time/in a row
-===========================================================
-
-This section is useful only if you want to run several sweeps with only one command line. This can be useful if you want to run over multiple brain regions, or if you want to run several sweeps during a week-end or holidays for instance. To do so, you have to set up the sweeps beforehand with the ``wandb sweep`` command, and then use the ``run_grid_searches.py`` file. Fill it according to the comments' instructions, i.e. with the sweeps' ids, their counts and the max number of agent you want to have in parallel, then run the program.
-
-**/!\\** If you want to run sweeps on different regions, you have to add the dataset keyword to the ``sweep.yaml``. But because datasets are not keywords of the config just like for example ``lr`` is, you have to change a bit the config files writting. You need to follow the following convention:
-
-.. code-block:: yaml
-    
-    +dataset:
-        value: [region_right, region_left]
-
-and you have to comment (or remove) the dataset in the ``config.yaml`` file.
-
-
 Tutorial: generate and rate embeddings
 ======================================
 

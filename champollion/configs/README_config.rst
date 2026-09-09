@@ -12,10 +12,6 @@ The ``config_no_save.yaml`` is used by embeddings pipeline, in order not to save
 SimCLR models are. The keywords it contains are actually not relevant, as they are overridden when the 
 function is called.
 
-The ``sweep.yaml`` file is related to WandB, and is used to launch grid searches. You have to specify in it 
-the variables of the config that you want to change during the search, and how they should be changed.
-More about it in the `doc of WandB <https://docs.wandb.ai/guides/sweeps/define-sweep-configuration>`.
-
 
 Folders
 =======
@@ -83,8 +79,3 @@ Parameters related to the projection head, such as its layers' activation and sh
 trainer
 -------
 Parameters related to the training process, such as learning rate, proportions of train/val, max number of epochs, etc.
-
-wandb
------
-Parameters linked to wandb. It should contain your own account and project names. It also contains parameters about grid 
-searches.

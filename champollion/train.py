@@ -47,7 +47,6 @@ import pytorch_lightning as pl
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.profilers import PyTorchProfiler, SimpleProfiler
-import wandb
 import omegaconf
 from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
@@ -74,7 +73,7 @@ We use the following definitions:
 
 
 def get_train_seed():
-    """Get a random seed for training to avoid collisions when using wandb."""
+    """Get a random seed for training."""
     train_seed = rd.randint(256)
     return train_seed
 
@@ -165,15 +164,6 @@ def train(config):
 
     # choose the logger
     loggers = [tb_logger]
-    if config.wandb.grid_search:
-        # add Wandb logger
-        wandb.config = omegaconf.OmegaConf.to_container(
-            config, resolve=True, throw_on_missing=True)
-        wandb.init(entity=config.wandb.entity, project=config.wandb.project,
-                   dir=os.getcwd())
-        wandb_logger = pl.loggers.WandbLogger(project=config.wandb.project,
-                                              save_dir=os.getcwd())
-        loggers.append(wandb_logger)
 
     # Configure device (CPU or GPU)
     if config.device == 'cuda':

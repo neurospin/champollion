@@ -12,7 +12,6 @@ defaults:
   - platform: cuda
   - projection_head: relu
   - trainer: default
-  - wandb: identity
   - override hydra/job_logging: custom
 
 data: ${oc.dict.values:dataset}

@@ -88,9 +88,7 @@ def train(config):
         log.info(f"Load weigths stored at {config.pretrained_model_path}")
         model.load_pretrained_model(config.pretrained_model_path,
                                     encoder_only=config.load_encoder_only,
-                                    convolutions_only=config.load_convolutions_only,
-                                    freeze_loaded_layers=config.freeze_loaded_layers,
-                                    freeze_bias=config.freeze_bias)
+                                    freeze_loaded_layers=config.freeze_loaded_layers)
 
     input_size = tuple([1] + list(config.data[0].input_size))
     if (len(config.dataset.keys()) == 1): # if one region

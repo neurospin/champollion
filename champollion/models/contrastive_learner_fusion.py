@@ -69,6 +69,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         if config.backbone_name == "convnet":
             for i in range(n_datasets):
                 self.backbones.append(ConvNet(
+                    in_channels=1,
                     encoder_depth=config.encoder_depth,
                     filters=config.filters,
                     block_depth=config.block_depth,
@@ -82,15 +83,14 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         elif config.backbone_name == 'resnet':
             for i in range(n_datasets):
                 self.backbones.append(ResNet(
+                    in_channels=1,
                     block=BasicBlock,
+                    out_block=None,
                     layers=config.layers,
                     channels=config.channels,
-                    in_channels=1,
                     num_classes=config.backbone_output_size,
                     zero_init_residual=config.zero_init_residual,
                     dropout_rate=config.drop_rate,
-                    out_block=None,
-                    prediction_bias=False,
                     initial_kernel_size=config.initial_kernel_size,
                     initial_stride=config.initial_stride,
                     adaptive_pooling=config.adaptive_pooling))

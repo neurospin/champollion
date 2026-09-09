@@ -46,10 +46,10 @@ class Conv3dSame(nn.Conv3d):
 
 class ConvNet(pl.LightningModule):
 
-    def __init__(self, in_channels=1, encoder_depth=3, block_depth=2,
-                 num_representation_features=256, linear=True,
-                 adaptive_pooling=None, filters=[16,32,64], initial_kernel_size=3,
-                 initial_stride=1, max_pool=False, drop_rate=0.1, in_shape=None):
+    def __init__(self, in_channels, encoder_depth, block_depth,
+                 num_representation_features, adaptive_pooling,
+                 filters, initial_kernel_size, initial_stride,
+                 max_pool, drop_rate, in_shape):
 
         super(ConvNet, self).__init__()
 
@@ -121,13 +121,12 @@ class ConvNet(pl.LightningModule):
                 raise ValueError("Wrong pooling name argument")
         # flatten and reduce to the desired dimension
         modules_encoder.append(('Flatten', nn.Flatten()))
-        if linear:
-            modules_encoder.append(
-                ('Linear',
-                nn.Linear(
-                    self.num_features*self.out_dim,
-                    self.num_representation_features)
-                ))
+        modules_encoder.append(
+            ('Linear',
+            nn.Linear(
+                self.num_features*self.out_dim,
+                self.num_representation_features)
+            ))
         self.encoder = nn.Sequential(OrderedDict(modules_encoder))
 
     def forward(self, x):

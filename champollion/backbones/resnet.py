@@ -58,10 +58,11 @@ class BasicBlock(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, layers, channels=[64,128,256,512], in_channels=3, num_classes=1000,
-                 zero_init_residual=False, groups=1, width_per_group=64, replace_stride_with_dilation=None,
-                 norm_layer=None, dropout_rate=None, out_block=None,
-                 initial_kernel_size=7, initial_stride=2, adaptive_pooling=['average', 1]):
+    def __init__(self, in_channels, block, layers, channels, num_classes,
+                 zero_init_residual, dropout_rate, out_block,
+                 initial_kernel_size, initial_stride, adaptive_pooling,
+                 groups=1, width_per_group=64, replace_stride_with_dilation=None,
+                 norm_layer=None):
         super(ResNet, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm3d

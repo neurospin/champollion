@@ -61,13 +61,8 @@ class ContrastiveLearnerFusion(pl.LightningModule):
     def __init__(self, config, sample_data):
         super(ContrastiveLearnerFusion, self).__init__()
 
-        if config.multiregion_single_encoder:
-            n_datasets = 1
-            n_regions = len(config.data)
-            log.info("n_datasets 1 because a single encoder is used for multiple regions")
-        else:
-            n_datasets = len(config.data)
-            log.info(f"n_datasets {n_datasets}")
+        n_datasets = len(config.data)
+        log.info(f"n_datasets {n_datasets}")
 
         # define the encoder structure
         self.backbones = nn.ModuleList()
@@ -81,7 +76,6 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     initial_stride=config.initial_stride,
                     max_pool=config.max_pool,
                     num_representation_features=config.backbone_output_size,
-                    linear = config.linear_in_backbone,
                     adaptive_pooling=config.adaptive_pooling,
                     drop_rate=config.drop_rate,
                     in_shape=config.data[i].input_size))
@@ -99,8 +93,7 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                     prediction_bias=False,
                     initial_kernel_size=config.initial_kernel_size,
                     initial_stride=config.initial_stride,
-                    adaptive_pooling=config.adaptive_pooling,
-                    linear_in_backbone=config.linear_in_backbone))
+                    adaptive_pooling=config.adaptive_pooling))
         else:
             raise ValueError(f"No underlying backbone with backbone name {config.backbone_name}")
         
@@ -126,43 +119,15 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         activation = config.projection_head_name
         log.debug(f"activation = {activation}")
 
-        if config.multiple_projection_heads:
-            # Evaluation: need to initialize the right number of projection heads for weight mapping
-            n_regions = len(config.data)
-            self.projection_head = nn.ModuleList()
-            for reg in range(n_regions):
-                if config.linear_in_backbone:
-                    self.projection_head.append(ProjectionHead(
-                    num_representation_features=num_representation_features,
-                    layers_shapes=layers_shapes,
-                    activation=activation,
-                    drop_rate=config.ph_drop_rate))
-                else:
-                    # add a variable size linear layer to each projection head
-                    layers_shapes_including_variable = layers_shapes.copy()
-                    # TODO: make it compatible with ResNet !
-                    backbone_output_shape = [config.data[reg].input_size[1] // 2**config.encoder_depth,
-                                            config.data[reg].input_size[2] // 2**config.encoder_depth,
-                                            config.data[reg].input_size[3] // 2**config.encoder_depth]
-                    backbone_output_shape = config.filters[-1]*np.prod(backbone_output_shape)
-                    layers_shapes_including_variable = [backbone_output_shape] + layers_shapes_including_variable
-                    self.projection_head.append(ProjectionHead(
-                        num_representation_features=num_representation_features,
-                        layers_shapes=layers_shapes_including_variable,
-                        activation=activation,
-                        drop_rate=config.ph_drop_rate))
-        else:
-            self.projection_head = ProjectionHead(
-                num_representation_features=num_representation_features,
-                layers_shapes=layers_shapes,
-                activation=activation,
-                drop_rate=config.ph_drop_rate)
+        self.projection_head = ProjectionHead(
+            num_representation_features=num_representation_features,
+            layers_shapes=layers_shapes,
+            activation=activation,
+            drop_rate=config.ph_drop_rate)
 
         # set up class keywords
         self.config = config
         self.n_datasets = n_datasets
-        if self.config.multiregion_single_encoder:
-            self.n_regions = n_regions
         self.sample_data = sample_data
         self.sample_i = np.array([])
         self.sample_j = np.array([])
@@ -175,9 +140,6 @@ class ContrastiveLearnerFusion(pl.LightningModule):
         # Keeps track of losses
         self.training_step_outputs = []
         self.validation_step_outputs = []
-        if self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
-            self.training_step_idxs_region = [] 
-            self.validation_step_idxs_region = []
         if self.config.contrastive_model=='BarlowTwins':
             self.training_step_loss_inv = []
             self.training_step_loss_redund = []
@@ -314,20 +276,13 @@ class ContrastiveLearnerFusion(pl.LightningModule):
     def training_step(self, train_batch, batch_idx):
         """Training step.
         """
-        if self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
-            inputs, filenames, idx_region = self.get_full_inputs_from_batch_with_region_idx(train_batch)
-        else:
-            inputs, filenames = self.get_full_inputs_from_batch(train_batch)
+        inputs, filenames = self.get_full_inputs_from_batch(train_batch)
 
         # print("TRAINING STEP", inputs.shape)
         input_i = [inputs[i][:, 0, ...] for i in range(self.n_datasets)]
         input_j = [inputs[i][:, 1, ...] for i in range(self.n_datasets)]
-        if self.config.multiple_projection_heads:
-            z_i = self.forward(input_i, idx_region=idx_region)
-            z_j = self.forward(input_j, idx_region=idx_region)
-        else:
-            z_i = self.forward(input_i)
-            z_j = self.forward(input_j)
+        z_i = self.forward(input_i)
+        z_j = self.forward(input_j)
 
         # compute the right loss
         if self.config.contrastive_model=='SimCLR':
@@ -356,8 +311,6 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             # decompose loss in invariance and redundancy term
             self.training_step_loss_inv.append(loss_invariance)
             self.training_step_loss_redund.append(loss_redundancy)
-        if self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
-            self.training_step_idxs_region.append(idx_region)
 
         batch_dictionary = {
             # REQUIRED: It is required for us to return "loss"
@@ -410,18 +363,6 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                 avg_loss_redund,
                 self.current_epoch)
 
-        # if multiregion, train loss for each region
-        if self.config.multiregion_single_encoder:
-            for region in range(self.n_regions):
-                regional_loss = [x for x, idx in zip(self.training_step_outputs, self.training_step_idxs_region)
-                                if idx==region]
-                if len(regional_loss) > 0:
-                    regional_loss = torch.stack(regional_loss).mean()
-                    self.loggers[0].experiment.add_scalar(
-                    f"LossRegion{region}/Train",
-                    regional_loss,
-                    self.current_epoch)
-
         if self.config.scheduler:
             self.loggers[0].experiment.add_scalar(
                 "Learning rate",
@@ -433,8 +374,6 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             avg_loss_redund = avg_loss_redund.detach().cpu().item()
 
         self.training_step_outputs.clear()  # free memory
-        if self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
-            self.training_step_idxs_region.clear()
         if self.config.mode == "encoder" and self.config.contrastive_model=='BarlowTwins':
             self.training_step_loss_inv.clear()
             self.training_step_loss_redund.clear()
@@ -442,19 +381,12 @@ class ContrastiveLearnerFusion(pl.LightningModule):
 
     def validation_step(self, val_batch, batch_idx):
         """Validation step"""
-        if self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
-            (inputs, _, idx_region) = self.get_full_inputs_from_batch_with_region_idx(val_batch)
-        else:
-            inputs, _ = self.get_full_inputs_from_batch(val_batch)
+        inputs, _ = self.get_full_inputs_from_batch(val_batch)
         
         input_i = [inputs[i][:, 0, ...] for i in range(self.n_datasets)]
         input_j = [inputs[i][:, 1, ...] for i in range(self.n_datasets)]
-        if self.config.multiple_projection_heads:
-            z_i = self.forward(input_i, idx_region=idx_region)
-            z_j = self.forward(input_j, idx_region=idx_region)
-        else:
-            z_i = self.forward(input_i)
-            z_j = self.forward(input_j)
+        z_i = self.forward(input_i)
+        z_j = self.forward(input_j)
 
         if self.config.contrastive_model=='SimCLR':
             batch_loss, sim_zij, sim_zii, sim_zjj = self.nt_xen_loss(z_i, z_j)
@@ -478,8 +410,6 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             # decompose loss in invariance and redundancy term
             self.validation_step_loss_inv.append(loss_invariance)
             self.validation_step_loss_redund.append(loss_redundancy)
-        if self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
-            self.validation_step_idxs_region.append(idx_region)
 
         return batch_dictionary
 
@@ -508,18 +438,6 @@ class ContrastiveLearnerFusion(pl.LightningModule):
                 "LossRedund/Val",
                 avg_loss_redund,
                 self.current_epoch)
-        
-        # if multiregion, val loss for each region
-        if self.config.multiregion_single_encoder:
-            for region in range(self.n_regions):
-                regional_loss = [x for x, idx in zip(self.validation_step_outputs, self.validation_step_idxs_region)
-                                if idx==region]
-                if len(regional_loss) > 0:
-                    regional_loss = torch.stack(regional_loss).mean()
-                    self.loggers[0].experiment.add_scalar(
-                    f"LossRegion{region}/Val",
-                    regional_loss,
-                    self.current_epoch)
 
 
         # save model if best validation loss
@@ -547,8 +465,6 @@ class ContrastiveLearnerFusion(pl.LightningModule):
             avg_loss_redund = avg_loss_redund.detach().cpu().item()
 
         self.validation_step_outputs.clear()  # free memory
-        if self.config.multiple_projection_heads or self.config.multiregion_single_encoder:
-            self.validation_step_idxs_region.clear()
         if self.config.mode == "encoder" and self.config.contrastive_model=='BarlowTwins':
             self.validation_step_loss_inv.clear()
             self.validation_step_loss_redund.clear()

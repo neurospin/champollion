@@ -130,7 +130,7 @@ class ResNet(nn.Module):
     def __init__(self, block, layers, channels=[64,128,256,512], in_channels=3, num_classes=1000,
                  zero_init_residual=False, groups=1, width_per_group=64, replace_stride_with_dilation=None,
                  norm_layer=None, dropout_rate=None, out_block=None, prediction_bias=True,
-                 initial_kernel_size=7, initial_stride=2, adaptive_pooling=['average', 1], linear_in_backbone=False):
+                 initial_kernel_size=7, initial_stride=2, adaptive_pooling=['average', 1]):
         super(ResNet, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm3d
@@ -142,7 +142,6 @@ class ResNet(nn.Module):
         self.dilation = 1
         self.out_block = out_block
         self.adaptive_pooling = adaptive_pooling
-        self.linear_in_backbone = linear_in_backbone
 
         if replace_stride_with_dilation is None:
             # each element in the tuple indicates if we should replace
@@ -179,10 +178,8 @@ class ResNet(nn.Module):
         if dropout_rate is not None and dropout_rate>0:
             self.dropout = nn.Dropout(dropout_rate)
 
-        # linear layer to map to embeddings size
-        if self.linear_in_backbone:
-            output_dim = np.prod(self.adaptive_pooling[1])*channels[-1]
-            self.linear = nn.Linear(output_dim, num_classes)
+        output_dim = np.prod(self.adaptive_pooling[1])*channels[-1]
+        self.linear = nn.Linear(output_dim, num_classes)
 
         # attention mechanism
         #self.attention_map = None
@@ -263,8 +260,7 @@ class ResNet(nn.Module):
         #    return x6
         #else:
         #    x6 = self.fc(x6).squeeze(dim=1)
-        if self.linear_in_backbone:
-            x6 = self.linear(x6)
+        x6 = self.linear(x6)
         return x6
 
 

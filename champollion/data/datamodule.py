@@ -134,49 +134,24 @@ class DataModule_Learning(DataModule):
         super(DataModule_Learning, self).__init__(config)
 
     def train_dataloader(self):
-        if self.config.multiregion_single_encoder:
-            cb_sampler = BatchSampler(CustomSampler(self.dataset_train,
-                                                         batch_size=self.config.batch_size,
-                                                         shuffle=True),
-                                            batch_size=self.config.batch_size,
-                                            drop_last=False)
-            loader_train = DataLoader(self.dataset_train,
-                                    batch_sampler=cb_sampler,
-                                    pin_memory=self.config.pin_mem,
-                                    multiprocessing_context='fork',
-                                    num_workers=self.config.num_cpu_workers)
-
-        else:
-            loader_train = DataLoader(self.dataset_train,
-                                    batch_size=self.config.batch_size,
-                                    sampler=RandomSampler(
-                                        data_source=self.dataset_train),
-                                    pin_memory=self.config.pin_mem,
-                                    multiprocessing_context='fork',
-                                    num_workers=self.config.num_cpu_workers,
-                                    drop_last=True)
+        loader_train = DataLoader(self.dataset_train,
+                                batch_size=self.config.batch_size,
+                                sampler=RandomSampler(
+                                    data_source=self.dataset_train),
+                                pin_memory=self.config.pin_mem,
+                                multiprocessing_context='fork',
+                                num_workers=self.config.num_cpu_workers,
+                                drop_last=True)
         return loader_train
 
     def val_dataloader(self):
-        if self.config.multiregion_single_encoder:
-            cb_sampler = BatchSampler(CustomSampler(self.dataset_val,
-                                                         batch_size=self.config.batch_size,
-                                                         shuffle=False),
-                                            batch_size=self.config.batch_size,
-                                            drop_last=False)
-            loader_val = DataLoader(self.dataset_val,
-                                    batch_sampler=cb_sampler,
-                                    pin_memory=self.config.pin_mem,
-                                    multiprocessing_context='fork',
-                                    num_workers=self.config.num_cpu_workers)
-        else:
-            loader_val = DataLoader(self.dataset_val,
-                                    batch_size=self.config.batch_size,
-                                    pin_memory=self.config.pin_mem,
-                                    multiprocessing_context='fork',
-                                    num_workers=self.config.num_cpu_workers,
-                                    shuffle=False,
-                                    drop_last=True)
+        loader_val = DataLoader(self.dataset_val,
+                                batch_size=self.config.batch_size,
+                                pin_memory=self.config.pin_mem,
+                                multiprocessing_context='fork',
+                                num_workers=self.config.num_cpu_workers,
+                                shuffle=False,
+                                drop_last=True)
         return loader_val
 
     def test_dataloader(self):

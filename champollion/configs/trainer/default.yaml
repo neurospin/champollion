@@ -31,8 +31,5 @@ threshold_plateau: 0.1
 factor: 0.33
 class_weights: [1., 1.]
 accumulate_grad_batches: 1
-multiregion_single_encoder: False
-multiple_projection_heads: False
-linear_in_backbone: True
 load_sparse: True
 save_views: True

@@ -60,7 +60,6 @@
 #     cfg.training_embeddings = \
 #         sub_dir + f"/{folder_name}_embeddings"
 #     cfg.apply_transformations = False
-#     cfg.multiregion_single_encoder = False
 #     cfg.load_sparse = False
 
 #     # add epoch to config if specified
@@ -362,7 +361,6 @@
 #     cfg.embeddings_save_path = sub_dir + f"/{folder_name}_embeddings"
 #     cfg.training_embeddings = sub_dir + f"/{folder_name}_embeddings"
 #     cfg.apply_transformations = False
-#     cfg.multiregion_single_encoder = False
 #     cfg.load_sparse = False
 #     # add epoch to config if specified
 #     if epoch is not None:
@@ -910,7 +908,6 @@ def preprocess_config(
     cfg.embeddings_save_path = join(sub_dir, f"{folder_name}_embeddings")
     cfg.training_embeddings = join(sub_dir, f"{folder_name}_embeddings")
     cfg.apply_transformations = False
-    cfg.multiregion_single_encoder = False
     cfg.load_sparse = False
 
     if epoch is not None:

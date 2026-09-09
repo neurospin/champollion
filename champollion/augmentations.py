@@ -232,7 +232,7 @@ class PartialCutOutTensor_Roll(object):
     """
 
     def __init__(self, mask_constraint=False, from_skeleton=True, input_size=None,
-                 keep_extremity='bottom', keep_proba_per_branch=1., keep_proba_global=1., patch_size=None,
+                 keep_extremity='bottom', keep_proba_per_branch=1., patch_size=None,
                  random_size=False, localization=None):
         """[summary]
         If from_skeleton==True,
@@ -264,7 +264,6 @@ class PartialCutOutTensor_Roll(object):
         self.from_skeleton = from_skeleton
         self.mask_constraint = mask_constraint
         self.keep_proba_per_branch = keep_proba_per_branch
-        self.keep_proba_global = keep_proba_global
         if keep_extremity=='random':
             np.random.seed()
             r = np.random.randint(3)
@@ -277,9 +276,6 @@ class PartialCutOutTensor_Roll(object):
         else:
             np.random.seed()
             r = np.random.uniform()
-            # don't keep bottom/top with given probability
-            if r > self.keep_proba_global:
-                keep_extremity=None
             self.keep_extremity = keep_extremity
 
     def __call__(self, tensor):

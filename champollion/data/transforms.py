@@ -72,13 +72,11 @@ def transform_mixed(sample_foldlabel, cutin_mask_path, input_size, config):
             from_skeleton=True
             patch_size=config.patch_size_cutout
             keep_proba_per_branch=config.keep_proba_per_branch_cutout
-            keep_proba_global=config.keep_proba_global_cutout
             mask_constraint=False
         else:
             from_skeleton=False
             patch_size=config.patch_size_cutin
             keep_proba_per_branch=config.keep_proba_per_branch_cutin
-            keep_proba_global=config.keep_proba_global_cutin
             mask_constraint=config.mask_constraint
         transforms_list.append(
             PartialCutOutTensor_Roll(
@@ -87,7 +85,6 @@ def transform_mixed(sample_foldlabel, cutin_mask_path, input_size, config):
                                     input_size=input_size,
                                     keep_extremity=config.keep_extremity,
                                     keep_proba_per_branch=keep_proba_per_branch,
-                                    keep_proba_global=keep_proba_global,
                                     patch_size=patch_size)
         )
 

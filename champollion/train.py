@@ -32,20 +32,12 @@
 #
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license version 2 and that you accept its terms.
-""" Training contrastive on skeleton images
 
-"""
-######################################################################
-# Imports and global variables definitions
-######################################################################
 import os
-# os.environ['MPLCONFIGDIR'] = os.getcwd()+'/.config_mpl'
-
 import hydra
 import numpy.random as rd
 import pytorch_lightning as pl
 from pytorch_lightning import loggers as pl_loggers
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.profilers import PyTorchProfiler, SimpleProfiler
 import omegaconf
 from torch.utils.tensorboard import SummaryWriter
@@ -54,22 +46,13 @@ from torchsummary import summary
 from champollion.data.datamodule import DataModule_Learning
 from champollion.models.contrastive_learner_fusion import ContrastiveLearnerFusion
 
-from champollion.utils.config import create_accessible_config, process_config,\
-    get_config_diff
+from champollion.utils.config import process_config
 from champollion.utils.logs import set_root_logger_level, \
     set_file_log_handler, set_file_logger
 
 tb_logger = pl_loggers.TensorBoardLogger('logs')
 writer = SummaryWriter()
 log = set_file_logger(__file__)
-
-"""
-We use the following definitions:
-- embedding or representation, the space before the projection head.
-  The elements of the space are features
-- output, the space after the projection head.
-  The elements are called output vectors
-"""
 
 
 def get_train_seed():
@@ -95,28 +78,6 @@ def train(config):
                          suffix='output')
     log.debug(f"current directory = {os.getcwd()}")
 
-    # copies some of the config parameters in a yaml file easily accessible
-    keys_to_keep = ['datasets', 'nb_subjects', 'model', 'with_labels',
-                    'input_size', 'temperature_initial', 'temperature', 'lambda_BT',
-                    'sigma', 'drop_rate', 'mode', 'foldlabel',
-                    'trimdepth', 'random_choice', 'mixed', 'distribution', 'patch_size', 'max_angle',
-                    'max_distance', 'max_translation', 'checkerboard_size',
-                    'keep_extremity', 'uniform_trim', 'binary_trim', 'growth_rate',
-                    'block_config', 'num_init_features','backbone_output_size',
-                    'fusioned_latent_space_size','num_outputs',
-                    'batch_size', 'pin_mem', 'partition',
-                    'lr', 'gamma', 'weight_decay', 'max_epochs',
-                    'early_stopping_patience', 'random_state', 'seed',
-                    'backbone_name', 'sigma_labels', 'label_names',
-                    'proportion_pure_contrastive', 'percentage', 
-                    'projection_head_name', 'sigma_noise', 'pretrained_model_path',
-                    'freeze_encoders', 'converter_activation']
-
-    create_accessible_config(keys_to_keep, os.getcwd() + "/.hydra/config.yaml")
-
-    # create a csv file where the parameters changing between runs are stored
-    get_config_diff(os.getcwd() + '/..', whole_config=False, save=True)
-
     data_module = DataModule_Learning(config)
     
     model = ContrastiveLearnerFusion(config,
@@ -131,36 +92,12 @@ def train(config):
                                     freeze_loaded_layers=config.freeze_loaded_layers,
                                     freeze_bias=config.freeze_bias)
 
-    #dataset = list(config.dataset.keys())[0]
-    # input_size = []
-    #input_size = tuple([1] + list(config.dataset[dataset]['input_size']))
-    # for dataset in config.dataset.keys():
-    #     input_size.extend(config.dataset[dataset]['input_size'][1:])
-    # print(f"Last linear layer dimension : \
-    #      {model.state_dict()['backbones.0.encoder.Linear.weight'].shape}")
     input_size = tuple([1] + list(config.data[0].input_size))
-    if config.backbone_name != 'pointnet':
-        if (len(config.dataset.keys()) == 1): # if one region
-            print(config.data[0].input_size)
-            summary(model, input_data=input_size, batch_dim=0, device=config.device, depth=6)
-        else:
-            summary(model, device=config.device, depth=6) # TODO : why 16 ?
+    if (len(config.dataset.keys()) == 1): # if one region
+        print(config.data[0].input_size)
+        summary(model, input_data=input_size, batch_dim=0, device=config.device, depth=6)
     else:
-        summary(model, device='cpu')
-
-    # define the early stoppings
-    early_stop_callback = \
-        EarlyStopping(monitor="val_loss",
-                      patience=config.early_stopping_patience)
-    
-    early_stop_overfitting = \
-        EarlyStopping(monitor="diff_auc",
-                      divergence_threshold=config.diff_auc_threshold,
-                      patience=config.max_epochs)
-
-    #callbacks = [early_stop_callback]
-    if config.mode in ['classifier', 'regresser']:
-        callbacks.append(early_stop_overfitting)
+        summary(model, device=config.device, depth=6) # TODO : why 16 ?
 
     # choose the logger
     loggers = [tb_logger]
@@ -193,11 +130,8 @@ def train(config):
         accelerator=accelerator,
         devices=devices,
         max_epochs=config.max_epochs,
-        #callbacks=callbacks,
         logger=loggers,
-        #flush_logs_every_n_steps=config.nb_steps_per_flush_logs,
         log_every_n_steps=config.log_every_n_steps,
-        #auto_lr_find=True
         accumulate_grad_batches=config.accumulate_grad_batches,
         profiler=profiler
         )
@@ -205,12 +139,6 @@ def train(config):
     # start training
     trainer.fit(model, data_module, ckpt_path=config.checkpoint_path)
     log.info("Fitting is done")
-
-    # Not used and take far too much disk space:
-    # save model with structure
-    # save_path = './logs/trained_model.pt'
-    # torch.save(model, save_path)
-    # print(f"Full model successfully saved at {os.path.abspath(save_path)}.")
 
     print(f"End of training for model {os.path.abspath('./')}")
 

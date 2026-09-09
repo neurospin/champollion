@@ -43,7 +43,7 @@ import copy
 
 from ..utils.logs import set_file_logger
 
-from .datasets import ContrastiveDatasetFusion
+from .datasets import SSLDataset
 
 from .utils import extract_data, extract_train_and_val_subjects
 
@@ -122,7 +122,7 @@ def create_sets_without_labels_without_load(config):
 
     for subset_name in dirs.keys():
 
-        datasets[subset_name] = ContrastiveDatasetFusion(
+        datasets[subset_name] = SSLDataset(
             filenames=dirs[subset_name]['filenames'], # quelle forme pd ?
             coords_arrays_dirs=dirs[subset_name]['coords_dirs'],
             skeleton_arrays_dirs=dirs[subset_name]['skeleton_dirs'],
@@ -187,7 +187,7 @@ def create_sets_without_labels(config):
                 foldlabel_array = None
             foldlabel_arrays.append(foldlabel_array)
 
-        datasets[subset_name] = ContrastiveDatasetFusion(
+        datasets[subset_name] = SSLDataset(
             filenames=filenames,
             arrays=arrays,
             foldlabel_arrays=foldlabel_arrays,

@@ -1,26 +1,3 @@
-"""
-
-The way this function works is that it creates a SimCLR structure
-based on the provided config,
-then loads the weights of the target model (in the config).
-
-Once this is done, generate the embeddings of the target dataset
-(in the config) in inference mode.
-
-This generation methods is highly dependent of the parameters config,
-so I suggest either to run it right
-after the training is complete,
-or to use evaluation/embeddings_pipeline.py to generate the embeddings
-(it handles the needed modifications in order to load the right model).
-
-This method is also relying on the current DataModule
-and ContrastiveLearner implementations, which means
-its retro compatibility leaves a lot to be desired.
-
-
-"""
-
-
 import hydra
 import torch
 import pandas as pd
@@ -30,8 +7,7 @@ import glob
 from champollion.utils.config import process_config
 from champollion.data.datamodule import DataModule_Evaluation
 from champollion.evaluation.utils_pipelines import save_used_datasets
-from champollion.models.contrastive_learner_fusion import \
-    ContrastiveLearnerFusion
+from champollion.models.ssl_model import SSLModel
 
 
 def embeddings_to_pandas(embeddings, csv_path=None, verbose=False):
@@ -94,7 +70,7 @@ def compute_embeddings(config, subsets=None):
     # then load hydra weights.
     print("No trained_model.pt saved. Create a new instance and load weights.")
 
-    model = ContrastiveLearnerFusion(config, sample_data=data_module)
+    model = SSLModel(config, sample_data=data_module)
     # fetch and load weights
     if 'epoch' in config.keys():
         ckpt_path = config.model_path+\

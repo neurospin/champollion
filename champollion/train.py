@@ -44,7 +44,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
 
 from champollion.data.datamodule import DataModule_Learning
-from champollion.models.contrastive_learner_fusion import ContrastiveLearnerFusion
+from champollion.models.ssl_model import SSLModel
 
 from champollion.utils.config import process_config
 from champollion.utils.logs import set_root_logger_level, \
@@ -80,7 +80,7 @@ def train(config):
 
     data_module = DataModule_Learning(config)
     
-    model = ContrastiveLearnerFusion(config,
+    model = SSLModel(config,
                                      sample_data=data_module)
 
     # load pretrained model's weights if in config

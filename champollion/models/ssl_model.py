@@ -56,10 +56,10 @@ log = set_file_logger(__file__)
 
 
 
-class ContrastiveLearnerFusion(pl.LightningModule):
+class SSLModel(pl.LightningModule):
 
     def __init__(self, config, sample_data):
-        super(ContrastiveLearnerFusion, self).__init__()
+        super(SSLModel, self).__init__()
 
         n_datasets = len(config.data)
         log.info(f"n_datasets {n_datasets}")

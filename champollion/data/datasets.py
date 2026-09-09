@@ -85,7 +85,7 @@ def padd_array(sample, input_size, fill_value=0):
     return sample
 
 
-class ContrastiveDatasetFusion():
+class SSLDataset():
     """Custom dataset that includes image file paths.
 
     Applies different transformations to data depending on the type of input.

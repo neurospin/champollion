@@ -198,9 +198,8 @@ class SSLDataset():
         regs = range(len(filenames))
         input_sizes = [self.config.data[reg].input_size for reg in regs]
         cutin_mask_paths = [self.config.data[reg].cutin_mask_path for reg in regs]
-        flips = [self.config.data[reg].flip_dataset for reg in regs]
         # compute the transforms
-        for reg, cutin_mask_path, input_size, flip in zip(regs, cutin_mask_paths, input_sizes, flips):
+        for reg, cutin_mask_path, input_size in zip(regs, cutin_mask_paths, input_sizes):
             if self.transform:
                 transform1 = transform_mixed(
                     sample_foldlabels[reg],

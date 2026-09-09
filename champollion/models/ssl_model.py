@@ -105,14 +105,13 @@ class SSLModel(pl.LightningModule):
                       in the config to False to unfreeze them.")
 
         # rename variables
-        concat_latent_spaces_size = config.backbone_output_size * n_datasets
+        num_representation_features = config.backbone_output_size * n_datasets
 
         # build converter (if required) and set the latent space size according to it
-        converter, num_representation_features = build_converter(config, concat_latent_spaces_size)
-        self.converter = converter
+        self.converter = nn.Sequential() # TODO : remove once sure it can be removed
 
         # set up the projection head layers shapes
-        layers_shapes = get_projection_head_shape(config, num_representation_features)
+        layers_shapes = config.proj_layers_shapes
         output_shape = layers_shapes[-1]
 
         # set projection head activation

@@ -31,77 +31,13 @@
 #
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license version 2 and that you accept its terms.
-""" Data module
-"""
+
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
-from torch.utils.data import RandomSampler, BatchSampler
-from torch.utils.data.sampler import Sampler
-import random
+from torch.utils.data import RandomSampler
 
 from .create_datasets import create_sets_without_labels
 from .create_datasets import create_sets_without_labels_without_load
-
-
-
-class CustomSampler(Sampler):
-    """Yield a mini-batch of indices. The sampler will drop the last batch of
-            an image size bin if it is not equal to batch_size
-
-    Args:
-        data_source (list): Arrays corresponding to specific regions.
-        batch_size (int): Size of mini-batch.
-    """
-
-    def __init__(self, data_source, batch_size, shuffle=False):
-        super(CustomSampler, self).__init__(data_source)
-        # build data for sampling here
-        self.data_source = data_source
-        self.batch_size = batch_size
-        self.shuffle = shuffle
-        
-    def __iter__(self):
-        # implement logic of sampling here
-
-        if self.data_source.arrs is not None:
-            nb_subjects = len(self.data_source.arrs[0])
-            nb_regions = len(self.data_source.arrs)
-        elif self.data_source.coords_arrs_dirs is not None:
-            nb_subjects = len(self.data_source.coords_arrs_dirs[0])
-            nb_regions = len(self.data_source.coords_arrs_dirs)
-        else:
-            raise ValueError('Neither the array nor the directories are provided.')
-
-        # drop random idxs to get n*batch_size idxs per region
-        idx_subjects = [i for i in range(nb_subjects)]
-        if self.shuffle:
-            random.shuffle(idx_subjects)
-        n_to_drop = nb_subjects % self.batch_size
-        if n_to_drop!=0:
-            idx_subjects = idx_subjects[:-n_to_drop]
-        
-        # for each region, partition the idxs
-        len_idx_subjects = len(idx_subjects)
-        nb_batches_per_region = int(len_idx_subjects//self.batch_size)
-        partitions_regions_list = []
-        for k in range(nb_regions):
-            if self.shuffle:
-                random.shuffle(idx_subjects)
-            rescaled_idx_subjects = [i+k*nb_subjects for i in idx_subjects]
-            partitions_list = [rescaled_idx_subjects[k*self.batch_size:(k+1)*self.batch_size]
-                                for k in range(nb_batches_per_region)]
-            partitions_regions_list.append(partitions_list)
-        # reformat to a simple list
-        # regions are seen one after the other r1,...rn,r1,...rn,r1... and so on ...
-        partition_full_indexes = [partitions_regions_list[region][idx]
-                                  for idx in range(nb_batches_per_region)
-                                  for region in range(nb_regions)]
-        full_indexes = [x for xs in partition_full_indexes for x in xs]
-        
-        return(iter(full_indexes))
-
-    def __len__(self):
-        return (int(len(self.data_source)*len(self.data_source[0])))
 
 
 class DataModule(pl.LightningDataModule):

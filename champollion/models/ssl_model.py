@@ -222,30 +222,6 @@ class SSLModel(pl.LightningModule):
             weight_decay=self.config.weight_decay)
         return_dict = {"optimizer": optimizer}
 
-        if 'scheduler' in self.config.keys() and self.config.scheduler:
-            scheduler = torch.optim.lr_scheduler.StepLR(
-                optimizer,
-                step_size=self.config.step_size,
-                gamma=self.config.gamma)
-            return_dict["lr_scheduler"] = {"scheduler": scheduler,
-                                           "interval": "epoch"}
-
-
-        """
-        if 'scheduler' in self.config.keys() and self.config.scheduler:  
-            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-                optimizer,
-                mode='min',           # We want to minimize the loss
-                factor=self.config.factor, # Divide the learning rate by 3
-                patience=self.config.step_size, # Wait for 10 epochs without improvement
-                threshold=self.config.threshold_plateau, # Minimum loss reduction of 10% to be considered an improvement
-                threshold_mode='rel', # Relative threshold, i.e., 10% relative decrease in loss
-            )
-            return_dict["lr_scheduler"] = {"scheduler": scheduler,
-                                        "monitor": 'val_loss',
-                                        "interval": "epoch",
-                                        "frequency": 1}
-        """
         return return_dict
     
     
@@ -309,9 +285,6 @@ class SSLModel(pl.LightningModule):
             # optional for batch logging purposes
             "log": logs}
 
-        if self.config.scheduler:
-            batch_dictionary['learning_rate'] = self.optimizers().param_groups[0]['lr']
-
         return batch_dictionary
     
         
@@ -352,12 +325,6 @@ class SSLModel(pl.LightningModule):
             self.loggers[0].experiment.add_scalar(
                 "LossRedund/Train",
                 avg_loss_redund,
-                self.current_epoch)
-
-        if self.config.scheduler:
-            self.loggers[0].experiment.add_scalar(
-                "Learning rate",
-                self.optimizers().param_groups[0]['lr'],
                 self.current_epoch)
 
         if self.config.mode == "encoder" and self.config.contrastive_model=='BarlowTwins':

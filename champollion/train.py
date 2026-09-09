@@ -130,7 +130,6 @@ def train(config):
         max_epochs=config.max_epochs,
         logger=loggers,
         log_every_n_steps=config.log_every_n_steps,
-        accumulate_grad_batches=config.accumulate_grad_batches,
         profiler=profiler
         )
 

@@ -14,10 +14,4 @@ partition: [0.99, 0.01]
 nb_subjects: -1
 random: False
 random_state: 25
-# Parameters of step scheduler
-scheduler: False
-step_size: 10
-gamma: 1.0
-threshold_plateau: 0.1
-factor: 0.33
 load_sparse: True

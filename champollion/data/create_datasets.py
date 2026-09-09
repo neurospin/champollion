@@ -152,8 +152,7 @@ def create_sets_without_labels(config):
         skeleton_all.append(skeleton_output)
 
         # Loads and separates in train_val/test set foldlabels if requested
-        if config.apply_augmentations and (config.foldlabel or config.trimdepth
-                                           or config.random_choice or config.mixed):
+        if config.apply_augmentations:
             foldlabel_output = extract_data(config.data[reg].foldlabel_all,
                                     config.data[reg].crop_dir,
                                     config, reg)
@@ -179,10 +178,7 @@ def create_sets_without_labels(config):
         for foldlabel_output in foldlabel_all:
             # select the augmentation method
             if config.apply_augmentations:
-                if config.trimdepth or config.random_choice or config.mixed or config.foldlabel:  # branch_clipping
-                    foldlabel_array = foldlabel_output[subset_name][1]
-                else:  # cutout
-                    foldlabel_array = None  # no need of fold labels
+                foldlabel_array = foldlabel_output[subset_name][1]
             else:  # no augmentation
                 foldlabel_array = None
             foldlabel_arrays.append(foldlabel_array)

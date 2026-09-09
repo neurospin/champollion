@@ -2,13 +2,10 @@ defaults:
   - _self_
   - augmentations: mixed
   - backbone: ConvNet
-  - classifier: svm
   #- dataset/julien/UKB40/array_load/SC-sylv_left
-  - embeddings: embeddings
   - hydra: local
-  - label: Left_OFC
   - mode: encoder
-  - model: SimCLR_fusion
+  - model: model
   - platform: cuda
   - projection_head: relu
   - trainer: default

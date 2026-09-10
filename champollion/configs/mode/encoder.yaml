@@ -1,5 +1,5 @@
 # @package _global_
-contrastive_model: BarlowTwins #contrastive_model: SimCLR
+ssl_loss: BarlowTwins #ssl_loss: SimCLR
 BT_correlation: 'cross'
 lambda_BT: 2.56
 temperature: 0.1

@@ -139,7 +139,7 @@ class SSLModel(pl.LightningModule):
         # Keeps track of losses
         self.training_step_outputs = []
         self.validation_step_outputs = []
-        if self.config.contrastive_model=='BarlowTwins':
+        if self.config.ssl_loss=='BarlowTwins':
             self.training_step_loss_inv = []
             self.training_step_loss_redund = []
             self.validation_step_loss_inv = []
@@ -252,16 +252,16 @@ class SSLModel(pl.LightningModule):
         z_j = self.forward(input_j)
 
         # compute the right loss
-        if self.config.contrastive_model=='SimCLR':
+        if self.config.ssl_loss=='SimCLR':
             batch_loss, sim_zij, sim_zii, sim_zjj = self.nt_xen_loss(z_i, z_j)
-        elif self.config.contrastive_model=='BarlowTwins':
+        elif self.config.ssl_loss=='BarlowTwins':
             batch_loss, loss_invariance, loss_redundancy = self.barlow_twins_loss(z_i,z_j)
 
         if batch_idx == 0:
             self.sample_i = change_list_device(input_i, 'cpu')
             self.sample_j = change_list_device(input_j, 'cpu')
             self.sample_filenames = filenames
-            if self.config.contrastive_model=='SimCLR':
+            if self.config.ssl_loss=='SimCLR':
                 self.sim_zij = sim_zij * self.config.temperature
                 self.sim_zii = sim_zii * self.config.temperature
                 self.sim_zjj = sim_zjj * self.config.temperature
@@ -269,12 +269,12 @@ class SSLModel(pl.LightningModule):
         # logs - a dictionary
         #self.log('Loss/Train', float(batch_loss), on_epoch=True)
         logs = {"train_loss": float(batch_loss)}
-        if self.config.contrastive_model=='BarlowTwins':
+        if self.config.ssl_loss=='BarlowTwins':
             logs["train_loss_inv"] = float(loss_invariance)
             logs["train_loss_redund"] = float(loss_redundancy)
 
         self.training_step_outputs.append(batch_loss)
-        if self.config.contrastive_model=='BarlowTwins':
+        if self.config.ssl_loss=='BarlowTwins':
             # decompose loss in invariance and redundancy term
             self.training_step_loss_inv.append(loss_invariance)
             self.training_step_loss_redund.append(loss_redundancy)
@@ -314,7 +314,7 @@ class SSLModel(pl.LightningModule):
             avg_loss,
             self.current_epoch)
         
-        if self.config.contrastive_model=='BarlowTwins':
+        if self.config.ssl_loss=='BarlowTwins':
             # visu the two loss components on tensorboard
             avg_loss_inv = torch.stack([x for x in self.training_step_loss_inv]).mean()
             avg_loss_redund = torch.stack([x for x in self.training_step_loss_redund]).mean()
@@ -327,12 +327,12 @@ class SSLModel(pl.LightningModule):
                 avg_loss_redund,
                 self.current_epoch)
 
-        if self.config.mode == "encoder" and self.config.contrastive_model=='BarlowTwins':
+        if self.config.mode == "encoder" and self.config.ssl_loss=='BarlowTwins':
             avg_loss_inv = avg_loss_inv.detach().cpu().item()
             avg_loss_redund = avg_loss_redund.detach().cpu().item()
 
         self.training_step_outputs.clear()  # free memory
-        if self.config.mode == "encoder" and self.config.contrastive_model=='BarlowTwins':
+        if self.config.mode == "encoder" and self.config.ssl_loss=='BarlowTwins':
             self.training_step_loss_inv.clear()
             self.training_step_loss_redund.clear()
 
@@ -346,16 +346,16 @@ class SSLModel(pl.LightningModule):
         z_i = self.forward(input_i)
         z_j = self.forward(input_j)
 
-        if self.config.contrastive_model=='SimCLR':
+        if self.config.ssl_loss=='SimCLR':
             batch_loss, sim_zij, sim_zii, sim_zjj = self.nt_xen_loss(z_i, z_j)
-        elif self.config.contrastive_model=='BarlowTwins':
+        elif self.config.ssl_loss=='BarlowTwins':
             batch_loss, loss_invariance, loss_redundancy = self.barlow_twins_loss(z_i,z_j)
         
         # values useful for early stoppings
         self.log('val_loss', float(batch_loss), on_epoch=True)
         # logs- a dictionary
         logs = {"val_loss": float(batch_loss)}
-        if self.config.contrastive_model=='BarlowTwins':
+        if self.config.ssl_loss=='BarlowTwins':
             logs["val_loss_inv"] = float(loss_invariance)
             logs["val_loss_redund"] = float(loss_redundancy)
         batch_dictionary = {
@@ -364,7 +364,7 @@ class SSLModel(pl.LightningModule):
             # optional for batch logging purposes
             "log": logs}
         self.validation_step_outputs.append(batch_loss)
-        if self.config.contrastive_model=='BarlowTwins':
+        if self.config.ssl_loss=='BarlowTwins':
             # decompose loss in invariance and redundancy term
             self.validation_step_loss_inv.append(loss_invariance)
             self.validation_step_loss_redund.append(loss_redundancy)
@@ -384,7 +384,7 @@ class SSLModel(pl.LightningModule):
             avg_loss,
             self.current_epoch)
         
-        if self.config.contrastive_model=='BarlowTwins':
+        if self.config.ssl_loss=='BarlowTwins':
             # visu the two loss components on tensorboard
             avg_loss_inv = torch.stack([x for x in self.validation_step_loss_inv]).mean()
             avg_loss_redund = torch.stack([x for x in self.validation_step_loss_redund]).mean()
@@ -418,11 +418,11 @@ class SSLModel(pl.LightningModule):
             with open(save_path+"best_model_params.json", 'w') as file:
                 json.dump(best_model_params, file)
 
-        if self.config.contrastive_model=='BarlowTwins':
+        if self.config.ssl_loss=='BarlowTwins':
             avg_loss_inv = avg_loss_inv.detach().cpu().item()
             avg_loss_redund = avg_loss_redund.detach().cpu().item()
 
         self.validation_step_outputs.clear()  # free memory
-        if self.config.mode == "encoder" and self.config.contrastive_model=='BarlowTwins':
+        if self.config.mode == "encoder" and self.config.ssl_loss=='BarlowTwins':
             self.validation_step_loss_inv.clear()
             self.validation_step_loss_redund.clear()

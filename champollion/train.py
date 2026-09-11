@@ -44,7 +44,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
 
 from champollion.data.datamodule import DataModule_Learning
-from champollion.models.ssl_model import SSLModel
+from champollion.ssl_model import SSLModel
 
 from champollion.utils.config import process_config
 from champollion.utils.logs import set_root_logger_level, \

@@ -37,7 +37,6 @@ Transforms used in dataset
 """
 
 import torchvision.transforms as transforms
-from skimage.morphology import ball
 import numpy as np
 
 from champollion.augmentations import *

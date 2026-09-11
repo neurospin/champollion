@@ -32,14 +32,12 @@
 #
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license version 2 and that you ac8
-from collections import namedtuple
 
 import numpy as np
 import torch
 from scipy.ndimage import rotate
 
 from champollion.utils import logs
-from champollion.data.utils import zero_padding, repeat_padding, pad, convert_sparse_to_numpy
 
 log = logs.set_file_logger(__file__)
 

@@ -322,7 +322,7 @@ class PartialCutOutTensor_Roll(object):
                 #        middle_cutout.append(middle_pos)
                 # alt : use mask as proba sampling # TODO : implement properly and distinguish cutin and cutout
                 # normalize the mask
-                mask = arr_all[4]
+                mask = arr_all[-1]
                 mask = mask / np.sum(mask)
                 i = np.random.choice(np.arange(mask.size), p=mask.ravel())
                 middle_pos = np.unravel_index(i, mask.shape)

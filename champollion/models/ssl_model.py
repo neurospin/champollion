@@ -48,7 +48,6 @@ from champollion.backbones.convnet import ConvNet
 from champollion.backbones.resnet import ResNet, BasicBlock
 from champollion.backbones.projection_heads import *
 from champollion.data.utils import change_list_device
-from champollion.models.models_utils import *
 from champollion.losses import *
 
 from champollion.utils.logs import set_file_logger
@@ -130,7 +129,6 @@ class SSLModel(pl.LightningModule):
         self.sample_data = sample_data
         self.sample_i = np.array([])
         self.sample_j = np.array([])
-        self.sample_k = np.array([])
         self.sample_filenames = []
         self.num_representation_features = num_representation_features
         self.output_shape = output_shape
@@ -161,15 +159,6 @@ class SSLModel(pl.LightningModule):
         else:
             out = self.projection_head.forward(embeddings)
         return out
-    
-    def get_full_inputs_from_batch_with_region_idx(self, batch):
-        full_inputs = []
-        for (inputs, filenames, idx_region) in batch:  # loop over datasets
-            full_inputs.append(inputs)
-        
-        inputs = full_inputs
-        idx_region = idx_region.detach().cpu().numpy()[0]
-        return (inputs, filenames, idx_region)
 
 
     def get_full_inputs_from_batch(self, batch):
@@ -327,12 +316,12 @@ class SSLModel(pl.LightningModule):
                 avg_loss_redund,
                 self.current_epoch)
 
-        if self.config.mode == "encoder" and self.config.ssl_loss=='BarlowTwins':
+        if self.config.ssl_loss=='BarlowTwins':
             avg_loss_inv = avg_loss_inv.detach().cpu().item()
             avg_loss_redund = avg_loss_redund.detach().cpu().item()
 
         self.training_step_outputs.clear()  # free memory
-        if self.config.mode == "encoder" and self.config.ssl_loss=='BarlowTwins':
+        if self.config.ssl_loss=='BarlowTwins':
             self.training_step_loss_inv.clear()
             self.training_step_loss_redund.clear()
 
@@ -423,6 +412,6 @@ class SSLModel(pl.LightningModule):
             avg_loss_redund = avg_loss_redund.detach().cpu().item()
 
         self.validation_step_outputs.clear()  # free memory
-        if self.config.mode == "encoder" and self.config.ssl_loss=='BarlowTwins':
+        if self.config.ssl_loss=='BarlowTwins':
             self.validation_step_loss_inv.clear()
             self.validation_step_loss_redund.clear()

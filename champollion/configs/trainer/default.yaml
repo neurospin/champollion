@@ -14,4 +14,4 @@ partition: [0.99, 0.01]
 nb_subjects: -1
 random: False
 random_state: 25
-load_sparse: True
+load_sparse: False

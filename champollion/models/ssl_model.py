@@ -106,9 +106,6 @@ class SSLModel(pl.LightningModule):
         # rename variables
         num_representation_features = config.backbone_output_size * n_datasets
 
-        # build converter (if required) and set the latent space size according to it
-        self.converter = nn.Sequential() # TODO : remove once sure it can be removed
-
         # set up the projection head layers shapes
         layers_shapes = config.proj_layers_shapes
         output_shape = layers_shapes[-1]
@@ -153,7 +150,6 @@ class SSLModel(pl.LightningModule):
             embedding = self.backbones[i].forward(x[i])
             embeddings.append(embedding)
         embeddings = torch.cat(embeddings, dim=1)
-        embeddings = self.converter.forward(embeddings)
         if idx_region is not None:
             out = self.projection_head[idx_region].forward(embeddings)
         else:

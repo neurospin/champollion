@@ -22,5 +22,5 @@ setup(
                       ],
     url='https://github.com/neurospin/champollion',
     author='Julien Laval, Joël Chavas, Barthélémy Drabczuk Antoine Dufournet, Aymeric Gaudin',
-    author_email='julien.laval@cea.fr, joel.chavas@cea.fr, antoine.dufournet@cea.fr, aymeric.gaudin@cea.fr'
+    author_email='julien.laval@cea.fr, joel.chavas@cea.fr'
 )

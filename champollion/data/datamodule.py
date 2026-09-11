@@ -87,37 +87,3 @@ class DataModule_Learning(DataModule):
                                 drop_last=True)
         return loader_val
 
-
-class DataModule_Evaluation(DataModule):
-    """Data module class for evaluation/visualization
-    """
-
-    def __init__(self, config):
-        super(DataModule_Evaluation, self).__init__(config)
-
-    def train_val_dataloader(self):
-        loader_train_val = DataLoader(self.dataset_train_val,
-                                      batch_size=self.config.batch_size,
-                                      pin_memory=self.config.pin_mem,
-                                      num_workers=self.config.num_cpu_workers,
-                                      shuffle=False
-                                      )
-        return loader_train_val
-
-    def train_dataloader(self):
-        loader_train = DataLoader(self.dataset_train,
-                                  batch_size=self.config.batch_size,
-                                  pin_memory=self.config.pin_mem,
-                                  num_workers=self.config.num_cpu_workers,
-                                  shuffle=False
-                                  )
-        return loader_train
-
-    def val_dataloader(self):
-        loader_val = DataLoader(self.dataset_val,
-                                batch_size=self.config.batch_size,
-                                pin_memory=self.config.pin_mem,
-                                num_workers=self.config.num_cpu_workers,
-                                shuffle=False
-                                )
-        return loader_val

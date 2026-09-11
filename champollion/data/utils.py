@@ -314,80 +314,8 @@ def extract_data(npy_file_path, sample_dir, config, reg):
     return split_data(normal_data, normal_subjects, sample_dir, config, reg)
 
 
-def read_labels(subject_labels_file, subject_column_name,
-                label_names, label_scaling):
-    """Extracts labels from label file. Returns a dataframe with labels"""
-
-    # Loads labels file
-    subject_labels_file = subject_labels_file  # ?
-    subject_labels = pd.read_csv(subject_labels_file)
-    log.info(f"Subject_labels_file = {subject_labels_file}")
-    log.debug(f"Subject_labels head just when loaded = "
-              f"{subject_labels.head()}")
-    log.info(f"Labels to keep = {label_names} "
-             f"of type {type(label_names)}")
-
-    # Extracts only columns with subject name and labels
-    subject_column_name = subject_column_name
-    desired_columns = [subject_column_name, ]
-    desired_columns.extend(label_names)
-    log.debug(f"columns in subject_labels = {subject_labels.columns}")
-    subject_labels = subject_labels[desired_columns]
-    subject_labels = subject_labels.rename({subject_column_name: 'Subject'},
-                                           axis='columns')
-
-    # Factorizes the column if they are categories (strings for example)
-    for col in label_names:
-        if subject_labels[col].dtype.type == np.object_:
-            subject_labels[col], uniques = \
-                pd.factorize(subject_labels[col], sort=True)
-            log.info(f"Column {col} sorted as categories. "
-                     f"Categories are {uniques}")
-
-    # Drops rows containing na and sets subject as index
-    subject_labels = subject_labels.dropna()
-    log.debug(f"Head of subject_labels:\n{subject_labels.head()}")
-    log.debug(f"Number of non-NaN subjects with label = {len(subject_labels)}")
-
-    # Sets min-max scaler on labels
-    if label_scaling == 'MinMax':
-        scaler = MinMaxScaler()
-        subject_labels.loc[:, label_names] = scaler.fit_transform(
-            subject_labels[label_names])
-
-    return subject_labels
-
-
 def change_list_device(list_of_tensors, device):
     """Change the device (cpu or cuda) of all tensors contained in a list"""
     returned_list = [tensor.to(device=device) for tensor in list_of_tensors]
     return returned_list
 
-
-# auxilary functions for ToPointnetTensor
-def zero_padding(cloud, n_max, shuffle=False):
-    return np.pad(cloud, ((0, 0), (0, n_max-cloud.shape[1])))
-
-
-def repeat_padding(cloud, n_max, replace=False):
-    while n_max - cloud.shape[1] > 0:  # loop in case len(cloud) < n_max/2
-        n = min(n_max - cloud.shape[1], cloud.shape[1])
-        if n < 0:
-            raise ValueError(
-                "the vector is too long compared to the desired vector size")
-
-        idx = np.random.choice(cloud.shape[1], size=n, replace=replace)
-        padded_part = cloud[:, idx]
-
-        cloud = np.concatenate([cloud, padded_part], axis=1)
-
-    return cloud
-
-
-def pad(clouds, padding_method=zero_padding, n_max=None):
-    if not n_max:
-        n_max = np.max([clouds[i].shape[1]
-                        for i in range(len(clouds))])  # max length of a sequence
-    padded_clouds = np.array([padding_method(cloud, n_max)
-                              for cloud in clouds])
-    return padded_clouds

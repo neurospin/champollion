@@ -118,28 +118,6 @@ def read_subset_csv(csv_file_path: str, name='train_val') -> pd.DataFrame:
     return subjects
 
 
-def extract_test(normal_subjects, train_val_subjects, normal_data):
-    """Extracts test subjects and test data from normal_data.
-
-    Test subjects are all subjects from normal_subjects that are not listed
-    in train_val_subjects.
-    normal_data is a numpy array corresponding to normal_subjects."""
-
-    test_subjects = normal_subjects[~normal_subjects.Subject.isin(
-        train_val_subjects.Subject)]
-    test_subjects_index = test_subjects.index
-    len_test = len(test_subjects_index)
-    log.debug(f"length of test = {len_test}")
-    log.debug(f"test_subjects = {test_subjects[:5]}")
-
-    # /!\ copy the data to construct test_data
-    test_data = normal_data[test_subjects_index]
-    test_subjects = test_subjects.reset_index(drop=True)
-    log.info(f"test set size: {test_data.shape}")
-
-    return test_subjects, test_data
-
-
 def restrict_length(subjects: pd.DataFrame, nb_subjects: int,
                     is_random: bool = False,
                     random_state: int = 1) -> pd.DataFrame:
@@ -234,27 +212,6 @@ def split_data(normal_data, normal_subjects, sample_dir, config, reg):
             # reconstruct train_val from train + val if not already done
             train_val_subjects = pd.concat([train_subjects, val_subjects])
 
-    # get test_intra subjects and data if in config
-    if 'test_intra_csv_file' in config.data[reg].keys():
-        test_intra_subjects = read_subset_csv(
-            config.data[reg].test_intra_csv_file, name='test_intra')
-        test_intra_subjects, test_intra_data = \
-            extract_partial_numpy(normal_subjects, test_intra_subjects,
-                                  normal_data, name='test_intra')
-    else:
-        test_intra_subjects = pd.DataFrame([], columns=['Subject'])
-        test_intra_data = np.array([])
-
-    # Extracts test subject names and corresponding data
-    if 'test_csv_file' in config.data[reg].keys():  # if specified in config
-        test_subjects = read_subset_csv(config.data[reg].test_csv_file, name='test')
-        test_subjects, test_data = \
-            extract_partial_numpy(normal_subjects, test_subjects,
-                                  normal_data, name='test')
-    else:  # define it as complementary to train_val
-        test_subjects, test_data = \
-            extract_test(normal_subjects, train_val_subjects, normal_data)
-
     # Restricts train_val length
     random_state = (None if 'random_state' not in config.keys()
                     else config.random_state)
@@ -289,9 +246,7 @@ def split_data(normal_data, normal_subjects, sample_dir, config, reg):
 
     output = {'train': [train_subjects, train_data],
               'val': [val_subjects, val_data],
-              'train_val': [train_val_subjects, train_val_data],
-              'test_intra': [test_intra_subjects, test_intra_data],
-              'test': [test_subjects, test_data], }
+              'train_val': [train_val_subjects, train_val_data],}
 
     return output
 
@@ -302,7 +257,7 @@ def extract_data(npy_file_path, sample_dir, config, reg):
     Args:
         config (Omegaconf dict): contains configuration parameters
     Returns (subjects as dataframe, data as numpy array):
-        train_val_subjects, train_val_data, test_subjects, test_data (tuple)
+        train_val_subjects, train_val_data
     """
 
     # Reads numpy data and subject list

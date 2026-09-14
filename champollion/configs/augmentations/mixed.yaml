@@ -1,0 +1,20 @@
+# @package _global_
+apply_augmentations: True
+# padding
+fill_value: 0
+# translation
+proba_translation: 1
+max_translation: 1
+# rotation
+proba_rotation: 1
+max_angle: 18
+# cutout
+proba_cutout: 0.4
+patch_size_cutout: [5,30]
+keep_proba_per_branch_cutout: 0.5
+# cutin
+proba_cutin: 0.4
+patch_size_cutin: [20,90]
+keep_proba_per_branch_cutin: 0.5
+keep_extremity: 'bottom'
+mask_constraint: True

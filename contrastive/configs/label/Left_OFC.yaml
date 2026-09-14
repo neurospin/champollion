@@ -1,4 +1,0 @@
-# @package _global_
-label_names: ["Left_OFC"]
-label_type: 'multiclass'
-nb_classes: 4

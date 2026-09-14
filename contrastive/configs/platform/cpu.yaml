@@ -1,4 +1,0 @@
-# @package _global_
-device: cpu
-num_cpu_workers: 46
-environment: not_brainvisa

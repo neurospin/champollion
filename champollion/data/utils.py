@@ -1,0 +1,276 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+#  This software and supporting documentation are distributed by
+#      Institut Federatif de Recherche 49
+#      CEA/NeuroSpin, Batiment 145,
+#      91191 Gif-sur-Yvette cedex
+#      France
+#
+# This software is governed by the CeCILL license version 2 under
+# French law and abiding by the rules of distribution of free software.
+# You can  use, modify and/or redistribute the software under the
+# terms of the CeCILL license version 2 as circulated by CEA, CNRS
+# and INRIA at the following URL "http://www.cecill.info".
+#
+# As a counterpart to the access to the source code and  rights to copy,
+# modify and redistribute granted by the license, users are provided only
+# with a limited warranty  and the software's author,  the holder of the
+# economic rights,  and the successive licensors  have only  limited
+# liability.
+#
+# In this respect, the user's attention is drawn to the risks associated
+# with loading,  using,  modifying and/or developing or reproducing the
+# software by the user in light of its specific status of free software,
+# that may mean  that it is complicated to manipulate,  and  that  also
+# therefore means  that it is reserved for developers  and  experienced
+# professionals having in-depth computer knowledge. Users are therefore
+# encouraged to load and test the software's suitability as regards their
+# requirements in conditions enabling the security of their systems and/or
+# data to be ensured and,  more generally, to use and operate it in the
+# same conditions as regards security.
+#
+# The fact that you are presently reading this means that you have had
+# knowledge of the CeCILL license version 2 and that you accept its terms.
+"""
+Tools to create pytorch dataloaders
+"""
+import os
+
+import numpy as np
+import pandas as pd
+import sparse
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+from ..utils.logs import set_file_logger
+
+_ALL_SUBJECTS = -1
+
+log = set_file_logger(__file__)
+
+
+def read_npy_file(npy_file_path: str) -> np.ndarray:
+    """Reads npy file containing all subjects and returns the numpy array."""
+    # Loads crops from all subjects
+    log.debug("Current directory = " + os.getcwd())
+    arr = np.load(npy_file_path, mmap_mode='r')
+    log.debug(f"shape of loaded numpy array = {arr.shape}")
+    return arr
+
+
+def read_subject_csv(csv_file_path: str) -> pd.DataFrame:
+    """Reads csv subject file.
+    It contains one column named \'Subject\' with all subject names"""
+    subjects = pd.read_csv(csv_file_path)
+    if 'Subject' in subjects.columns:
+        return subjects
+    else:
+        raise ValueError(f"Column name of csv file {csv_file_path} must be "
+                         f"\'Subject\'. Instead it is {subjects.columns}")
+    
+
+def convert_sparse_to_numpy(data, coords, input_size, dtype):
+    """
+    Convert coords and associated values to numpy array
+    """
+    s = sparse.COO(coords, data, shape=input_size)
+    arr = s.todense()
+    arr = np.expand_dims(arr, axis=-1)
+    arr = arr.astype(dtype)
+
+    return arr
+
+
+def length_object(object):
+    """Returns object.shape[0] if numpy array else len(object)"""
+    return object.shape[0] if type(object) == np.ndarray else len(object)
+
+
+def is_equal_length(object_1, object_2):
+    """Checks if the two objects have equal length"""
+    len_1 = length_object(object_1)
+    len_2 = length_object(object_2)
+    return (len_1 == len_2)
+
+
+def read_numpy_data_and_subject_csv(npy_file_path, csv_file_path):
+    npy_data = read_npy_file(npy_file_path)
+    subjects = read_subject_csv(csv_file_path)
+    if not is_equal_length(npy_data, subjects):
+        raise ValueError(
+            f"numpy array {npy_file_path} "
+            f"and csv subject file {csv_file_path} "
+            "don't have the same length.")
+    return npy_data, subjects
+
+
+def read_subset_csv(csv_file_path: str, name='train_val') -> pd.DataFrame:
+    """Reads a subset subject csv.
+
+    This csv has a unique column.
+    The resulting dataframe gives the name 'Subject' to this column
+    """
+    subjects = pd.read_csv(csv_file_path, names=['Subject'])
+    subjects = subjects[subjects.Subject != 'Subject'] # in case the column was named Subject before
+    log.debug(f"{name}_subjects = {subjects.head()}")
+
+    return subjects
+
+
+def restrict_length(subjects: pd.DataFrame, nb_subjects: int,
+                    is_random: bool = False,
+                    random_state: int = 1) -> pd.DataFrame:
+    """Restrict length by nb_subjects if requested"""
+    if nb_subjects == _ALL_SUBJECTS:
+        length = len(subjects)
+        subjects = subjects
+    else:
+        length = min(nb_subjects,
+                     len(subjects))
+        if is_random:
+            subjects = subjects.sample(n=length, random_state=random_state)
+        else:
+            subjects = subjects[:length]
+
+    return subjects
+
+
+def extract_partial_numpy(normal_subjects, target_subjects, normal_data,
+                          name='train_val'):
+    """Returns numpy data corresponding to subjects listed in target_subjects.
+    """
+
+    log.info(f"Length of {name} dataframe = {len(target_subjects)}")
+    # Filter to keep only the target subjects
+    target_normal_subjects = normal_subjects[normal_subjects.Subject.isin(
+        target_subjects.Subject)]
+    # corresponding indices in the npy file
+    target_normal_index = target_normal_subjects.index
+    # /!\ copy the data to construct the target_data
+    target_data = normal_data[target_normal_index]
+    target_normal_subjects = target_normal_subjects.reset_index(drop=True)
+    return target_normal_subjects, target_data
+
+
+def extract_train_and_val_subjects(train_val_subjects, partition, seed):
+    """Extracts traing and validation dataset from a train_val dataset"""
+    # Single subject (or empty): skip split, put all in train
+    if len(train_val_subjects) <= 1:
+        log.info("Single subject: skipping train/val split, all assigned to train.")
+        return train_val_subjects, pd.DataFrame([], columns=train_val_subjects.columns)
+
+    # Split training/val set into train and validation set
+    size_partitions = [round(i * (len(train_val_subjects))) for i in partition]
+    # to be sure the sum of train and val sizes is train_val's one
+    size_partitions[-1] = len(train_val_subjects) - sum(size_partitions[:-1])
+    log.info(f"Train/val size partitions = {size_partitions}")
+
+    # Fixates seed if it is defined
+    if seed:
+        log.info(f"Seed for train/val split is {seed}")
+    else:
+        seed = None
+        log.info("Train/val split has not fixed seed")
+
+    if size_partitions[-1] == 0:
+        test_size = 1
+        train_size = size_partitions[0]-1
+    else:
+        test_size = size_partitions[-1]
+        train_size=size_partitions[0]
+        
+    # Split train and test
+    train_subjects, val_subjects = \
+        train_test_split(train_val_subjects,
+                         test_size=test_size,
+                         train_size=train_size,
+                         random_state=seed)
+    log.debug(f"Size of train / val sets: "
+              f"{len(train_subjects)} /  {len(val_subjects)}")
+
+    return train_subjects, val_subjects
+
+
+def split_data(normal_data, normal_subjects, sample_dir, config, reg):
+
+    # Gets train_val subjects as dataframe from csv file
+    if 'train_val_csv_file' in config.data[reg].keys():
+        train_val_subjects = read_subset_csv(
+            config.data[reg].train_val_csv_file, name='train_val')
+        if 'train_csv_file' not in config.data[reg].keys():
+            # define train and val from here
+            train_subjects, val_subjects = \
+                extract_train_and_val_subjects(
+                    train_val_subjects, config.partition, config.seed)
+                
+    # get train & val separately if in config
+    if 'train_csv_file' in config.data[reg].keys():
+        train_subjects = read_subset_csv(config.data[reg].train_csv_file, name='train')
+        val_subjects = read_subset_csv(config.data[reg].val_csv_file, name='val')
+        if 'train_val_csv_file' not in config.data[reg].keys():
+            # reconstruct train_val from train + val if not already done
+            train_val_subjects = pd.concat([train_subjects, val_subjects])
+
+    # Restricts train_val length
+    random_state = (None if 'random_state' not in config.keys()
+                    else config.random_state)
+    is_random = None if 'random' not in config.keys() else config.random
+    if 'train_csv_file' in config.keys():
+        train_subjects = restrict_length(train_subjects,
+                                         config.nb_subjects,
+                                         is_random,
+                                         random_state)
+        # propagate the modification to train_val ; val is not affected
+        train_val_subjects = pd.concat([train_subjects, val_subjects])
+    else:
+        train_val_subjects = restrict_length(train_val_subjects,
+                                             config.nb_subjects,
+                                             is_random,
+                                             random_state)
+
+    # Extracts train, val and train_val from normal_data
+    train_subjects, train_data = \
+        extract_partial_numpy(normal_subjects, train_subjects,
+                              normal_data, name='train')
+    val_subjects, val_data = \
+        extract_partial_numpy(normal_subjects, val_subjects,
+                              normal_data, name='val')
+    train_val_subjects, train_val_data = \
+        extract_partial_numpy(normal_subjects, train_val_subjects,
+                              normal_data, name='train_val')
+    
+    assert len(train_val_subjects), \
+        "train_val is empty. " \
+        "It could be a problem with the subject names"
+
+    output = {'train': [train_subjects, train_data],
+              'val': [val_subjects, val_data],
+              'train_val': [train_val_subjects, train_val_data],}
+
+    return output
+
+
+def extract_data(npy_file_path, sample_dir, config, reg):
+    """Extracts train_val and test data and subjects from npy and csv file
+
+    Args:
+        config (Omegaconf dict): contains configuration parameters
+    Returns (subjects as dataframe, data as numpy array):
+        train_val_subjects, train_val_data
+    """
+
+    # Reads numpy data and subject list
+    # normal_data corresponds to all data ('normal' != 'benchmark')
+    normal_data, normal_subjects = \
+        read_numpy_data_and_subject_csv(npy_file_path,
+                                        config.data[reg].subjects_all)
+
+    return split_data(normal_data, normal_subjects, sample_dir, config, reg)
+
+
+def change_list_device(list_of_tensors, device):
+    """Change the device (cpu or cuda) of all tensors contained in a list"""
+    returned_list = [tensor.to(device=device) for tensor in list_of_tensors]
+    return returned_list
+

@@ -1,4 +1,0 @@
-# @package _global_
-test: False
-mode: regresser
-with_labels: True

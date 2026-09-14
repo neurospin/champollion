@@ -1,0 +1,10 @@
+# @package _global_
+# Characterization of the ConvNet model used
+backbone_name: resnet
+layers: [2,2,2,2]
+channels: [32,64,128,256]
+zero_init_residual: True
+initial_kernel_size: 7
+initial_stride: 1
+backbone_output_size: 32
+adaptive_pooling: !!null #adaptive_pooling: ['average', 1]

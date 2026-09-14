@@ -1,0 +1,6 @@
+# @package _global_
+drop_rate: 0.05
+pretrained_model_path:
+load_encoder_only: False
+freeze_loaded_layers: False
+freeze_encoders: False

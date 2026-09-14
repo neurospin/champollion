@@ -1,0 +1,15 @@
+defaults:
+  - _self_
+  - augmentations: mixed
+  - backbone: ConvNet
+  #- dataset/julien/UKB40/array_load/SC-sylv_left
+  - hydra: local
+  - mode: encoder
+  - model: model
+  - platform: cuda
+  - projection_head: relu
+  - trainer: default
+  - override hydra/job_logging: custom
+
+data: ${oc.dict.values:dataset}
+datakey: ${oc.dict.keys:dataset}

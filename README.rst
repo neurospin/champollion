@@ -29,8 +29,9 @@ This submodule is installed automatically by ``champollion_pipeline``:
 
 .. code-block:: shell
 
-    git clone https://github.com/neurospin/champollion.git
-    cd champollion
+    git clone https://github.com/neurospin/champollion_pipeline.git
+    cd champollion_pipeline
+    pixi run install-all
 
 It can also be installed as a standalone deep learning framework :
 

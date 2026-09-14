@@ -37,7 +37,7 @@ Script to generate the embeddings of the models.
 Tutorial: train a Champollion-like SSL model
 ============================================
 
-Run the command line (here the number of epochs is given, overwritting the config default) :
+Run the command line (here the number of epochs is given, overriding the config default) :
 
 .. code-block:: shell
 

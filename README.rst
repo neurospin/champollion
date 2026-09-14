@@ -2,7 +2,7 @@
 Champollion V1
 ==============
 
-Self-supervised Barlow Twins models for generating embeddings of cortical folding patterns from T1 MRI brain scans.
+Self-supervised SSL models for generating embeddings of cortical folding patterns from T1 MRI brain scans.
 
 This repository is used as a **git submodule** inside `champollion_pipeline <https://github.com/neurospin/champollion_pipeline>`_.
 
@@ -12,11 +12,11 @@ Pre-trained models are published on Hugging Face: `neurospin/Champollion_V1 <htt
 What it does
 ------------
 
-Given preprocessed 3D brain crops of sulcal regions, each model fold produces a fixed-size embedding vector per subject.
+Given preprocessed 3D brain crops of sulcal regions (ROIs), each model fold produces a fixed-size embedding vector per subject.
 The repository covers 56 sulcal regions (28 regions × 2 hemispheres), matching the regions defined in
 ``champollion_pipeline/sulci_regions_champollion_V1.json``.
 
-- **Architecture**: Barlow Twins (self-supervised learning) with a CNN backbone
+- **Architecture**: SSL (Barlow Twins) with a CNN backbone
 - **Input**: 3D numpy crops of sulcal regions
 - **Output**: Fixed-size embedding vectors (one per subject per region)
 - **Training data**: UKBioBank (42,433 subjects)
@@ -31,26 +31,22 @@ This submodule is installed automatically by ``champollion_pipeline``:
 
     git clone https://github.com/neurospin/champollion.git
     cd champollion
-    
 
-Configuration system
---------------------
+It can also be installed as a standalone deep learning framework :
 
-The submodule uses Hydra-style YAML configs located in ``contrastive/configs/``.
+.. code-block:: shell
 
-Two files are updated at runtime by ``generate_champollion_config.py`` (step 4 of the pipeline):
-
-- ``contrastive/configs/local.yaml`` — sets ``dataset_folder`` to the crop directory on disk
-- ``contrastive/configs/dataset_localization/local.yaml`` — selects the ``local`` localization preset
-
-Pass ``--external-config`` in read-only environments (Apptainer/Docker) to write these files
-to a writable path instead.
+    git clone https://github.com/neurospin/champollion.git
+    cd champollion
+    virtualenv --python=python3 --system-site-packages venv
+    . venv/bin/activate
+    pip install -e .
 
 
 Mask versions
 -------------
 
-Models are organised by mask version inside the Hugging Face repo:
+Models are organised by ROI mask version inside the Hugging Face repo:
 
 +-----------------------------+----------------------------------------------------------+
 | Version                     | Description                                              |
@@ -65,10 +61,18 @@ The mask version to use is selected via the ``--masks`` flag in ``run_cortical_t
 and must match the model version downloaded in step 5.
 
 
+Configuration system
+--------------------
+
+The submodule uses Hydra-style YAML configs located in ``champollion/configs/``.
+
+
 Training
 --------
 
-To retrain models on a new dataset, use ``train_champollion.py`` from ``champollion_pipeline``:
+This repository can be used to train models on already preprocessed data.
+
+An end-to-end preprocessing from MRI, training, and evaluation is performed by the pipeline, with ``train_champollion.py`` from ``champollion_pipeline``:
 
 .. code-block:: shell
 
@@ -80,7 +84,7 @@ To retrain models on a new dataset, use ``train_champollion.py`` from ``champoll
 See ``champollion_pipeline`` documentation for the full training workflow.
 
 For details on the training architecture, augmentations, and evaluation scripts,
-see `contrastive/README.rst <contrastive/README.rst>`_.
+see `champollion/README.rst <champollion/README.rst>`_.
 
 
 Repository structure
@@ -88,16 +92,13 @@ Repository structure
 
 .. code-block:: text
 
-    champollion_V1/
-        contrastive/
-            configs/
-                dataset_localization/
-                    local.yaml          # Updated by generate_champollion_config.py
-                local.yaml              # Updated by generate_champollion_config.py
+    champollion/
+        champollion/
+            configs/                    # Hydra-style YAML configs
             backbones/                  # CNN backbone definitions
             data/                       # Dataset and DataModule classes
-            models/                     # Barlow Twins model definitions
-            evaluation/                 # Embedding evaluation scripts
+            ssl_model.py                # SSL model
+            evaluate.py                 # Embedding generation scripts
             train.py                    # Training entry point
         setup.cfg
         LICENSE

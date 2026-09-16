@@ -18,3 +18,6 @@ patch_size_cutin: [20,90]
 keep_proba_per_branch_cutin: 0.5
 keep_extremity: 'bottom'
 mask_constraint: True
+# input translation augmentation
+offset_proba_tr: 0.5
+max_tr: 0

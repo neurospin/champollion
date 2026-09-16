@@ -85,7 +85,7 @@ def create_sets_without_labels_without_load(config):
             val_subjects = pd.read_csv(config.data[reg]['val_csv_file'], names=['Subject'])
             train_val_subjects = pd.concat((train_subjects, val_subjects), ignore_index=True)
         elif 'train_val_csv_file' in config.data[reg].keys():
-            train_val_subjects = pd.read_csv(config.data[reg]['train_val_csv_file'], names=['Subject'])
+            train_val_subjects = pd.read_csv(config.data[reg]['train_val_csv_file'], usecols=['Subject'])
             train_subjects, val_subjects = \
                 extract_train_and_val_subjects(
                     train_val_subjects, config.partition, config.seed)
@@ -97,15 +97,15 @@ def create_sets_without_labels_without_load(config):
         for subset in dirs.keys():
             # coords
             coords_dir = config.data[reg].coords_all
-            coords_dirs = np.array([os.path.join(coords_dir,f'{sub}_coords.npy') for sub in dirs[subset]['filenames'][reg].Subject])
+            coords_dirs = np.array([os.path.join(coords_dir,f'{sub}.npy') for sub in dirs[subset]['filenames'][reg].Subject])
             dirs[subset]['coords_dirs'].append(coords_dirs)
             # skels
             skels_dir = config.data[reg].numpy_all
-            skeleton_dirs = np.array([os.path.join(skels_dir,f'{sub}_skeleton_values.npy') for sub in dirs[subset]['filenames'][reg].Subject])
+            skeleton_dirs = np.array([os.path.join(skels_dir,f'{sub}.npy') for sub in dirs[subset]['filenames'][reg].Subject])
             dirs[subset]['skeleton_dirs'].append(skeleton_dirs)
             # foldlabels
             foldlabel_dir = config.data[reg].foldlabel_all
-            foldlabel_dirs = np.array([os.path.join(foldlabel_dir,f'{sub}_foldlabel_values.npy') for sub in dirs[subset]['filenames'][reg].Subject])
+            foldlabel_dirs = np.array([os.path.join(foldlabel_dir,f'{sub}.npy') for sub in dirs[subset]['filenames'][reg].Subject])
             dirs[subset]['foldlabel_dirs'].append(foldlabel_dirs)
 
     datasets = {}

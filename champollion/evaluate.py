@@ -6,6 +6,7 @@ import glob
 import omegaconf
 import os
 import ast
+from tqdm import tqdm
 from torch.utils.data import DataLoader, TensorDataset
 from champollion.backbones.convnet import ConvNet
 from champollion.backbones.resnet import ResNet, BasicBlock
@@ -46,27 +47,31 @@ def load_model(model_path, in_shape):
         raise ValueError(
             f"Failed to load weights: {e}\n"
             "This likely means the model parameters (encoder_depth, block_depth, filters, etc.) "
-            "do not match the saved weights. Please check your ConvNet configuration."
+            "do not match the saved weights. Please check your model configuration."
         )
     model.eval()
+    print('Model weights loaded')
     return model
 
 
 def load_data(skels_path, batch_size=32):
     arrays = np.load(skels_path) # (N, H, W, D, C)
     arrays = (arrays != 0).astype(np.float32)
-    arrays = torch.tensor(arrays).permute(0, 4, 1, 2, 3)  # (N, C, H, W, D)
-
+    arrays = torch.tensor(arrays).permute(0, 4, 1, 2, 3).contiguous()  # (N, C, H, W, D)
     in_shape = tuple(arrays.shape[1:]) # (C, H, W, D)
-    return DataLoader(TensorDataset(arrays), batch_size=batch_size, shuffle=False), in_shape
+    return DataLoader(TensorDataset(arrays), batch_size=batch_size, shuffle=False, pin_memory=True), in_shape
 
 
 
-def generate_embeddings(model, dataloader):
+def generate_embeddings(model, dataloader, device):
     embeddings = []
-    with torch.no_grad():
+    total_samples = len(dataloader.dataset)
+    with torch.no_grad(), tqdm(total=total_samples, desc='Generating embeddings', unit='sample') as pbar:
         for (batch,) in dataloader:
-            embeddings.append(model(batch).numpy())
+            batch = batch.to(device)
+            out = model(batch).cpu().numpy()
+            embeddings.append(out)
+            pbar.update(out.shape[0])
     return np.concatenate(embeddings, axis=0)
 
 
@@ -78,9 +83,11 @@ def main(args):
 
     # ── 2. Loading Model ───────────────────
     model = load_model(args.model_path, in_shape)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = model.to(device)
 
     # ── 3. Computing embeddings  ───────────
-    embeddings = generate_embeddings(model, dataloader)
+    embeddings = generate_embeddings(model, dataloader, device)
 
     # ── 4. Saving results  ─────────────────
     df = pd.DataFrame(embeddings, columns=[f'dim{i}' for i in range(1,embeddings.shape[1]+1)])

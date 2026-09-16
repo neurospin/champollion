@@ -124,6 +124,14 @@ venvis243185
 # run folders
 champollion/notebooks/
 champollion/runs/
+champollion/checkpoints/
+champollion/wandb/
+champollion/outputs/
+champollion/multirun/
+champollion/evaluation/runs/
+champollion/evaluation/outputs/
+runs/
+wandb/
 
 # generated src folders
 src

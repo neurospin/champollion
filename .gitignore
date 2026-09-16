@@ -122,24 +122,12 @@ venvis243185
 .vscode
 
 # run folders
-runs
-wandb
-contrastive/runs
-contrastive/outputs
-contrastive/evaluation/runs
-contrastive/evaluation/outputs
-contrastive/notebooks/COPYING
-contrastive/notebooks/mni_icbm152_nlin_asym_09c
-contrastive/notebooks/temp
-contrastive/notebooks/*.bck
-contrastive/notebooks/*.bck.minf
-contrastive/multirun
-contrastive/checkpoints
-contrastive/wandb
+champollion/notebooks/
+champollion/runs/
 
 # generated src folders
 src
-contrastive/src
+champollion/src
 
 # Rope project settings
 .ropeproject
@@ -159,7 +147,7 @@ dmypy.json
 sh_kraken
 
 # privacy
-# contrastive/configs/wandb/sweep.yaml
+# champollion/configs/wandb/sweep.yaml
 
 *.prof
 

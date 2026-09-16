@@ -6,6 +6,7 @@ weight_decay: 5.0e-05
 max_epochs: 81
 nb_epochs_per_weight_save: 10
 log_every_n_steps: 2
+checkpoint_path:
 verbose: 1
 load_sparse: False
 # Data split and subject choice

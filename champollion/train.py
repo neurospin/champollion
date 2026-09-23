@@ -41,7 +41,7 @@ from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.profilers import PyTorchProfiler, SimpleProfiler
 import omegaconf
 from torch.utils.tensorboard import SummaryWriter
-from torchsummary import summary
+from torchinfo import summary
 
 from champollion.data.datamodule import DataModule_Learning
 from champollion.ssl_model import SSLModel

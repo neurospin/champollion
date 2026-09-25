@@ -62,6 +62,20 @@ def load_data(skels_path, batch_size=32):
     return DataLoader(TensorDataset(arrays), batch_size=batch_size, shuffle=False, pin_memory=True), in_shape
 
 
+def load_subjects(subjects_path):
+    """Read the subjects CSV and return the 'Subject' column as an array.
+
+    Raises a ValueError naming the file and its actual columns if the
+    expected 'Subject' column is absent, instead of a bare KeyError.
+    """
+    df = pd.read_csv(subjects_path)
+    if 'Subject' not in df.columns:
+        raise ValueError(
+            f"Subjects file {subjects_path} has no 'Subject' column; "
+            f"columns read: {list(df.columns)}"
+        )
+    return df['Subject'].values
+
 
 def generate_embeddings(model, dataloader, device):
     embeddings = []
@@ -79,7 +93,15 @@ def main(args):
 
     # ── 1. Loading Data  ───────────────────
     dataloader, in_shape = load_data(args.skels_path)
-    subjects = pd.read_csv(args.subjects_path)['Subject'].values
+    subjects = load_subjects(args.subjects_path)
+
+    n_samples = len(dataloader.dataset)
+    if len(subjects) != n_samples:
+        raise ValueError(
+            f"Subject count mismatch: {len(subjects)} subjects in "
+            f"{args.subjects_path} but {n_samples} samples on the first axis "
+            f"of {args.skels_path}; refusing to label embeddings by position."
+        )
 
     # ── 2. Loading Model ───────────────────
     model = load_model(args.model_path, in_shape)

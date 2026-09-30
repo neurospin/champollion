@@ -6,7 +6,8 @@ the pipeline wrapper (``train_champollion.py``) does it -- ``+dataset/<name>=
 <region>`` from an extra search path, ``++dataset_folder=...``,
 ``platform=cuda`` -- plus ``device=cpu`` so it runs on a CPU-only machine.
 The dataset is a tiny synthetic region (skeleton, foldlabel and cut-in mask
-``.npy`` files plus subject CSVs) written to ``tmp_path``; the default
+``.npy`` files plus subject CSVs) written to ``tmp_path`` by the shared
+``synthetic_region`` / ``compose_training_config`` fixtures (conftest.py); the default
 augmentations (``mixed``: rotation, cutout/cutin, translation), the default
 ``ConvNet`` backbone, the ``relu`` projection head and the BarlowTwins loss
 all run for real.
@@ -25,99 +26,17 @@ champollion_pipeline root:
 
 import importlib
 import math
-from pathlib import Path
 
-import numpy as np
-import pandas as pd
 import pytest
 import pytorch_lightning as pl
 from champollion.data.datamodule import DataModule_Learning
 from champollion.ssl_model import SSLModel
-from champollion.utils.config import process_config
-from hydra import compose, initialize_config_dir
 from pytorch_lightning import loggers as pl_loggers
-
-CONFIG_DIR = Path(__file__).resolve().parents[1] / "champollion" / "configs"
-
-DATASET_GROUP = "synthetic"
-REGION = "region"
-N_SUBJECTS = 8
-VOLUME_SHAPE = (12, 12, 12)  # (D, H, W); arrays carry a trailing channel axis
-BATCH_SIZE = 2
-
-# Skeleton voxel values used by the augmentations (bottom 30, top 35, surface 60).
-SURFACE, BOTTOM, TOP = 60, 30, 35
-
-
-def _synthetic_subject(rng: np.random.Generator) -> tuple[np.ndarray, np.ndarray]:
-    """One subject: a sulcus-like plane (skeleton) split into 4 labelled branches."""
-    skeleton = np.zeros((*VOLUME_SHAPE, 1), dtype=np.float32)
-    foldlabel = np.zeros((*VOLUME_SHAPE, 1), dtype=np.int32)
-    depth = int(rng.integers(4, 8))
-    skeleton[depth, 2:10, 2:10, 0] = SURFACE
-    skeleton[depth, 2:10, 2, 0] = BOTTOM
-    skeleton[depth, 2:10, 9, 0] = TOP
-    for branch, (h, w) in enumerate([(2, 2), (2, 6), (6, 2), (6, 6)], start=1):
-        foldlabel[depth, h : h + 4, w : w + 4, 0] = 1000 + branch
-    return skeleton, foldlabel
-
-
-def _write_synthetic_region(root: Path) -> tuple[Path, Path]:
-    """Write arrays/CSVs and a dataset yaml; return (config search dir, dataset_folder)."""
-    data_dir = root / "data"
-    data_dir.mkdir()
-    rng = np.random.default_rng(0)
-    subjects = [f"sub-{i:02d}" for i in range(N_SUBJECTS)]
-    skeletons, foldlabels = zip(*(_synthetic_subject(rng) for _ in subjects))
-    np.save(data_dir / "skeleton.npy", np.stack(skeletons))
-    np.save(data_dir / "label.npy", np.stack(foldlabels))
-    mask = np.zeros((*VOLUME_SHAPE, 1), dtype=np.float32)
-    mask[3:9, 3:9, 3:9, 0] = 1
-    np.save(data_dir / "mask.npy", mask)
-    pd.DataFrame({"Subject": subjects}).to_csv(data_dir / "skeleton_subject.csv", index=False)
-
-    search_dir = root / "configs"
-    group_dir = search_dir / "dataset" / DATASET_GROUP
-    group_dir.mkdir(parents=True)
-    d, h, w = VOLUME_SHAPE
-    (group_dir / f"{REGION}.yaml").write_text(
-        f"# @package dataset.{DATASET_GROUP}_{REGION}\n"
-        f"dataset_name: {DATASET_GROUP}_{REGION}\n"
-        "numpy_all: ${dataset_folder}/skeleton.npy\n"
-        "subjects_all: ${dataset_folder}/skeleton_subject.csv\n"
-        "crop_dir:\n"
-        "foldlabel_all: ${dataset_folder}/label.npy\n"
-        "train_val_csv_file: ${dataset_folder}/skeleton_subject.csv\n"
-        "cutin_mask_path: ${dataset_folder}/mask.npy\n"
-        "flip_dataset: False\n"
-        f"input_size: (1, {d}, {h}, {w})\n"
-    )
-    return search_dir, data_dir
-
-
-def _compose_config(search_dir: Path, data_dir: Path):
-    """Compose the training config as the pipeline wrapper does, forced onto the CPU."""
-    overrides = [
-        f"hydra.searchpath=[file://{search_dir}]",
-        f"+dataset/{DATASET_GROUP}={REGION}",
-        f"++dataset_folder={data_dir}",
-        "platform=cuda",
-        "device=cpu",
-        "load_sparse=false",
-        "num_cpu_workers=1",
-        f"batch_size={BATCH_SIZE}",
-        "partition=[0.5,0.5]",
-        "pin_mem=false",
-        "max_epochs=1",
-    ]
-    with initialize_config_dir(config_dir=str(CONFIG_DIR), version_base="1.1"):
-        return compose(config_name="config", overrides=overrides)
 
 
 @pytest.fixture
-def config(tmp_path):
-    search_dir, data_dir = _write_synthetic_region(tmp_path)
-    return process_config(_compose_config(search_dir, data_dir))
+def config(synthetic_region, compose_training_config):
+    return compose_training_config(*synthetic_region)
 
 
 @pytest.fixture

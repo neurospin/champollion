@@ -40,6 +40,7 @@ import pytorch_lightning as pl
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.profilers import PyTorchProfiler, SimpleProfiler
 import omegaconf
+import torch
 from torch.utils.tensorboard import SummaryWriter
 from torchinfo import summary
 
@@ -54,11 +55,30 @@ tb_logger = pl_loggers.TensorBoardLogger('logs')
 writer = SummaryWriter()
 log = set_file_logger(__file__)
 
+SUMMARY_DEPTH = 6
+
 
 def get_train_seed():
     """Get a random seed for training."""
     train_seed = rd.randint(256)
     return train_seed
+
+
+def make_summary_input(config):
+    """Build torchinfo's forward args for a single-region model.
+
+    SSLModel.forward takes a list of per-region batched tensors, as
+    training_step passes them; torchinfo unpacks the outer list.
+    """
+    return [[torch.zeros(1, *config.data[0].input_size)]]
+
+
+def print_model_summary(model, config):
+    """Print the torchinfo summary; runs a forward pass only for one region."""
+    if len(config.dataset.keys()) != 1:
+        return summary(model, device=config.device, depth=SUMMARY_DEPTH)
+    return summary(model, input_data=make_summary_input(config),
+                   device=config.device, depth=SUMMARY_DEPTH)
 
 
 @hydra.main(config_name='config', version_base="1.1", config_path="configs")
@@ -90,12 +110,7 @@ def train(config):
                                     encoder_only=config.load_encoder_only,
                                     freeze_loaded_layers=config.freeze_loaded_layers)
 
-    input_size = tuple([1] + list(config.data[0].input_size))
-    if (len(config.dataset.keys()) == 1): # if one region
-        print(config.data[0].input_size)
-        summary(model, input_data=input_size, batch_dim=0, device=config.device, depth=6)
-    else:
-        summary(model, device=config.device, depth=6) # TODO : why 16 ?
+    print_model_summary(model, config)
 
     # choose the logger
     loggers = [tb_logger]

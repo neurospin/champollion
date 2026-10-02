@@ -17,6 +17,59 @@ def conv1x1(in_planes, out_planes, stride=1):
     """1x1 convolution"""
     return nn.Conv3d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
 
+def ComputeOutputDim(dimension, depth):
+    """Compute the output resolution
+    """
+    if depth==0:
+        return dimension
+    else:
+        return(ComputeOutputDim(dimension//2+dimension%2, depth-1))
+    
+class Bottleneck(nn.Module):
+    expansion = 4
+
+    def __init__(self, inplanes, planes, stride=1, downsample=None, groups=1,
+                 base_width=64, dilation=1, norm_layer=None):
+        super(Bottleneck, self).__init__()
+        if norm_layer is None:
+            norm_layer = nn.BatchNorm3d
+        width = int(planes * (base_width / 64.)) * groups
+        # Both self.conv2 and self.downsample layers downsample the input when stride != 1
+        self.conv1 = conv1x1(inplanes, width)
+        self.bn1 = norm_layer(width)
+        self.conv2 = conv3x3(width, width, stride, groups, dilation)
+        self.bn2 = norm_layer(width)
+        self.conv3 = conv1x1(width, planes * self.expansion)
+        self.bn3 = norm_layer(planes * self.expansion)
+        self.relu = nn.ReLU(inplace=True)
+        self.downsample = downsample
+        self.stride = stride
+
+    def forward(self, x):
+        identity = x
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+        out = self.relu(out)
+
+        if hasattr(self, "concrete_dropout"):
+            out = self.concrete_dropout(out)
+        else:
+            out = self.conv3(out)
+        out = self.bn3(out)
+
+        if self.downsample is not None:
+            identity = self.downsample(x)
+
+        out += identity
+        out = self.relu(out)
+
+        return out
+
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -58,11 +111,10 @@ class BasicBlock(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, in_channels, block, layers, channels, num_classes,
-                 zero_init_residual, dropout_rate, out_block,
-                 initial_kernel_size, initial_stride, adaptive_pooling,
-                 groups=1, width_per_group=64, replace_stride_with_dilation=None,
-                 norm_layer=None):
+    def __init__(self, block, layers, channels=[64,128,256,512], in_channels=3, num_classes=1000,
+                 zero_init_residual=False, groups=1, width_per_group=64, replace_stride_with_dilation=None,
+                 norm_layer=None, dropout_rate=None, out_block=None, prediction_bias=True,
+                 initial_kernel_size=7, initial_stride=2, maxpool_layer=False, adaptive_pooling=['average', 1], linear_in_backbone=True, in_shape=None):
         super(ResNet, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm3d
@@ -74,6 +126,19 @@ class ResNet(nn.Module):
         self.dilation = 1
         self.out_block = out_block
         self.adaptive_pooling = adaptive_pooling
+        self.linear_in_backbone = linear_in_backbone
+        self.maxpool_layer = maxpool_layer
+
+        c, h, w, d = in_shape
+        depth = 3
+        if initial_stride==2:
+            depth+=1
+        if self.maxpool_layer:
+            depth+=1
+        
+        self.z_dim_h = ComputeOutputDim(h, depth)
+        self.z_dim_w = ComputeOutputDim(w, depth)
+        self.z_dim_d = ComputeOutputDim(d, depth)
 
         if replace_stride_with_dilation is None:
             # each element in the tuple indicates if we should replace
@@ -84,12 +149,16 @@ class ResNet(nn.Module):
                              "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
         self.groups = groups
         self.base_width = width_per_group
+        #initial_stride = 2 if initial_kernel_size==7 else 1
         padding = (initial_kernel_size-initial_stride+1)//2
         self.conv1 = nn.Conv3d(in_channels, self.inplanes, kernel_size=initial_kernel_size, stride=initial_stride,
                                padding=padding, bias=False)
         self.bn1 = norm_layer(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
-        #self.maxpool = nn.MaxPool3d(kernel_size=3, stride=2, padding=1) # differ from typical resnet
+        if self.maxpool_layer:
+            self.maxpool = nn.MaxPool3d(kernel_size=3, stride=2, padding=1)
+
+        #channels = [64, 128, 256, 512]
 
         self.layer1 = self._make_layer(block, channels[0], layers[0], stride=1)
         self.layer2 = self._make_layer(block, channels[1], layers[1], stride=2,
@@ -98,21 +167,29 @@ class ResNet(nn.Module):
                                        dilate=replace_stride_with_dilation[1])
         self.layer4 = self._make_layer(block, channels[3], layers[3], stride=2,
                                        dilate=replace_stride_with_dilation[2])
-        if self.adaptive_pooling[0]=='max':
-            self.pool = nn.AdaptiveMaxPool3d(self.adaptive_pooling[1])
-        elif self.adaptive_pooling[0]=='average':
-            self.pool = nn.AdaptiveAvgPool3d(self.adaptive_pooling[1])
-        else:
-            raise ValueError("Wrong pooling name argument")
+        if self.adaptive_pooling is not None:
+            if self.adaptive_pooling[0]=='max':
+                self.pool = nn.AdaptiveMaxPool3d(self.adaptive_pooling[1])
+            elif self.adaptive_pooling[0]=='average':
+                self.pool = nn.AdaptiveAvgPool3d(self.adaptive_pooling[1])
+            else:
+                raise ValueError("Wrong pooling name argument")
         if dropout_rate is not None and dropout_rate>0:
             self.dropout = nn.Dropout(dropout_rate)
 
-        output_dim = np.prod(self.adaptive_pooling[1])*channels[-1]
-        self.linear = nn.Linear(output_dim, num_classes)
+        # linear layer to map to embeddings size
+        if self.linear_in_backbone:
+            if self.adaptive_pooling is not None:
+                output_dim = np.prod(self.adaptive_pooling[1])*channels[-1] * block.expansion
+            else:
+                output_dim = self.z_dim_d*self.z_dim_h*self.z_dim_w*channels[-1] * block.expansion
+            self.linear = nn.Linear(output_dim, num_classes)
 
         if zero_init_residual:
             for m in self.modules():
-                if isinstance(m, BasicBlock):
+                if isinstance(m, Bottleneck):
+                    nn.init.constant_(m.bn3.weight, 0)
+                elif isinstance(m, BasicBlock):
                     nn.init.constant_(m.bn2.weight, 0)
                     
 
@@ -148,28 +225,35 @@ class ResNet(nn.Module):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        #x = self.maxpool(x)
+        if self.maxpool_layer:
+            x = self.maxpool(x)
 
         x1 = self.layer1(x)
         x2 = self.layer2(x1)
         x3 = self.layer3(x2)
         x4 = self.layer4(x3)
-
-        x5 = self.pool(x4)
-        x6 = torch.flatten(x5, 1)
+        if self.adaptive_pooling is not None:
+            x4 = self.pool(x4)
+        x5 = torch.flatten(x4, 1)
         if hasattr(self, 'dropout'):
-            x6  = self.dropout(x6)
-        x6 = self.linear(x6)
-        return x6
+            x5  = self.dropout(x5)
+        if self.linear_in_backbone:
+            x5 = self.linear(x5)
+        return x5
 
 
 def _resnet(arch, block, layers, **kwargs):
     model = ResNet(block, layers, **kwargs)
     return model
 
-
 def resnet18(**kwargs):
     r"""ResNet-18 model from
     `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_
     """
     return _resnet('resnet18', BasicBlock, [2, 2, 2, 2],  **kwargs)
+
+def resnet34(**kwargs):
+    return _resnet('resnet34', BasicBlock, [3, 4, 6, 3], **kwargs)
+
+def resnet50(**kwargs):
+    return _resnet('resnet50', Bottleneck, [3, 4, 6, 3], **kwargs)

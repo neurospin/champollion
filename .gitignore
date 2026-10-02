@@ -124,6 +124,7 @@ venvis243185
 # run folders
 champollion/notebooks/
 champollion/runs/
+champollion/configs/dataset/custom_configs/
 
 # generated src folders
 src

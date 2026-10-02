@@ -45,7 +45,7 @@ import pytorch_lightning as pl
 from collections import OrderedDict
 
 from champollion.backbones.convnet import ConvNet
-from champollion.backbones.resnet import ResNet, BasicBlock
+from champollion.backbones.resnet import ResNet, BasicBlock, Bottleneck
 from champollion.backbones.projection_heads import *
 from champollion.data.utils import change_list_device
 from champollion.losses import *
@@ -81,9 +81,13 @@ class SSLModel(pl.LightningModule):
                     in_shape=config.data[i].input_size))
         elif config.backbone_name == 'resnet':
             for i in range(n_datasets):
+                if config.block=='basicblock':
+                    block=BasicBlock
+                elif config.block=='bottleneck':
+                    block=Bottleneck
                 self.backbones.append(ResNet(
                     in_channels=1,
-                    block=BasicBlock,
+                    block=block,
                     out_block=None,
                     layers=config.layers,
                     channels=config.channels,
@@ -92,7 +96,8 @@ class SSLModel(pl.LightningModule):
                     dropout_rate=config.drop_rate,
                     initial_kernel_size=config.initial_kernel_size,
                     initial_stride=config.initial_stride,
-                    adaptive_pooling=config.adaptive_pooling))
+                    adaptive_pooling=config.adaptive_pooling,
+                    in_shape=config.data[i].input_size))
         else:
             raise ValueError(f"No underlying backbone with backbone name {config.backbone_name}")
         

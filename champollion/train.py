@@ -81,7 +81,7 @@ def train(config):
     data_module = DataModule_Learning(config)
     
     model = SSLModel(config,
-                                     sample_data=data_module)
+                     sample_data=data_module)
 
     # load pretrained model's weights if in config
     if config.pretrained_model_path is not None:
@@ -91,11 +91,8 @@ def train(config):
                                     freeze_loaded_layers=config.freeze_loaded_layers)
 
     input_size = tuple([1] + list(config.data[0].input_size))
-    if (len(config.dataset.keys()) == 1): # if one region
-        print(config.data[0].input_size)
-        summary(model, input_data=input_size, batch_dim=0, device=config.device, depth=6)
-    else:
-        summary(model, device=config.device, depth=6) # TODO : why 16 ?
+    if config.backbone_name=='convnet' and (len(config.dataset.keys()) == 1):
+            summary(model, input_data=input_size, batch_dim=0, device=config.device, depth=6)
 
     # choose the logger
     loggers = [tb_logger]

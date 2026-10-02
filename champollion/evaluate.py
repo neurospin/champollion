@@ -9,7 +9,7 @@ import ast
 from tqdm import tqdm
 from torch.utils.data import DataLoader, TensorDataset
 from champollion.backbones.convnet import ConvNet
-from champollion.backbones.resnet import ResNet, BasicBlock
+from champollion.backbones.resnet import ResNet, BasicBlock, Bottleneck
 
 ### Small .py to generate embeddings using Champollionv1 ###
 
@@ -17,7 +17,8 @@ def load_model(model_path, in_shape):
     weights_path = glob.glob(model_path + '/logs/lightning_logs/version_0/checkpoints/*.ckpt')[0]
     config_path = model_path + '/.hydra/config.yaml'
     checkpoint = torch.load(weights_path, map_location='cpu')
-    encoder_state_dict = {k.replace('backbones.0.', ''): v for k, v in checkpoint['state_dict'].items() if k.startswith('backbones.0.encoder.')}
+    print([k for k,v in checkpoint['state_dict'].items()])
+    encoder_state_dict = {k.replace('backbones.0.', ''): v for k, v in checkpoint['state_dict'].items() if k.startswith('backbones.0.')}
     config = omegaconf.OmegaConf.load(config_path)
     try:
         input_size = ast.literal_eval(config.data[0].input_size)
@@ -37,7 +38,8 @@ def load_model(model_path, in_shape):
                                          'drop_rate', 'initial_kernel_size', 'initial_stride', 'adaptive_pooling')}
         kwargs['num_classes']=kwargs.pop('backbone_output_size')
         kwargs['dropout_rate']=kwargs.pop('drop_rate')
-        model = ResNet(in_channels=1, block=BasicBlock, out_block=None, **kwargs)
+        block=BasicBlock if config.block=='basicblock' else Bottleneck
+        model = ResNet(in_channels=1, in_shape=in_shape, block=block, out_block=None, **kwargs)
     else:
         raise ValueError("The architecture is not handled.")
     

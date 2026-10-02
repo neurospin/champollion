@@ -110,6 +110,12 @@ def create_sets_without_labels_without_load(config):
 
     datasets = {}
 
+    if config.deterministic_translations is not None:
+        df = pd.read_csv(config.deterministic_translations)
+        tr = {str(r.ID): (-r.shift_x, -r.shift_y, -r.shift_z) for r in df.itertuples()}
+    else:
+        tr = None
+
     for subset_name in dirs.keys():
 
         datasets[subset_name] = SSLDataset(
@@ -118,7 +124,8 @@ def create_sets_without_labels_without_load(config):
             skeleton_arrays_dirs=dirs[subset_name]['skeleton_dirs'],
             foldlabel_arrays_dirs=dirs[subset_name]['foldlabel_dirs'],
             config=config,
-            apply_transform=config.apply_augmentations)
+            apply_transform=config.apply_augmentations,
+            fixed_mask_tr=tr)
         
     return datasets
 

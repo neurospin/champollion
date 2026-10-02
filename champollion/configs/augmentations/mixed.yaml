@@ -21,3 +21,4 @@ mask_constraint: True
 # input translation augmentation
 offset_proba_tr: 0.5
 max_tr: 0
+deterministic_translations: !!null

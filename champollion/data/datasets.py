@@ -94,7 +94,7 @@ class SSLDataset():
     def __init__(self, filenames, config, apply_transform=True,
                  labels=None, arrays=None, foldlabel_arrays=None,
                  coords_arrays_dirs=None, skeleton_arrays_dirs=None,
-                 foldlabel_arrays_dirs=None):
+                 foldlabel_arrays_dirs=None, fixed_mask_tr=None):
         """
         Every data argument is a list over regions
 
@@ -113,6 +113,14 @@ class SSLDataset():
         self.coords_arrs_dirs=coords_arrays_dirs
         self.skeleton_arrs_dirs=skeleton_arrays_dirs
         self.foldlabel_arrs_dirs=foldlabel_arrays_dirs
+
+        if fixed_mask_tr is not None:
+            missing = set(self.filenames[0]['Subject']) - set(fixed_mask_tr)
+            if missing:
+                raise KeyError(f"No translation for {len(missing)} subjects, e.g. {sorted(missing)[:5]}")
+            self.fixed_mask_tr = {s: np.round(np.asarray(fixed_mask_tr[s])).astype(int) for s in self.filenames[0]['Subject']}
+        else:
+            self.fixed_mask_tr = None
 
         log.debug(f"nb_train = {self.nb_train}")
         log.debug(f"filenames[:5] = {filenames[:5]}")
@@ -169,12 +177,15 @@ class SSLDataset():
             coords_arrs = [np.load(coords_dir) for coords_dir in coords_arr_dir]
             # load the mask
             mask = np.load(self.config.data[0].mask_path)
+            # apply deterministic translation
+            if self.fixed_mask_tr is not None:
+                mask = translate_mask(mask, self.fixed_mask_tr[filenames[0]])
             trs = sample_spherical(3)
             p = int(np.random.rand() > self.config.offset_proba_tr)
             radius = np.random.randint(0, self.config.max_tr +1)
             translation = np.round(trs * radius * p).astype(int)
+            # apply random translation to the mask
             mask = translate_mask(mask, translation)
-            # apply translation to the mask
         if self.skeleton_arrs_dirs is not None and self.skeleton_arrs_dirs[0] is not None:
             skeleton_arr_dir = [arr[idx] for arr in self.skeleton_arrs_dirs]
             skeleton_arrs = [np.load(skeleton_dir) for skeleton_dir in skeleton_arr_dir]

@@ -1,6 +1,7 @@
 # @package _global_
 # Characterization of the ConvNet model used
 backbone_name: resnet
+block: basicblock
 layers: [2,2,2,2]
 channels: [32,64,128,256]
 zero_init_residual: True

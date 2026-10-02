@@ -101,7 +101,7 @@ def train(config):
     data_module = DataModule_Learning(config)
     
     model = SSLModel(config,
-                                     sample_data=data_module)
+                     sample_data=data_module)
 
     # load pretrained model's weights if in config
     if config.pretrained_model_path is not None:

@@ -41,7 +41,7 @@ Run the command line (here the number of epochs is given, overriding the config 
 
 .. code-block:: shell
 
-    python3 train.py +dataset=config_dataset +dataset_localization=local --max_epochs=81
+    python3 train.py +dataset=config_dataset +dataset_localization=local max_epochs=81
 
 
 Tutorial: generate embeddings

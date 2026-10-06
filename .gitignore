@@ -161,3 +161,4 @@ sh_kraken
 
 # OMC
 .omc/
+.codegraph/

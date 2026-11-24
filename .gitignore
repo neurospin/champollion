@@ -162,3 +162,6 @@ sh_kraken
 # OMC
 .omc/
 .codegraph/
+
+# ALM ledger (local, own git repo)
+.alm

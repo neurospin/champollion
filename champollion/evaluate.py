@@ -10,6 +10,9 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader, TensorDataset
 from champollion.backbones.convnet import ConvNet
 from champollion.backbones.resnet import ResNet, BasicBlock, Bottleneck
+from champollion.utils.logs import set_file_logger
+
+log = set_file_logger(__file__)
 
 ### Small .py to generate embeddings using Champollionv1 ###
 
@@ -17,7 +20,7 @@ def load_model(model_path, in_shape):
     weights_path = glob.glob(model_path + '/logs/lightning_logs/version_0/checkpoints/*.ckpt')[0]
     config_path = model_path + '/.hydra/config.yaml'
     checkpoint = torch.load(weights_path, map_location='cpu')
-    print([k for k,v in checkpoint['state_dict'].items()])
+    log.debug('Checkpoint state_dict keys: %s', list(checkpoint['state_dict']))
     encoder_state_dict = {k.replace('backbones.0.', ''): v for k, v in checkpoint['state_dict'].items() if k.startswith('backbones.0.')}
     config = omegaconf.OmegaConf.load(config_path)
     try:
@@ -52,7 +55,7 @@ def load_model(model_path, in_shape):
             "do not match the saved weights. Please check your model configuration."
         )
     model.eval()
-    print('Model weights loaded')
+    log.info('Model weights loaded')
     return model
 
 

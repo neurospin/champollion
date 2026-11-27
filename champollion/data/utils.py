@@ -274,3 +274,72 @@ def change_list_device(list_of_tensors, device):
     returned_list = [tensor.to(device=device) for tensor in list_of_tensors]
     return returned_list
 
+
+def bbox_3d(mask):
+    """
+    Compute the bounding box coordinates of a binary mask in a 3D image.
+
+    Parameters
+    ----------
+    mask : np.ndarray
+        3D binary array (nonzero/True = foreground).
+
+    Returns
+    -------
+    bbox : tuple
+        (zmin, zmax, ymin, ymax, xmin, xmax) — inclusive coordinates
+        of the smallest box containing all nonzero voxels.
+    """
+
+    if not np.any(mask):
+        raise ValueError("Mask is empty (no foreground voxels)")
+
+    # Find indices along each axis where any voxel is nonzero
+    x_indices = np.any(mask, axis=(1, 2))
+    y_indices = np.any(mask, axis=(0, 2))
+    z_indices = np.any(mask, axis=(0, 1))
+
+    zmin, zmax = np.where(z_indices)[0][[0, -1]]
+    ymin, ymax = np.where(y_indices)[0][[0, -1]]
+    xmin, xmax = np.where(x_indices)[0][[0, -1]]
+
+    return zmin, zmax, ymin, ymax, xmin, xmax
+
+
+def skel_to_crop(skel, mask):
+
+    skel = skel[:,:,:,0]
+    mask = mask[:,:,:,0]
+    zmin, zmax, ymin, ymax, xmin, xmax = bbox_3d(mask)
+    skel = np.expand_dims(skel * mask, -1)
+    return skel[xmin:xmax+1, ymin:ymax+1, zmin:zmax+1] 
+
+
+def sample_spherical(ndim=3):
+    vec = np.random.randn(ndim)
+    vec /= np.linalg.norm(vec, axis=0)
+    return vec
+
+
+def translate_mask(mask, translation):
+    tx, ty, tz = translation
+
+    translated = np.roll(mask, shift=(tx, ty, tz), axis=(0, 1, 2))
+
+    # Remove the wrapped-around voxels
+    if tx > 0:
+        translated[:tx, :, :] = 0
+    elif tx < 0:
+        translated[tx:, :, :] = 0
+
+    if ty > 0:
+        translated[:, :ty, :] = 0
+    elif ty < 0:
+        translated[:, ty:, :] = 0
+
+    if tz > 0:
+        translated[:, :, :tz] = 0
+    elif tz < 0:
+        translated[:, :, tz:] = 0
+
+    return translated

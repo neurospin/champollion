@@ -72,3 +72,61 @@ and produces a pairwise CKA similarity matrix.
         embedding_filename='full_embeddings.csv'
     )
     print(f"Mean coherence: {stats['mean_cka']:.4f}")
+
+Changes and configuration notes
+===============================
+
+CUDA platform
+-------------
+
+``configs/platform/cuda.yaml`` sets ``num_cpu_workers: 24`` (it was 20).
+
+ResNet backbone
+---------------
+
+``configs/backbone/ResNet.yaml`` has a ``block`` key. ``basicblock`` (the
+default) selects ``BasicBlock``; ``bottleneck`` selects ``Bottleneck``. Both
+``ssl_model.py`` and ``evaluate.py`` read this key.
+
+Resuming training
+-----------------
+
+``checkpoint_path`` (``configs/trainer/default.yaml``, empty by default) is
+passed to ``trainer.fit`` as ``ckpt_path``, so a run can resume from a
+checkpoint.
+
+Sparse loading (``load_sparse``)
+--------------------------------
+
+With ``load_sparse: True`` (``configs/trainer/default.yaml``, default
+``False``), the data module reads one file per subject from three folders of
+each ``data`` entry: ``coords_all``, ``numpy_all`` (skeleton values) and
+``foldlabel_all`` (fold label values). Each folder holds ``<sub>.npy``, where
+``<sub>`` is the subject id. The old suffixed names ``_coords``,
+``_skeleton_values`` and ``_foldlabel_values`` are no longer used. Every
+``data`` entry must define ``coords_all``, and all three paths must be
+folders, not files; otherwise a ``ValueError`` is raised. The mask is read
+from ``data[0].mask_path``.
+
+The whole-brain sparse path has no producer yet: nothing in this repository
+or in the pipeline writes these per-subject ``<sub>.npy`` files.
+
+Translation augmentation
+------------------------
+
+Three keys in ``configs/augmentations/mixed.yaml`` control translation of the
+crop mask:
+
+``offset_proba_tr`` (default 0.5)
+    Threshold on a uniform random draw. A random translation is applied when
+    the draw is above it.
+
+``max_tr`` (default 0)
+    Maximum radius, in voxels, of the random translation. A radius is drawn
+    between 0 and ``max_tr`` and applied along a random direction. With 0
+    no random translation happens.
+
+``deterministic_translations`` (default null)
+    Path to a CSV with the columns ``ID``, ``shift_x``, ``shift_y`` and
+    ``shift_z``. The mask of subject ``ID`` is shifted by the negated values
+    before any random translation. It applies only with ``load_sparse``.

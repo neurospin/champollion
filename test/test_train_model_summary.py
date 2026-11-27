@@ -59,12 +59,13 @@ class _TinySSLLike(nn.Module):
         return self.bn(self.conv(x[0])).mean(dim=(2, 3, 4))
 
 
-def _single_region_config():
+def _single_region_config(backbone_name="convnet", regions=("only_region",)):
     return OmegaConf.create(
         {
-            "data": [{"input_size": list(INPUT_SIZE)}],
-            "dataset": {"only_region": {}},
+            "data": [{"input_size": list(INPUT_SIZE)} for _ in regions],
+            "dataset": {name: {} for name in regions},
             "device": "cpu",
+            "backbone_name": backbone_name,
         }
     )
 
@@ -122,3 +123,19 @@ def test_train_calls_print_model_summary_with_model_and_config():
     assert len(calls) == 1, "train() must call print_model_summary exactly once"
     args = [a.id for a in calls[0].args if isinstance(a, ast.Name)]
     assert args == ["model", "config"]
+
+
+def test_resnet_single_region_summary_runs_no_forward_pass(train_module):
+    """REQ-V1PR3-BDRABCZUK-86F18CCA1AE5: a ResNet backbone gets no forward pass."""
+    model = _TinySSLLike()
+    _helper(train_module)(model, _single_region_config(backbone_name="resnet"))
+
+    assert model.calls == []
+
+
+def test_convnet_multi_region_summary_runs_no_forward_pass(train_module):
+    """REQ-V1PR3-BDRABCZUK-86F18CCA1AE5: several regions get no forward pass."""
+    model = _TinySSLLike()
+    _helper(train_module)(model, _single_region_config(regions=("left", "right")))
+
+    assert model.calls == []

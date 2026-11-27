@@ -42,7 +42,7 @@ from champollion.utils.logs import set_file_logger
 
 from champollion.data.transforms import transform_only_padding, transform_mixed
 
-from champollion.data.utils import convert_sparse_to_numpy
+from champollion.data.utils import convert_sparse_to_numpy, skel_to_crop, sample_spherical, translate_mask
 
 from champollion.augmentations import PaddingTensor
 
@@ -94,7 +94,7 @@ class SSLDataset():
     def __init__(self, filenames, config, apply_transform=True,
                  labels=None, arrays=None, foldlabel_arrays=None,
                  coords_arrays_dirs=None, skeleton_arrays_dirs=None,
-                 foldlabel_arrays_dirs=None):
+                 foldlabel_arrays_dirs=None, fixed_mask_tr=None):
         """
         Every data argument is a list over regions
 
@@ -113,6 +113,14 @@ class SSLDataset():
         self.coords_arrs_dirs=coords_arrays_dirs
         self.skeleton_arrs_dirs=skeleton_arrays_dirs
         self.foldlabel_arrs_dirs=foldlabel_arrays_dirs
+
+        if fixed_mask_tr is not None:
+            missing = set(self.filenames[0]['Subject']) - set(fixed_mask_tr)
+            if missing:
+                raise KeyError(f"No translation for {len(missing)} subjects, e.g. {sorted(missing)[:5]}")
+            self.fixed_mask_tr = {s: np.round(np.asarray(fixed_mask_tr[s])).astype(int) for s in self.filenames[0]['Subject']}
+        else:
+            self.fixed_mask_tr = None
 
         log.debug(f"nb_train = {self.nb_train}")
         log.debug(f"filenames[:5] = {filenames[:5]}")
@@ -167,13 +175,25 @@ class SSLDataset():
         if self.coords_arrs_dirs is not None and self.coords_arrs_dirs[0] is not None:
             coords_arr_dir = [arr[idx] for arr in self.coords_arrs_dirs]
             coords_arrs = [np.load(coords_dir) for coords_dir in coords_arr_dir]
+            # load the mask
+            mask = np.load(self.config.data[0].mask_path)
+            # apply deterministic translation
+            if self.fixed_mask_tr is not None:
+                mask = translate_mask(mask, self.fixed_mask_tr[filenames[0]])
+            trs = sample_spherical(3)
+            p = int(np.random.rand() > self.config.offset_proba_tr)
+            radius = np.random.randint(0, self.config.max_tr +1)
+            translation = np.round(trs * radius * p).astype(int)
+            # apply random translation to the mask
+            mask = translate_mask(mask, translation)
         if self.skeleton_arrs_dirs is not None and self.skeleton_arrs_dirs[0] is not None:
             skeleton_arr_dir = [arr[idx] for arr in self.skeleton_arrs_dirs]
             skeleton_arrs = [np.load(skeleton_dir) for skeleton_dir in skeleton_arr_dir]
             samples = [convert_sparse_to_numpy(skeleton_arr, coords_arr,
-                                                self.config.data[reg].input_size[1:], 'float32')
+                                                mask.shape[:-1], 'float32')
                                                 for reg, (skeleton_arr, coords_arr)
                                                 in enumerate(zip(skeleton_arrs, coords_arrs))]
+            samples = [skel_to_crop(skel, mask) for skel in samples]
             samples = [torch.from_numpy(sample) for sample in samples]
             samples = [padd_array(sample,
                                 self.config.data[reg].input_size,
@@ -183,9 +203,10 @@ class SSLDataset():
             foldlabel_arr_dir = [arr[idx] for arr in self.foldlabel_arrs_dirs]
             foldlabel_arrs = [np.load(foldlabel_dir) for foldlabel_dir in foldlabel_arr_dir]
             sample_foldlabels = [convert_sparse_to_numpy(foldlabel_arr, coords_arr,
-                                                self.config.data[reg].input_size[1:], 'int32')
+                                                mask.shape[:-1], 'int32')
                                                 for reg, (foldlabel_arr, coords_arr)
                                                 in enumerate(zip(foldlabel_arrs, coords_arrs))]
+            sample_foldlabels = [skel_to_crop(sample, mask) for sample in sample_foldlabels]
             sample_foldlabels = [torch.from_numpy(sample_foldlabel) for sample_foldlabel in sample_foldlabels]
             sample_foldlabels = [padd_array(sample_foldlabel,
                                 self.config.data[reg].input_size,

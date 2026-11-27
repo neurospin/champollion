@@ -132,6 +132,7 @@ champollion/evaluation/runs/
 champollion/evaluation/outputs/
 runs/
 wandb/
+champollion/configs/dataset/custom_configs/
 
 # generated src folders
 src
@@ -162,3 +163,6 @@ sh_kraken
 # OMC
 .omc/
 .codegraph/
+
+# ALM ledger (local, own git repo)
+.alm

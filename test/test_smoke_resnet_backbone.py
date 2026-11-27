@@ -1,4 +1,4 @@
-"""Smoke tests for REQ-V1INTEG-01..04 (champollion_pipeline ledger, TASK-159).
+"""Smoke tests for REQ-V1INTEG-01, 02, 04 and REQ-V1PR3-BDRABCZUK-B65C34550F93 (was V1INTEG-03) (champollion_pipeline ledger, TASK-159).
 
 Integration of neurospin/champollion PR #3 (``refactor-update-2``): the ResNet
 backbone is brought in line with the Champollion preprint. The shipped
@@ -71,22 +71,19 @@ def test_bottleneck_block_option_builds_only_bottleneck_residual_blocks(syntheti
     assert not offenders, f"non-Bottleneck residual blocks: {offenders}"
 
 
-def test_model_summary_runs_resnet_backbone_forward(resnet_config):
-    """REQ-V1INTEG-03: print_model_summary runs the real ResNet SSLModel's backbone forward."""
+def test_model_summary_prints_resnet_model_without_forward_pass(resnet_config):
+    """REQ-V1PR3-BDRABCZUK-B65C34550F93: the ResNet summary lists the model and runs no forward pass."""
     train_module = importlib.import_module("champollion.train")
     model = SSLModel(resnet_config, sample_data=DataModule_Learning(resnet_config))
     block_types = {type(b) for b in _residual_blocks(model.backbones[0])}
 
     stats = train_module.print_model_summary(model, resnet_config)
 
-    # SSLModel calls ``backbone.forward(x)`` directly, which skips the backbone's own
-    # module hooks; its residual blocks are called normally, so torchinfo records
-    # their output shapes only if the backbone's forward really ran.
     assert stats is not None, "print_model_summary returned no torchinfo statistics"
-    assert stats.total_mult_adds > 0, "summary did not run a forward pass"
-    ran = [layer for layer in stats.summary_list if layer.module is not None and type(layer.module) in block_types]
-    assert ran, "no ResNet residual block in the torchinfo summary"
-    assert all(layer.output_size for layer in ran), "ResNet residual blocks recorded no output (forward not run)"
+    assert stats.total_mult_adds == 0, "summary ran a forward pass for a ResNet backbone"
+    listed = [layer for layer in stats.summary_list if layer.module is not None and type(layer.module) in block_types]
+    assert listed, "no ResNet residual block listed in the torchinfo summary"
+    assert all(not layer.output_size for layer in listed), "ResNet residual blocks recorded an output (forward ran)"
 
 
 class _LossRecorder(pl.Callback):

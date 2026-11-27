@@ -74,8 +74,11 @@ def make_summary_input(config):
 
 
 def print_model_summary(model, config):
-    """Print the torchinfo summary; runs a forward pass only for one region."""
-    if len(config.dataset.keys()) != 1:
+    """Print the torchinfo summary.
+
+    A forward pass runs only for a ConvNet backbone with exactly one region.
+    """
+    if config.backbone_name != 'convnet' or len(config.dataset.keys()) != 1:
         return summary(model, device=config.device, depth=SUMMARY_DEPTH)
     return summary(model, input_data=make_summary_input(config),
                    device=config.device, depth=SUMMARY_DEPTH)
